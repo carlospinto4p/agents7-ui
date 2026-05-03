@@ -3,8 +3,6 @@ services:
     build:
       context: ..
       dockerfile: agents7_ui/Dockerfile.backend
-      secrets:
-        - gitlab_token
     ports:
       - "8000:8000"
     environment:
@@ -20,7 +18,3 @@ services:
       - "8080:80"
     depends_on:
       - backend
-
-secrets:
-  gitlab_token:
-    environment: GITLAB_TOKEN
