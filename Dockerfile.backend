@@ -9,11 +9,7 @@ WORKDIR /app
 COPY agents7_framework/pyproject.toml agents7_framework/README.md agents7_framework/
 COPY agents7_framework/src agents7_framework/src/
 
-# Install agents7
-RUN --mount=type=secret,id=gitlab_token \
-    UV_INDEX_GITLAB_CPINTO_USERNAME=oauth2 \
-    UV_INDEX_GITLAB_CPINTO_PASSWORD=$(cat /run/secrets/gitlab_token) \
-    uv pip install --system agents7_framework/
+RUN uv pip install --system agents7_framework/
 
 # Install backend API deps (no private index needed)
 RUN uv pip install --system "fastapi>=0.115.0" "uvicorn[standard]>=0.34.0"
