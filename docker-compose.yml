@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: agents7_ui/Dockerfile.backend
+      secrets:
+        - gitlab_token
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+secrets:
+  gitlab_token:
+    environment: GITLAB_TOKEN
