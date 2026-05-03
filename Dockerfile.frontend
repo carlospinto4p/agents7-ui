@@ -1,10 +1,9 @@
-# Build context: agents7_ui/frontend/
-# docker build -f agents7_ui/Dockerfile.frontend agents7_ui/frontend/
+# Build context: agents7_ui/
 FROM node:22-alpine AS build
 WORKDIR /app
-COPY package.json ./
+COPY frontend/package.json ./
 RUN npm install
-COPY . .
+COPY frontend/ .
 RUN npm run build
 
 FROM nginx:alpine
