@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.7.0 - 9th May 2026
+
+- Added `frontend/src/pages/Eval.svelte`: Evaluation view — agent selector dropdown, Run Eval button, overall accuracy progress bar (green/yellow/red), per-category table sorted by accuracy, and mismatch list with input/expected/actual per row.
+- Updated `frontend/src/App.svelte`: added Eval tab and route (`#/eval`).
+- Fixed `frontend/package.json`: bumped version from 0.4.0 to 0.7.0 to match changelog.
+
+
 ### v0.6.0 - 9th May 2026
 
 - Added `backend/routers/eval.py`: `POST /api/eval/{agent_name}` — discovers the agent's golden set (`data/golden_set.csv` or `.jsonl`), infers input vs. output columns from the output schema, runs the agent on every row, and returns `total`, `passed`, `failed`, `accuracy`, per-category breakdown, and a `mismatches` list.

@@ -2,6 +2,7 @@
   import Catalog from './pages/Catalog.svelte'
   import Runner from './pages/Runner.svelte'
   import Engine from './pages/Engine.svelte'
+  import Eval from './pages/Eval.svelte'
 
   let page = $state(getPage())
 
@@ -22,6 +23,7 @@
     <a href="#/catalog" class:active={page === 'catalog'}>Catalog</a>
     <a href="#/runner" class:active={page === 'runner'}>Runner</a>
     <a href="#/engine" class:active={page === 'engine'}>Engine</a>
+    <a href="#/eval" class:active={page === 'eval'}>Eval</a>
   </nav>
 </header>
 
@@ -32,6 +34,8 @@
     <Runner />
   {:else if page === 'engine'}
     <Engine />
+  {:else if page === 'eval'}
+    <Eval />
   {:else}
     <p>Page not found.</p>
   {/if}
