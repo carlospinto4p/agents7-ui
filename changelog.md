@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.4.0 - 9th May 2026
+
+- Added `src/stores/history.js`: run-history store persisted to `localStorage`, max 50 entries, with `add()` and `clear()`.
+- Updated `Runner.svelte`:
+  - Single-input runner tab: input form derived from agent's first example, structured output card with key-value table.
+  - Response history sidebar: collapsible, shows agent, mode, status, and timestamp for each run.
+  - Batch runner now records a summary entry to history on completion.
+
+
 ### v0.3.0 - 9th May 2026
 
 - Added `frontend/src/pages/Runner.svelte`: batch runner page — agent selector dropdown, JSONL textarea (paste or upload `.jsonl`), sequential per-row execution against `POST /api/run/{agent_name}`, live results table with `pass/fail/error` status badge and token count per row.
