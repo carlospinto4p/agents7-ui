@@ -12,9 +12,12 @@ COPY agents7_framework/src agents7_framework/src/
 RUN uv pip install --system agents7_framework/
 
 # Install backend API deps (no private index needed)
-RUN uv pip install --system "fastapi>=0.115.0" "uvicorn[standard]>=0.34.0"
+RUN uv pip install --system "fastapi>=0.115.0" "uvicorn[standard]>=0.34.0" "pyyaml>=6.0"
 
+COPY agents_catalog/ agents_catalog/
 COPY agents7_ui/backend/ backend/
+
+ENV CATALOG_PATH=/app/agents_catalog
 
 WORKDIR /app/backend
 
