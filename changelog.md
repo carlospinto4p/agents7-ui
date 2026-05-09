@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.5.0 - 9th May 2026
+
+- Added `backend/routers/engine.py`: implemented `GET /api/engine/models` — queries Ollama `/api/tags` and `/api/ps`, returns merged list with `name`, `size`, `loaded`, `size_vram`, and `details` per model; returns `error` key when Ollama is unreachable.
+- Added `httpx>=0.28.0` to `backend/pyproject.toml` and `Dockerfile.backend`.
+- Updated `frontend/src/pages/Engine.svelte`: Engine status panel — shows all installed Ollama models in a table with size, loaded/idle badge, and VRAM usage; highlights loaded rows; auto-fetches on mount with a Refresh button.
+
+
 ### v0.4.0 - 9th May 2026
 
 - Added `src/stores/history.js`: run-history store persisted to `localStorage`, max 50 entries, with `add()` and `clear()`.
