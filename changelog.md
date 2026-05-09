@@ -2,6 +2,12 @@
 ## Changelog - agents7 UI
 
 
+### v0.6.0 - 9th May 2026
+
+- Added `backend/routers/eval.py`: `POST /api/eval/{agent_name}` — discovers the agent's golden set (`data/golden_set.csv` or `.jsonl`), infers input vs. output columns from the output schema, runs the agent on every row, and returns `total`, `passed`, `failed`, `accuracy`, per-category breakdown, and a `mismatches` list.
+- Updated `backend/main.py`: registered `eval` router.
+
+
 ### v0.5.0 - 9th May 2026
 
 - Added `backend/routers/engine.py`: implemented `GET /api/engine/models` — queries Ollama `/api/tags` and `/api/ps`, returns merged list with `name`, `size`, `loaded`, `size_vram`, and `details` per model; returns `error` key when Ollama is unreachable.

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from routers import catalog, engine, run
+from routers import catalog, engine, eval, run
 
 app = FastAPI(title="agents7 UI backend")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 app.include_router(catalog.router)
 app.include_router(run.router)
 app.include_router(engine.router)
+app.include_router(eval.router)
 
 
 @app.get("/api/health")
