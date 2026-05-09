@@ -1,5 +1,6 @@
 import csv
 import json
+import logging
 from pathlib import Path
 
 import yaml
@@ -7,6 +8,8 @@ from fastapi import APIRouter, HTTPException
 
 from routers.catalog import find_config_file
 from routers.run import _AGENT_TYPE_MAP, _import_agent_class
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/eval", tags=["eval"])
 
@@ -70,7 +73,7 @@ def eval_agent(agent_name: str) -> dict:
             model_cls = import_from_path(output_model_path)
             schema = model_cls.model_json_schema()
             output_fields = set(schema.get("properties", {}).keys())
-        except Exception:
+        except (ImportError, AttributeError):
             pass
 
     rows = _load_golden_set(golden_path)
@@ -100,7 +103,13 @@ def eval_agent(agent_name: str) -> dict:
         try:
             response = agent.act(input_data)
             actual = response.model.model_dump() if response.model else None
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "agent.act() failed for input %r: %s",
+                input_data,
+                exc,
+                exc_info=True,
+            )
             actual = None
 
         passed = actual is not None and all(

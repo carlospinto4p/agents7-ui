@@ -37,7 +37,7 @@ def _parse_detail(config_file: Path) -> dict:
 
             model_cls = import_from_path(output_model_path)
             output_schema = model_cls.model_json_schema()
-        except Exception:
+        except (ImportError, AttributeError):
             pass
 
     return {

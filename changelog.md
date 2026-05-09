@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.7.1 - 9th May 2026
+
+- Refactored `backend/routers/`:
+  - `eval.py`: narrowed `except Exception: pass` to `except (ImportError, AttributeError)` when loading output model schema; added `logger.warning()` with traceback before swallowing exceptions in `agent.act()`.
+  - `catalog.py`: narrowed `except Exception: pass` to `except (ImportError, AttributeError)` when loading output model schema.
+
+
 ### v0.7.0 - 9th May 2026
 
 - Added `frontend/src/pages/Eval.svelte`: Evaluation view — agent selector dropdown, Run Eval button, overall accuracy progress bar (green/yellow/red), per-category table sorted by accuracy, and mismatch list with input/expected/actual per row.
