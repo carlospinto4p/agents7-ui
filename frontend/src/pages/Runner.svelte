@@ -136,8 +136,7 @@
     }))
     running = true
 
-    for (let i = 0; i < results.length; i++) {
-      if (results[i].status === 'parse-error') continue
+    async function runOne(i) {
       results[i].status = 'running'
       try {
         const r = await fetch(`/api/run/${encodeURIComponent(agentName)}`, {
@@ -163,15 +162,30 @@
       }
     }
 
-    const passCount = results.filter(r => r.status === 'pass').length
-    const failCount = results.filter(r =>
-      ['fail', 'error', 'parse-error'].includes(r.status)
-    ).length
+    const CONCURRENCY = 4
+    const slots = new Array(CONCURRENCY).fill(Promise.resolve())
+    let slot = 0
+    const all = results
+      .map((_, i) => i)
+      .filter(i => results[i].status !== 'parse-error')
+      .map(i => {
+        const p = slots[slot].then(() => runOne(i))
+        slots[slot] = p
+        slot = (slot + 1) % CONCURRENCY
+        return p
+      })
+    await Promise.allSettled(all)
+
+    let pass = 0, fail = 0
+    for (const r of results) {
+      if (r.status === 'pass') pass++
+      else if (['fail', 'error', 'parse-error'].includes(r.status)) fail++
+    }
     history.add({
       id: Date.now(), ts: new Date().toISOString(),
       agent: agentName, mode: 'batch',
-      status: failCount === 0 ? 'pass' : passCount === 0 ? 'fail' : 'mixed',
-      rowCount: results.length, passCount, failCount,
+      status: fail === 0 ? 'pass' : pass === 0 ? 'fail' : 'mixed',
+      rowCount: results.length, passCount: pass, failCount: fail,
     })
     running = false
   }
@@ -185,13 +199,18 @@
     e.target.value = ''
   }
 
-  let passCount = $derived(results.filter(r => r.status === 'pass').length)
-  let failCount = $derived(
-    results.filter(r => ['fail', 'error', 'parse-error'].includes(r.status)).length
-  )
-  let doneCount = $derived(
-    results.filter(r => !['pending', 'running'].includes(r.status)).length
-  )
+  const _counts = $derived.by(() => {
+    let pass = 0, fail = 0, done = 0
+    for (const r of results) {
+      if (r.status === 'pass') pass++
+      if (['fail', 'error', 'parse-error'].includes(r.status)) fail++
+      if (!['pending', 'running'].includes(r.status)) done++
+    }
+    return { pass, fail, done }
+  })
+  let passCount = $derived(_counts.pass)
+  let failCount = $derived(_counts.fail)
+  let doneCount = $derived(_counts.done)
 
   function truncate(s, n = 60) {
     if (typeof s !== 'string') s = JSON.stringify(s)
