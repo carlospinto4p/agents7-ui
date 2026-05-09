@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.3.0 - 9th May 2026
+
+- Added `frontend/src/pages/Runner.svelte`: batch runner page — agent selector dropdown, JSONL textarea (paste or upload `.jsonl`), sequential per-row execution against `POST /api/run/{agent_name}`, live results table with `pass/fail/error` status badge and token count per row.
+
+
 ### v0.2.0 - 9th May 2026
 
 - Added `backend/routers/catalog.py`:
