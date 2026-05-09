@@ -3,11 +3,11 @@ import json
 import logging
 from pathlib import Path
 
-import yaml
 from fastapi import APIRouter, HTTPException
 
 from routers.catalog import find_config_file
 from routers.run import _AGENT_TYPE_MAP, _import_agent_class
+from routers.utils import _load_config, _load_output_schema
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +53,7 @@ def eval_agent(agent_name: str) -> dict:
             detail=f"No golden set found for agent '{agent_name}'",
         )
 
-    with open(config_file, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+    cfg, _ = _load_config(config_file)
 
     agent_type = (cfg.get("agent_type") or "").lower()
     class_path = _AGENT_TYPE_MAP.get(agent_type)
@@ -64,17 +63,7 @@ def eval_agent(agent_name: str) -> dict:
             detail=f"Unknown agent_type '{agent_type}'",
         )
 
-    output_fields: set[str] = set()
-    output_model_path = cfg.get("output_model")
-    if output_model_path:
-        try:
-            from agents7.agents.utils import import_from_path
-
-            model_cls = import_from_path(output_model_path)
-            schema = model_cls.model_json_schema()
-            output_fields = set(schema.get("properties", {}).keys())
-        except (ImportError, AttributeError):
-            pass
+    _, output_fields = _load_output_schema(cfg)
 
     rows = _load_golden_set(golden_path)
     if not rows:

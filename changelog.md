@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.7.2 - 9th May 2026
+
+- Refactored `routers/`:
+  - Added `routers/utils.py`:
+    - `_load_config()`: shared YAML config loader returning `(cfg, raw_yaml)`.
+    - `_load_output_schema()`: shared output model resolver returning `(schema, fields)`.
+  - Updated `catalog.py`: use `_load_config` in `_parse_summary`, `_parse_detail`, `find_config_file`; use `_load_output_schema` in `_parse_detail`.
+  - Updated `eval.py`: use `_load_config` and `_load_output_schema` in `eval_agent`.
+
+
 ### v0.7.1 - 9th May 2026
 
 - Refactored `backend/routers/`:

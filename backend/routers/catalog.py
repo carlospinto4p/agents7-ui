@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 
-import yaml
 from fastapi import APIRouter, HTTPException
+
+from routers.utils import _load_config, _load_output_schema
 
 router = APIRouter(prefix="/api/catalog", tags=["catalog"])
 
@@ -11,8 +12,7 @@ CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
 
 
 def _parse_summary(config_file: Path) -> dict:
-    with open(config_file, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
+    cfg, _ = _load_config(config_file)
     engine = cfg.get("engine") or {}
     return {
         "name": cfg.get("name"),
@@ -24,21 +24,9 @@ def _parse_summary(config_file: Path) -> dict:
 
 
 def _parse_detail(config_file: Path) -> dict:
-    with open(config_file, encoding="utf-8") as f:
-        raw_yaml = f.read()
-    cfg = yaml.safe_load(raw_yaml)
+    cfg, raw_yaml = _load_config(config_file)
     engine = cfg.get("engine") or {}
-
-    output_model_path = cfg.get("output_model")
-    output_schema = None
-    if output_model_path:
-        try:
-            from agents7.agents.utils import import_from_path
-
-            model_cls = import_from_path(output_model_path)
-            output_schema = model_cls.model_json_schema()
-        except (ImportError, AttributeError):
-            pass
+    output_schema, _ = _load_output_schema(cfg)
 
     return {
         "name": cfg.get("name"),
@@ -47,7 +35,7 @@ def _parse_detail(config_file: Path) -> dict:
         "provider": engine.get("provider"),
         "model": engine.get("model"),
         "system_prompt": cfg.get("system_prompt"),
-        "output_model": output_model_path,
+        "output_model": cfg.get("output_model"),
         "output_schema": output_schema,
         "system_examples": cfg.get("system_examples"),
         "raw_yaml": raw_yaml,
@@ -57,8 +45,7 @@ def _parse_detail(config_file: Path) -> dict:
 def find_config_file(agent_name: str) -> Path | None:
     """Return config.yml path for agent_name (case-insensitive)."""
     for config_file in sorted(CATALOG_PATH.rglob("config.yml")):
-        with open(config_file, encoding="utf-8") as f:
-            cfg = yaml.safe_load(f)
+        cfg, _ = _load_config(config_file)
         if (cfg.get("name") or "").lower() == agent_name.lower():
             return config_file
     return None
