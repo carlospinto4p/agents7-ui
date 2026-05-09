@@ -1,2 +1,264 @@
-<h2>Catalog</h2>
-<p>Agent catalog — coming soon.</p>
+<script>
+  let agents = $state([])
+  let loading = $state(true)
+  let error = $state(null)
+  let selected = $state(null)
+  let detailLoading = $state(false)
+
+  $effect(() => {
+    fetch('/api/catalog')
+      .then(r => r.json())
+      .then(data => { agents = data; loading = false })
+      .catch(e => { error = e.message; loading = false })
+  })
+
+  async function openAgent(name) {
+    detailLoading = true
+    selected = null
+    error = null
+    try {
+      const r = await fetch(`/api/catalog/${encodeURIComponent(name)}`)
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      selected = await r.json()
+    } catch (e) {
+      error = e.message
+    } finally {
+      detailLoading = false
+    }
+  }
+
+  function back() {
+    selected = null
+    error = null
+  }
+</script>
+
+{#if loading}
+  <p class="state-msg">Loading catalog…</p>
+{:else if detailLoading}
+  <p class="state-msg">Loading…</p>
+{:else if error && !selected}
+  <p class="state-msg error">{error}</p>
+{:else if selected}
+
+  <div class="detail">
+    <button class="back-btn" onclick={back}>← Catalog</button>
+
+    <div class="detail-header">
+      <h1>{selected.name}</h1>
+      <div class="badges">
+        {#if selected.agent_type}
+          <span class="badge type">{selected.agent_type}</span>
+        {/if}
+        {#if selected.provider}
+          <span class="badge provider">{selected.provider}</span>
+        {/if}
+        {#if selected.model}
+          <span class="badge model">{selected.model}</span>
+        {/if}
+        {#if selected.version != null}
+          <span class="badge version">v{selected.version}</span>
+        {/if}
+      </div>
+    </div>
+
+    {#if selected.output_schema}
+      <section>
+        <h2>Output Schema</h2>
+        <pre class="code">{JSON.stringify(selected.output_schema, null, 2)}</pre>
+      </section>
+    {:else if selected.output_model}
+      <section>
+        <h2>Output Model</h2>
+        <code class="inline-code">{selected.output_model}</code>
+      </section>
+    {/if}
+
+    {#if selected.system_examples?.length}
+      <section>
+        <h2>Examples ({selected.system_examples.length})</h2>
+        <div class="examples">
+          {#each selected.system_examples.slice(0, 4) as ex}
+            <div class="example">
+              <div class="ex-row">
+                <span class="ex-label">in</span>
+                <code>{typeof ex.input === 'string' ? ex.input : JSON.stringify(ex.input)}</code>
+              </div>
+              <div class="ex-row">
+                <span class="ex-label">out</span>
+                <code>{JSON.stringify(ex.output)}</code>
+              </div>
+            </div>
+          {/each}
+          {#if selected.system_examples.length > 4}
+            <p class="muted">+{selected.system_examples.length - 4} more in config</p>
+          {/if}
+        </div>
+      </section>
+    {/if}
+
+    {#if selected.system_prompt}
+      <section>
+        <h2>System Prompt</h2>
+        <pre class="code prompt">{selected.system_prompt}</pre>
+      </section>
+    {/if}
+
+    <section>
+      <h2>YAML Source</h2>
+      <pre class="code yaml-src">{selected.raw_yaml}</pre>
+    </section>
+  </div>
+
+{:else}
+
+  <div class="catalog">
+    <h1>Agents</h1>
+    {#if agents.length === 0}
+      <p class="muted">No agents found in catalog.</p>
+    {:else}
+      <div class="grid">
+        {#each agents as agent}
+          <button class="card" onclick={() => openAgent(agent.name)}>
+            <div class="card-name">{agent.name}</div>
+            <div class="card-meta">
+              {#if agent.agent_type}
+                <span class="badge type">{agent.agent_type}</span>
+              {/if}
+              {#if agent.model}
+                <span class="badge model">{agent.model}</span>
+              {/if}
+            </div>
+            <div class="card-footer">
+              {#if agent.provider}{agent.provider}{/if}
+              {#if agent.version != null} · v{agent.version}{/if}
+            </div>
+          </button>
+        {/each}
+      </div>
+    {/if}
+  </div>
+
+{/if}
+
+<style>
+  .state-msg { color: #888; font-size: 0.95rem; margin: 2rem 0; }
+  .state-msg.error { color: #cc3300; }
+  .muted { color: #999; font-size: 0.88rem; margin: 0.25rem 0 0; }
+
+  /* Catalog */
+  .catalog h1 { font-size: 1.3rem; margin: 0 0 1.25rem; font-weight: 600; color: #111; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem 1rem 0.85rem;
+    text-align: left;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #0066cc; }
+  .card-name { font-weight: 600; font-size: 0.97rem; color: #111; }
+  .card-meta { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .card-footer { font-size: 0.78rem; color: #aaa; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 0.13rem 0.42rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge.type     { background: #eff6ff; color: #1d4ed8; }
+  .badge.model    { background: #f0fdf4; color: #166534; }
+  .badge.provider { background: #fef9c3; color: #854d0e; }
+  .badge.version  { background: #f1f5f9; color: #475569; }
+
+  /* Detail */
+  .back-btn {
+    background: none;
+    border: none;
+    color: #0066cc;
+    cursor: pointer;
+    font-size: 0.88rem;
+    padding: 0;
+    margin-bottom: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .back-btn:hover { text-decoration: underline; }
+
+  .detail-header { margin-bottom: 1.75rem; }
+  .detail-header h1 { font-size: 1.45rem; font-weight: 700; margin: 0 0 0.6rem; color: #111; }
+  .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+  .detail section { margin-bottom: 1.75rem; }
+  .detail section h2 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #999;
+    margin: 0 0 0.55rem;
+  }
+
+  .code {
+    background: #f6f8fa;
+    border: 1px solid #e4e7eb;
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  }
+  .code.prompt   { max-height: 220px; }
+  .code.yaml-src { max-height: 340px; }
+
+  .inline-code {
+    background: #f6f8fa;
+    border: 1px solid #e4e7eb;
+    border-radius: 4px;
+    padding: 0.2rem 0.5rem;
+    font-size: 0.85rem;
+    font-family: ui-monospace, monospace;
+  }
+
+  /* Examples */
+  .examples { display: flex; flex-direction: column; gap: 0.55rem; }
+  .example {
+    background: #f6f8fa;
+    border: 1px solid #e4e7eb;
+    border-radius: 6px;
+    padding: 0.55rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .ex-row { display: flex; gap: 0.65rem; align-items: baseline; font-size: 0.83rem; }
+  .ex-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #bbb;
+    min-width: 22px;
+  }
+  .ex-row code { font-family: ui-monospace, monospace; color: #333; }
+</style>
