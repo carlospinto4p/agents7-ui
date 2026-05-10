@@ -2,6 +2,12 @@
 ## Changelog - agents7 UI
 
 
+### v0.7.6 - 10th May 2026
+
+- Added `frontend/public/favicon.svg`: SVG favicon — rounded blue square with white "7".
+- Updated `frontend/index.html`: added `<link rel="icon">` pointing to `/favicon.svg`.
+
+
 ### v0.7.5 - 10th May 2026
 
 - Fixed `frontend/src/App.svelte`:
