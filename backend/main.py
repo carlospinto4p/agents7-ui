@@ -25,7 +25,7 @@ app.include_router(engine.router)
 app.include_router(eval.router)
 app.include_router(chat.router)
 
-_README = Path(__file__).parents[2] / "agents7_framework" / "README.md"
+_README = Path(__file__).parents[1] / "agents7_framework" / "README.md"
 
 
 @app.get("/api/readme", response_class=PlainTextResponse)
