@@ -11,6 +11,14 @@ _default = str(Path(__file__).parents[3] / "agents_catalog")
 CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
 
 
+def _agent_source(config_file: Path) -> str:
+    if "examples" in config_file.parts:
+        if (config_file.parent / "data" / "golden_set.jsonl").exists():
+            return "integration_test"
+        return "example"
+    return "catalog"
+
+
 def _parse_summary(config_file: Path) -> dict:
     cfg, _ = _load_config(config_file)
     engine = cfg.get("engine") or {}
@@ -20,6 +28,7 @@ def _parse_summary(config_file: Path) -> dict:
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),
         "model": engine.get("model"),
+        "source": _agent_source(config_file),
     }
 
 
@@ -39,6 +48,7 @@ def _parse_detail(config_file: Path) -> dict:
         "output_schema": output_schema,
         "system_examples": cfg.get("system_examples"),
         "raw_yaml": raw_yaml,
+        "source": _agent_source(config_file),
     }
 
 

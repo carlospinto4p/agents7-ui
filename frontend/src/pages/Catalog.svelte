@@ -5,6 +5,12 @@
   let selected = $state(null)
   let detailLoading = $state(false)
 
+  let grouped = $derived({
+    catalog: agents.filter(a => a.source === 'catalog'),
+    example: agents.filter(a => a.source === 'example'),
+    integration_test: agents.filter(a => a.source === 'integration_test'),
+  })
+
   $effect(() => {
     fetch('/api/catalog')
       .then(r => r.json())
@@ -113,29 +119,37 @@
 {:else}
 
   <div class="catalog">
-    <h1>Agents</h1>
     {#if agents.length === 0}
       <p class="muted">No agents found in catalog.</p>
     {:else}
-      <div class="grid">
-        {#each agents as agent}
-          <button class="card" onclick={() => openAgent(agent.name)}>
-            <div class="card-name">{agent.name}</div>
-            <div class="card-meta">
-              {#if agent.agent_type}
-                <span class="badge type">{agent.agent_type}</span>
-              {/if}
-              {#if agent.model}
-                <span class="badge model">{agent.model}</span>
-              {/if}
-            </div>
-            <div class="card-footer">
-              {#if agent.provider}{agent.provider}{/if}
-              {#if agent.version != null} · v{agent.version}{/if}
-            </div>
-          </button>
-        {/each}
-      </div>
+      {#each [
+        { key: 'catalog', label: 'Catalog Agents' },
+        { key: 'example', label: 'Framework Examples' },
+        { key: 'integration_test', label: 'Framework Integration Tests' },
+      ] as section}
+        {#if grouped[section.key].length > 0}
+          <h2 class="section-heading">{section.label}</h2>
+          <div class="grid">
+            {#each grouped[section.key] as agent}
+              <button class="card" onclick={() => openAgent(agent.name)}>
+                <div class="card-name">{agent.name}</div>
+                <div class="card-meta">
+                  {#if agent.agent_type}
+                    <span class="badge type">{agent.agent_type}</span>
+                  {/if}
+                  {#if agent.model}
+                    <span class="badge model">{agent.model}</span>
+                  {/if}
+                </div>
+                <div class="card-footer">
+                  {#if agent.provider}{agent.provider}{/if}
+                  {#if agent.version != null} · v{agent.version}{/if}
+                </div>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      {/each}
     {/if}
   </div>
 
@@ -147,7 +161,17 @@
   .muted { color: var(--text-muted); font-size: 0.88rem; margin: 0.25rem 0 0; }
 
   /* Catalog */
-  .catalog h1 { font-size: 1.3rem; margin: 0 0 1.25rem; font-weight: 600; color: var(--text-strong); }
+  .section-heading {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin: 1.75rem 0 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-heading:first-child { margin-top: 0; }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
