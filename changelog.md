@@ -2,6 +2,12 @@
 ## Changelog - agents7 UI
 
 
+### v0.7.4 - 10th May 2026
+
+- Added `frontend/src/app.css`: global CSS reset and base styles — system font stack, `box-sizing: border-box`, body background, link and form element defaults.
+- Updated `frontend/src/main.js`: import `app.css`.
+
+
 ### v0.7.3 - 10th May 2026
 
 - Removed `docker-compose.yml` backend `ports` mapping: backend port 8000 is no longer exposed to the host — it is only reachable from nginx inside the Docker network.
