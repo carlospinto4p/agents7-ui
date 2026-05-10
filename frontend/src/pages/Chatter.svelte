@@ -97,6 +97,11 @@
 
 <div class="chatter">
 
+  <div class="page-intro">
+    <h1 class="page-title">Chatter</h1>
+    <p class="intro-desc">Chat with conversational agents that maintain context across turns. Select an agent — a session starts automatically. Send messages with Enter (Shift+Enter for a newline). Token counts appear next to each assistant reply. <strong>Reset</strong> clears the conversation and starts a fresh session with the same agent.</p>
+  </div>
+
   <div class="controls">
     <label class="field">
       <span class="label">Agent</span>
@@ -176,6 +181,20 @@
 </div>
 
 <style>
+  .page-intro { flex-shrink: 0; margin-bottom: 0.25rem; }
+  .page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin: 0 0 0.4rem;
+  }
+  .intro-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+
   .chatter {
     display: flex;
     flex-direction: column;

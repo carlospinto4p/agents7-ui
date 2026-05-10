@@ -28,7 +28,10 @@
 
 <div class="engine-page">
   <div class="page-header">
-    <h2>Engine</h2>
+    <div>
+      <h2>Engine</h2>
+      <p class="intro-desc">Shows all models installed in Ollama, the local model runtime. <strong>Loaded</strong> means the model is currently in GPU memory (VRAM) and will respond without delay. <strong>Idle</strong> means it is installed but not loaded — it will load automatically on the next request.</p>
+    </div>
     <button onclick={fetchModels} disabled={loading}>
       {loading ? 'Loading…' : 'Refresh'}
     </button>
@@ -80,11 +83,18 @@
 
   .page-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
-  .page-header h2 { margin: 0; color: var(--text-strong); }
+  .page-header h2 { margin: 0 0 0.35rem; color: var(--text-strong); }
+  .intro-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 600px;
+  }
 
   button {
     padding: 0.35rem 0.9rem;

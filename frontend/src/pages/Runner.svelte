@@ -245,6 +245,11 @@
       <p class="state-msg error">{loadError}</p>
     {:else}
 
+      <div class="page-intro">
+        <h1 class="page-title">Runner</h1>
+        <p class="intro-desc">Run catalog agents with custom inputs. <strong>Single</strong> mode lets you type inputs one at a time and inspect the structured output immediately. <strong>Batch</strong> mode accepts a JSONL file (one JSON object per line) and processes up to 4 requests in parallel, showing a pass/fail for each row. Run history is saved locally in your browser.</p>
+      </div>
+
       <div class="runner-header">
         <div class="tabs">
           <button
@@ -480,6 +485,20 @@
     display: flex;
     gap: 0;
     height: 100%;
+  }
+
+  .page-intro { margin-bottom: 1.5rem; max-width: 700px; }
+  .page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin: 0 0 0.4rem;
+  }
+  .intro-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0;
   }
 
   .runner {

@@ -56,6 +56,7 @@
 <div class="eval-page">
   <div class="page-header">
     <h2>Evaluation</h2>
+    <p class="intro-desc">Run an agent against its golden dataset — a curated set of inputs with known expected outputs — to measure accuracy. The results show an overall accuracy score, a per-category breakdown to reveal which classes the agent handles well, and a mismatch list showing the exact input, expected output, and actual output for every failure.</p>
   </div>
 
   <div class="controls">
@@ -161,11 +162,18 @@
 
   .page-header {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.4rem;
     margin-bottom: 1.5rem;
   }
   .page-header h2 { margin: 0; color: var(--text-strong); }
+  .intro-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 680px;
+  }
 
   .controls {
     display: flex;

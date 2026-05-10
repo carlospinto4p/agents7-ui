@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.2 - 10th May 2026
+
+- Added page intro headers to all 6 tabs:
+  - `Home`: title and summary linking to README content
+  - `Catalog`: explains Catalog / Examples / Integration Test sections; added per-section descriptions in agent detail view (Output Schema, Examples, System Prompt, YAML Source)
+  - `Runner`: explains Single vs Batch modes and JSONL format
+  - `Chatter`: explains session-based chat, Reset, and token counts
+  - `Engine`: explains Ollama, loaded vs idle model states, and VRAM column
+  - `Eval`: explains golden datasets, accuracy bar, per-category breakdown, and mismatches
+
+
 ### v0.8.1 - 10th May 2026
 
 - Fixed wide-screen layout across all pages: content no longer sticks to the

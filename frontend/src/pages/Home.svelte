@@ -22,6 +22,11 @@
   })
 </script>
 
+<div class="page-intro">
+  <h1 class="page-title">Home</h1>
+  <p class="intro-desc">agents7 framework documentation. The README below covers installation, core concepts, and usage examples. Use the tabs above to browse the agent catalog, run agents interactively, chat with conversational agents, or measure their accuracy against a golden dataset.</p>
+</div>
+
 {#if loading}
   <p class="state-msg">Loading…</p>
 {:else if error}
@@ -33,6 +38,24 @@
 {/if}
 
 <style>
+  .page-intro {
+    max-width: 900px;
+    margin: 0 auto 1.75rem;
+  }
+  .page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    margin: 0 0 0.4rem;
+  }
+  .intro-desc {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 680px;
+  }
+
   .state-msg {
     color: var(--text-muted);
     padding: 2rem 0;
