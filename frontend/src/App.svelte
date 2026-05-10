@@ -2,6 +2,7 @@
   import Home from './pages/Home.svelte'
   import Catalog from './pages/Catalog.svelte'
   import Runner from './pages/Runner.svelte'
+  import Chatter from './pages/Chatter.svelte'
   import Engine from './pages/Engine.svelte'
   import Eval from './pages/Eval.svelte'
 
@@ -24,6 +25,7 @@
     <a href="#/home" class:active={page === 'home'}>Home</a>
     <a href="#/catalog" class:active={page === 'catalog'}>Catalog</a>
     <a href="#/runner" class:active={page === 'runner'}>Runner</a>
+    <a href="#/chatter" class:active={page === 'chatter'}>Chatter</a>
     <a href="#/engine" class:active={page === 'engine'}>Engine</a>
     <a href="#/eval" class:active={page === 'eval'}>Eval</a>
   </nav>
@@ -36,6 +38,8 @@
     <Catalog />
   {:else if page === 'runner'}
     <Runner />
+  {:else if page === 'chatter'}
+    <Chatter />
   {:else if page === 'engine'}
     <Engine />
   {:else if page === 'eval'}

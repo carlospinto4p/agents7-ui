@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
-from routers import catalog, engine, eval, run
+from routers import catalog, chat, engine, eval, run
 
 app = FastAPI(title="agents7 UI backend")
 
@@ -23,6 +23,7 @@ app.include_router(catalog.router)
 app.include_router(run.router)
 app.include_router(engine.router)
 app.include_router(eval.router)
+app.include_router(chat.router)
 
 _README = Path(__file__).parents[2] / "agents7_framework" / "README.md"
 
