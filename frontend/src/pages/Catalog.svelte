@@ -142,20 +142,20 @@
 {/if}
 
 <style>
-  .state-msg { color: #888; font-size: 0.95rem; margin: 2rem 0; }
-  .state-msg.error { color: #cc3300; }
-  .muted { color: #999; font-size: 0.88rem; margin: 0.25rem 0 0; }
+  .state-msg { color: var(--text-muted); font-size: 0.95rem; margin: 2rem 0; }
+  .state-msg.error { color: var(--fail); }
+  .muted { color: var(--text-muted); font-size: 0.88rem; margin: 0.25rem 0 0; }
 
   /* Catalog */
-  .catalog h1 { font-size: 1.3rem; margin: 0 0 1.25rem; font-weight: 600; color: #111; }
+  .catalog h1 { font-size: 1.3rem; margin: 0 0 1.25rem; font-weight: 600; color: var(--text-strong); }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
   }
   .card {
-    background: #fff;
-    border: 1px solid #e0e0e0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
     padding: 1rem 1rem 0.85rem;
     text-align: left;
@@ -165,10 +165,10 @@
     flex-direction: column;
     gap: 0.45rem;
   }
-  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #0066cc; }
-  .card-name { font-weight: 600; font-size: 0.97rem; color: #111; }
+  .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.4); border-color: var(--accent); }
+  .card-name { font-weight: 600; font-size: 0.97rem; color: var(--text-strong); }
   .card-meta { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-  .card-footer { font-size: 0.78rem; color: #aaa; }
+  .card-footer { font-size: 0.78rem; color: var(--text-muted); }
 
   /* Badges */
   .badge {
@@ -180,16 +180,16 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
-  .badge.type     { background: #eff6ff; color: #1d4ed8; }
-  .badge.model    { background: #f0fdf4; color: #166534; }
-  .badge.provider { background: #fef9c3; color: #854d0e; }
-  .badge.version  { background: #f1f5f9; color: #475569; }
+  .badge.type     { background: var(--info-bg);    color: var(--accent); }
+  .badge.model    { background: var(--pass-bg);     color: var(--pass); }
+  .badge.provider { background: var(--warn-bg);     color: var(--warn); }
+  .badge.version  { background: var(--neutral-bg);  color: var(--neutral); }
 
   /* Detail */
   .back-btn {
     background: none;
     border: none;
-    color: #0066cc;
+    color: var(--accent);
     cursor: pointer;
     font-size: 0.88rem;
     padding: 0;
@@ -201,7 +201,7 @@
   .back-btn:hover { text-decoration: underline; }
 
   .detail-header { margin-bottom: 1.75rem; }
-  .detail-header h1 { font-size: 1.45rem; font-weight: 700; margin: 0 0 0.6rem; color: #111; }
+  .detail-header h1 { font-size: 1.45rem; font-weight: 700; margin: 0 0 0.6rem; color: var(--text-strong); }
   .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
   .detail section { margin-bottom: 1.75rem; }
@@ -210,13 +210,13 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
-    color: #999;
+    color: var(--text-muted);
     margin: 0 0 0.55rem;
   }
 
   .code {
-    background: #f6f8fa;
-    border: 1px solid #e4e7eb;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 0.85rem 1rem;
     font-size: 0.8rem;
@@ -227,24 +227,26 @@
     max-height: 300px;
     overflow-y: auto;
     font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+    color: var(--text);
   }
   .code.prompt   { max-height: 220px; }
   .code.yaml-src { max-height: 340px; }
 
   .inline-code {
-    background: #f6f8fa;
-    border: 1px solid #e4e7eb;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0.2rem 0.5rem;
     font-size: 0.85rem;
     font-family: ui-monospace, monospace;
+    color: var(--text);
   }
 
   /* Examples */
   .examples { display: flex; flex-direction: column; gap: 0.55rem; }
   .example {
-    background: #f6f8fa;
-    border: 1px solid #e4e7eb;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
     border-radius: 6px;
     padding: 0.55rem 0.85rem;
     display: flex;
@@ -257,8 +259,8 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #bbb;
+    color: var(--text-muted);
     min-width: 22px;
   }
-  .ex-row code { font-family: ui-monospace, monospace; color: #333; }
+  .ex-row code { font-family: ui-monospace, monospace; color: var(--text); }
 </style>

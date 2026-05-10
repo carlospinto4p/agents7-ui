@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.0 - 10th May 2026
+
+- Added dark theme across all frontend files using CSS custom properties:
+  - `app.css`: defined 19 design tokens (`--bg`, `--bg-surface`, `--bg-raised`, `--bg-header`, `--border`, `--text`, `--text-muted`, `--text-strong`, `--accent`, `--accent-dim`, and status vars `--pass/fail/warn` with `-bg` variants, `--neutral`).
+  - `App.svelte`, `Catalog.svelte`, `Engine.svelte`, `Eval.svelte`, `Runner.svelte`: replaced all hardcoded hex colours with `var(--...)` tokens.
+- Updated `public/favicon.svg`: dark `#16181d` numeral on accent blue background.
+
+
 ### v0.7.6 - 10th May 2026
 
 - Added `frontend/public/favicon.svg`: SVG favicon — rounded blue square with white "7".

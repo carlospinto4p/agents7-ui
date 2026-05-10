@@ -4,6 +4,28 @@
   padding: 0;
 }
 
+:root {
+  --bg:          #16181d;
+  --bg-surface:  #1e2128;
+  --bg-raised:   #262930;
+  --bg-header:   #13151a;
+  --border:      #2e3138;
+  --text:        #c8ccd4;
+  --text-muted:  #7a8190;
+  --text-strong: #e4e6ed;
+  --accent:      #4c9eff;
+  --accent-dim:  rgba(76, 158, 255, 0.15);
+  --pass:        #3fc97e;
+  --pass-bg:     rgba(63, 201, 126, 0.12);
+  --fail:        #f06060;
+  --fail-bg:     rgba(240, 96, 96, 0.12);
+  --warn:        #f5a623;
+  --warn-bg:     rgba(245, 166, 35, 0.12);
+  --info-bg:     rgba(76, 158, 255, 0.12);
+  --neutral:     #6b7280;
+  --neutral-bg:  rgba(107, 114, 128, 0.15);
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -13,8 +35,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 0.95rem;
   line-height: 1.5;
-  color: #111;
-  background: #f7f8fa;
+  color: var(--text);
+  background: var(--bg);
   min-height: 100vh;
 }
 
@@ -25,21 +47,12 @@ body {
 }
 
 a {
-  color: #0066cc;
+  color: var(--accent);
   text-decoration: none;
 }
+a:hover { text-decoration: underline; }
 
-a:hover {
-  text-decoration: underline;
-}
-
-button {
-  font-family: inherit;
-  font-size: inherit;
-  cursor: pointer;
-}
-
-input, select, textarea {
+button, input, select, textarea {
   font-family: inherit;
   font-size: inherit;
 }

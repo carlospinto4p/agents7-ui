@@ -47,8 +47,8 @@
     align-items: center;
     gap: 2rem;
     padding: 0.75rem 1.5rem;
-    border-bottom: 1px solid #e0e0e0;
-    background: #fff;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-header);
     position: sticky;
     top: 0;
     z-index: 10;
@@ -57,6 +57,7 @@
     font-weight: 700;
     font-size: 1.1rem;
     letter-spacing: -0.5px;
+    color: var(--text-strong);
   }
   nav {
     display: flex;
@@ -64,11 +65,11 @@
   }
   nav a {
     text-decoration: none;
-    color: #555;
+    color: var(--text-muted);
     font-size: 0.95rem;
   }
   nav a.active {
-    color: #0066cc;
+    color: var(--accent);
     font-weight: 600;
   }
   main {

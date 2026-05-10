@@ -84,25 +84,27 @@
     gap: 1rem;
     margin-bottom: 1.5rem;
   }
-  .page-header h2 { margin: 0; }
+  .page-header h2 { margin: 0; color: var(--text-strong); }
 
   button {
     padding: 0.35rem 0.9rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border);
     border-radius: 4px;
-    background: #fff;
+    background: var(--bg-surface);
+    color: var(--text);
     cursor: pointer;
     font-size: 0.875rem;
   }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  button:hover:not(:disabled) { background: #f5f5f5; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:hover:not(:disabled) { background: var(--bg-raised); }
 
   h3 {
     margin: 0 0 0.75rem;
     font-size: 1rem;
     font-weight: 600;
+    color: var(--text-strong);
   }
-  .count { color: #888; font-weight: 400; }
+  .count { color: var(--text-muted); font-weight: 400; }
 
   table {
     width: 100%;
@@ -112,14 +114,18 @@
   th, td {
     padding: 0.5rem 0.75rem;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
   }
   th {
-    background: #f8f8f8;
+    background: var(--bg-raised);
     font-weight: 600;
-    color: #444;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  tr.loaded { background: #f3faf3; }
+  tr.loaded { background: rgba(63, 201, 126, 0.06); }
 
   .mono { font-family: monospace; font-size: 0.82rem; }
 
@@ -130,10 +136,10 @@
     font-size: 0.78rem;
     font-weight: 500;
   }
-  .badge.green { background: #d4edda; color: #155724; }
-  .badge.grey  { background: #e9ecef; color: #495057; }
+  .badge.green { background: var(--pass-bg); color: var(--pass); }
+  .badge.grey  { background: var(--neutral-bg); color: var(--neutral); }
 
   .msg { padding: 0.5rem 0; }
-  .error { color: #c0392b; }
-  .muted { color: #888; }
+  .error { color: var(--fail); }
+  .muted { color: var(--text-muted); }
 </style>
