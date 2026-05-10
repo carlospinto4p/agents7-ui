@@ -161,6 +161,10 @@
   .muted { color: var(--text-muted); font-size: 0.88rem; margin: 0.25rem 0 0; }
 
   /* Catalog */
+  .catalog { max-width: 1200px; margin: 0 auto; }
+
+  .detail { max-width: 900px; margin: 0 auto; }
+
   .section-heading {
     font-size: 0.72rem;
     font-weight: 700;

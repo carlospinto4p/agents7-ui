@@ -76,7 +76,7 @@
 </div>
 
 <style>
-  .engine-page { max-width: 820px; }
+  .engine-page { max-width: 820px; margin: 0 auto; }
 
   .page-header {
     display: flex;

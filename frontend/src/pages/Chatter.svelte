@@ -181,6 +181,7 @@
     flex-direction: column;
     height: calc(100vh - 4rem);
     max-width: 780px;
+    margin: 0 auto;
     gap: 0.75rem;
   }
 

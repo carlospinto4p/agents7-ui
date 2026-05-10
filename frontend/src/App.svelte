@@ -20,15 +20,17 @@
 </script>
 
 <header>
-  <span class="logo">agents7</span>
-  <nav>
-    <a href="#/home" class:active={page === 'home'}>Home</a>
-    <a href="#/catalog" class:active={page === 'catalog'}>Catalog</a>
-    <a href="#/runner" class:active={page === 'runner'}>Runner</a>
-    <a href="#/chatter" class:active={page === 'chatter'}>Chatter</a>
-    <a href="#/engine" class:active={page === 'engine'}>Engine</a>
-    <a href="#/eval" class:active={page === 'eval'}>Eval</a>
-  </nav>
+  <div class="header-inner">
+    <span class="logo">agents7</span>
+    <nav>
+      <a href="#/home" class:active={page === 'home'}>Home</a>
+      <a href="#/catalog" class:active={page === 'catalog'}>Catalog</a>
+      <a href="#/runner" class:active={page === 'runner'}>Runner</a>
+      <a href="#/chatter" class:active={page === 'chatter'}>Chatter</a>
+      <a href="#/engine" class:active={page === 'engine'}>Engine</a>
+      <a href="#/eval" class:active={page === 'eval'}>Eval</a>
+    </nav>
+  </div>
 </header>
 
 <main>
@@ -51,15 +53,20 @@
 
 <style>
   header {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-    padding: 0.75rem 1.5rem;
     border-bottom: 1px solid var(--border);
     background: var(--bg-header);
     position: sticky;
     top: 0;
     z-index: 10;
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 0.75rem 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
   }
   .logo {
     font-weight: 700;
@@ -83,5 +90,8 @@
   main {
     flex: 1;
     padding: 1.5rem;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
   }
 </style>

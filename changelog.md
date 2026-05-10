@@ -2,6 +2,18 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.1 - 10th May 2026
+
+- Fixed wide-screen layout across all pages: content no longer sticks to the
+  left edge on large monitors:
+  - `App.svelte`: header content wrapped in `.header-inner` (max-width 1400px,
+    centred); `<main>` constrained to max-width 1400px with `margin: 0 auto`.
+  - `Home.svelte`: `.readme` centred with `margin: 0 auto`.
+  - `Catalog.svelte`: `.catalog` and `.detail` centred with `margin: 0 auto`.
+  - `Chatter.svelte`, `Engine.svelte`, `Eval.svelte`: page containers
+    centred with `margin: 0 auto`.
+
+
 ### v0.8.0 - 10th May 2026
 
 - Added dark theme across all frontend files using CSS custom properties:

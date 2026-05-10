@@ -157,7 +157,7 @@
 </div>
 
 <style>
-  .eval-page { max-width: 860px; }
+  .eval-page { max-width: 860px; margin: 0 auto; }
 
   .page-header {
     display: flex;
