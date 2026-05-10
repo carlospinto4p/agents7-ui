@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.7.3 - 10th May 2026
+
+- Removed `docker-compose.yml` backend `ports` mapping: backend port 8000 is no longer exposed to the host — it is only reachable from nginx inside the Docker network.
+
+
 ### v0.7.2 - 9th May 2026
 
 - Refactored `routers/`:

@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: agents7_ui/Dockerfile.backend
-    ports:
-      - "8000:8000"
     environment:
       - OLLAMA_HOST=http://host.docker.internal:11434
     extra_hosts:
