@@ -49,6 +49,9 @@
     padding: 0.75rem 1.5rem;
     border-bottom: 1px solid #e0e0e0;
     background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
   .logo {
     font-weight: 700;
@@ -69,6 +72,7 @@
     font-weight: 600;
   }
   main {
+    flex: 1;
     padding: 1.5rem;
   }
 </style>

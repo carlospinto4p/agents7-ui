@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.7.5 - 10th May 2026
+
+- Fixed `frontend/src/App.svelte`:
+  - `main`: added `flex: 1` so the background fills the full viewport on short pages.
+  - `header`: added `position: sticky; top: 0; z-index: 10` so the nav stays visible when scrolling.
+
+
 ### v0.7.4 - 10th May 2026
 
 - Added `frontend/src/app.css`: global CSS reset and base styles — system font stack, `box-sizing: border-box`, body background, link and form element defaults.
