@@ -1,4 +1,5 @@
 <script>
+  import Home from './pages/Home.svelte'
   import Catalog from './pages/Catalog.svelte'
   import Runner from './pages/Runner.svelte'
   import Engine from './pages/Engine.svelte'
@@ -7,7 +8,7 @@
   let page = $state(getPage())
 
   function getPage() {
-    return window.location.hash.replace('#/', '').split('/')[0] || 'catalog'
+    return window.location.hash.replace('#/', '').split('/')[0] || 'home'
   }
 
   $effect(() => {
@@ -20,6 +21,7 @@
 <header>
   <span class="logo">agents7</span>
   <nav>
+    <a href="#/home" class:active={page === 'home'}>Home</a>
     <a href="#/catalog" class:active={page === 'catalog'}>Catalog</a>
     <a href="#/runner" class:active={page === 'runner'}>Runner</a>
     <a href="#/engine" class:active={page === 'engine'}>Engine</a>
@@ -28,7 +30,9 @@
 </header>
 
 <main>
-  {#if page === 'catalog'}
+  {#if page === 'home'}
+    <Home />
+  {:else if page === 'catalog'}
     <Catalog />
   {:else if page === 'runner'}
     <Runner />
