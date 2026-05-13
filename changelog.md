@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.3 - 13th May 2026
+
+- Migrated `frontend/` from npm to pnpm (pinned via corepack):
+  - `package.json`: added `packageManager: pnpm@11.1.1` and `pnpm.onlyBuiltDependencies: [esbuild]`.
+  - Added `pnpm-workspace.yaml` with `allowBuilds.esbuild: true` (required by pnpm 11's build-approval check).
+  - `pnpm-lock.yaml` replaces deleted `package-lock.json`.
+  - `node_modules`: set NTFS `com.dropbox.ignored` ADS so Dropbox skips the directory from sync (replaces what would have been a junction to `D:\` — pnpm/Node fails with `ENOTDIR` on `fs.mkdir` against junctions in Dropbox-watched paths).
+- Updated `Dockerfile.frontend`: switched from `npm install` / `npm run build` to corepack-managed pnpm with `--frozen-lockfile`; added `pnpm-lock.yaml` and `pnpm-workspace.yaml` to the deps-cache `COPY` stage.
+- Part of the cross-project npm → pnpm standardization (pilot repo).
+
+
 ### v0.8.2 - 10th May 2026
 
 - Added page intro headers to all 6 tabs:
