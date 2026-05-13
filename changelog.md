@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.4 - 13th May 2026
+
+- Tightened pnpm security posture in `frontend/`:
+  - `pnpm-workspace.yaml`: changed `allowBuilds.esbuild` from `true` to `false` — esbuild's `postinstall: node install.js` is now explicitly denied. esbuild's platform binary still ships via the `@esbuild/win32-x64` optional dependency, so `vite build` works unchanged.
+  - `package.json`: removed the redundant `pnpm.onlyBuiltDependencies` block (the workspace-level `allowBuilds: esbuild: false` is the authoritative deny).
+- Why: pnpm's whole point over npm is *no postinstall scripts unless explicitly approved*. The v0.8.3 entry that approved esbuild's postinstall defeated that and is reversed here.
+
+
 ### v0.8.3 - 13th May 2026
 
 - Migrated `frontend/` from npm to pnpm (pinned via corepack):

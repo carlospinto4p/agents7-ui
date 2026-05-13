@@ -16,10 +16,5 @@
   },
   "dependencies": {
     "marked": "^18.0.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
   }
 }
