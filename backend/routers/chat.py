@@ -1,5 +1,7 @@
 """Stateful chat sessions for Chatter-family agents."""
 
+import logging
+import time
 import uuid
 
 import yaml
@@ -8,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
 from routers.catalog import find_config_file
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+logger = logging.getLogger(__name__)
 
 _CHATTER_TYPE_MAP = {
     "chatter": "agents7.agents.Chatter",
@@ -17,7 +20,9 @@ _CHATTER_TYPE_MAP = {
     "guarded_scene_chatter": "agents7.agents.GuardedSceneChatter",
 }
 
+_SESSION_TTL = 3600  # seconds
 _sessions: dict[str, object] = {}
+_session_times: dict[str, float] = {}
 
 
 def _import_class(dotted_path: str):
@@ -28,8 +33,19 @@ def _import_class(dotted_path: str):
     return getattr(module, class_name)
 
 
+def _evict_expired_sessions() -> None:
+    now = time.monotonic()
+    expired = [
+        sid for sid, t in _session_times.items() if now - t > _SESSION_TTL
+    ]
+    for sid in expired:
+        _sessions.pop(sid, None)
+        _session_times.pop(sid, None)
+
+
 @router.post("/start/{agent_name}")
 def start_chat(agent_name: str) -> dict:
+    _evict_expired_sessions()
     config_file = find_config_file(agent_name)
     if config_file is None:
         raise HTTPException(
@@ -55,6 +71,7 @@ def start_chat(agent_name: str) -> dict:
 
     session_id = str(uuid.uuid4())
     _sessions[session_id] = chatter
+    _session_times[session_id] = time.monotonic()
     return {"session_id": session_id, "agent": cfg.get("name")}
 
 
@@ -74,8 +91,9 @@ async def send_message(session_id: str, request: Request) -> dict:
     try:
         response = chatter.chat(message)
     except Exception as exc:
+        logger.exception("Chat error in session %s", session_id)
         raise HTTPException(
-            status_code=500, detail=f"Chat error: {exc}"
+            status_code=500, detail="Internal chat error"
         ) from exc
 
     return {
@@ -91,4 +109,5 @@ async def send_message(session_id: str, request: Request) -> dict:
 @router.delete("/{session_id}")
 def end_session(session_id: str) -> dict:
     _sessions.pop(session_id, None)
+    _session_times.pop(session_id, None)
     return {"ok": True}
