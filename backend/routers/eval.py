@@ -94,8 +94,8 @@ def eval_agent(agent_name: str) -> dict:
             actual = response.model.model_dump() if response.model else None
         except Exception as exc:
             logger.warning(
-                "agent.act() failed for input %r: %s",
-                input_data,
+                "agent.act() failed (input keys: %s): %s",
+                list(input_data.keys()),
                 exc,
                 exc_info=True,
             )

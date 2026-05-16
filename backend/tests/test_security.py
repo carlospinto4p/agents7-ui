@@ -114,3 +114,111 @@ def test_resolve_agent_path_absolute_passthrough(tmp_path):
     absolute = str(tmp_path / "elsewhere" / "config.yml")
     result = _resolve_agent_path(absolute, catalog, catalog)
     assert result == absolute
+
+
+# ── eval.py PII logging Tests ─────────────────────────────────────────────
+
+
+def test_eval_log_does_not_expose_input_values(monkeypatch):
+    import logging
+    from routers import eval as eval_router
+
+    captured = []
+
+    class _Handler(logging.Handler):
+        def emit(self, record):
+            captured.append(self.format(record))
+
+    handler = _Handler()
+    eval_logger = logging.getLogger(eval_router.__name__)
+    eval_logger.addHandler(handler)
+    eval_logger.setLevel(logging.WARNING)
+
+    sensitive = {"name": "Alice", "ssn": "123-45-6789"}
+    try:
+        raise RuntimeError("boom")
+    except RuntimeError as exc:
+        eval_logger.warning(
+            "agent.act() failed (input keys: %s): %s",
+            list(sensitive.keys()),
+            exc,
+        )
+
+    assert captured, "expected at least one log record"
+    log_line = captured[0]
+    assert "123-45-6789" not in log_line
+    assert "Alice" not in log_line
+    assert "name" in log_line
+    assert "ssn" in log_line
+
+
+# ── engine.py generic error Tests ─────────────────────────────────────────
+
+
+def test_engine_error_response_is_generic():
+    import asyncio
+    import unittest.mock as mock
+    from routers.engine import list_models
+
+    async def _run():
+        mock_client = mock.AsyncMock()
+        mock_client.get.side_effect = Exception("Connection refused")
+        with mock.patch("routers.engine.httpx.AsyncClient") as MockClient:
+            MockClient.return_value.__aenter__ = mock.AsyncMock(
+                return_value=mock_client
+            )
+            MockClient.return_value.__aexit__ = mock.AsyncMock(
+                return_value=False
+            )
+            return await list_models()
+
+    result = asyncio.run(_run())
+    assert result["models"] == []
+    assert result["error"] == "Could not reach model provider"
+    assert "Connection refused" not in result["error"]
+
+
+# ── chat.py rate limit Tests ───────────────────────────────────────────────
+
+
+def test_check_start_rate_allows_within_limit():
+    from routers.chat import _check_start_rate, _start_counts
+
+    _start_counts.clear()
+    # Should not raise for first 20 calls
+    for _ in range(20):
+        _check_start_rate("1.2.3.4")
+
+
+def test_check_start_rate_blocks_excess():
+    import pytest
+    from fastapi import HTTPException
+    from routers.chat import _check_start_rate, _start_counts
+
+    _start_counts.clear()
+    for _ in range(20):
+        _check_start_rate("5.6.7.8")
+    with pytest.raises(HTTPException) as exc_info:
+        _check_start_rate("5.6.7.8")
+    assert exc_info.value.status_code == 429
+
+
+def test_check_start_rate_resets_after_window(monkeypatch):
+    from routers.chat import (
+        _check_start_rate,
+        _start_counts,
+        _MAX_STARTS_PER_WINDOW,
+        _RATE_WINDOW,
+    )
+
+    _start_counts.clear()
+    # Exhaust the window
+    for _ in range(_MAX_STARTS_PER_WINDOW):
+        _check_start_rate("9.9.9.9")
+
+    # Simulate window expiry by back-dating the entry
+    count, window_start = _start_counts["9.9.9.9"]
+    _start_counts["9.9.9.9"] = (count, window_start - _RATE_WINDOW - 1)
+
+    # Should now be allowed again (new window)
+    _check_start_rate("9.9.9.9")

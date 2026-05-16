@@ -1,9 +1,11 @@
+import logging
 import os
 
 import httpx
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/api/engine", tags=["engine"])
+logger = logging.getLogger(__name__)
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
@@ -15,7 +17,10 @@ async def list_models() -> dict:
             tags_r = await client.get(f"{OLLAMA_HOST}/api/tags", timeout=5.0)
             ps_r = await client.get(f"{OLLAMA_HOST}/api/ps", timeout=5.0)
         except Exception as exc:
-            return {"models": [], "error": str(exc)}
+            logger.warning(
+                "Failed to reach model provider at %s: %s", OLLAMA_HOST, exc
+            )
+            return {"models": [], "error": "Could not reach model provider"}
 
     tags = tags_r.json().get("models", []) if tags_r.is_success else []
     loaded_list = ps_r.json().get("models", []) if ps_r.is_success else []

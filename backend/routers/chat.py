@@ -24,6 +24,10 @@ _SESSION_TTL = 3600  # seconds
 _sessions: dict[str, object] = {}
 _session_times: dict[str, float] = {}
 
+_MAX_STARTS_PER_WINDOW = 20
+_RATE_WINDOW = 60  # seconds
+_start_counts: dict[str, tuple[int, float]] = {}
+
 
 def _import_class(dotted_path: str):
     import importlib
@@ -31,6 +35,19 @@ def _import_class(dotted_path: str):
     module_path, class_name = dotted_path.rsplit(".", 1)
     module = importlib.import_module(module_path)
     return getattr(module, class_name)
+
+
+def _check_start_rate(client_ip: str) -> None:
+    now = time.monotonic()
+    count, window_start = _start_counts.get(client_ip, (0, now))
+    if now - window_start > _RATE_WINDOW:
+        count, window_start = 0, now
+    count += 1
+    _start_counts[client_ip] = (count, window_start)
+    if count > _MAX_STARTS_PER_WINDOW:
+        raise HTTPException(
+            status_code=429, detail="Too many session requests"
+        )
 
 
 def _evict_expired_sessions() -> None:
@@ -44,7 +61,9 @@ def _evict_expired_sessions() -> None:
 
 
 @router.post("/start/{agent_name}")
-def start_chat(agent_name: str) -> dict:
+def start_chat(agent_name: str, request: Request) -> dict:
+    client_ip = request.client.host if request.client else "unknown"
+    _check_start_rate(client_ip)
     _evict_expired_sessions()
     config_file = find_config_file(agent_name)
     if config_file is None:

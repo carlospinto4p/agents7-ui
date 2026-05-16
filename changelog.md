@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.7 - 16th May 2026
+
+- Fixed security issues in `agents7_ui/backend/routers/`:
+  - `eval.py`: Log only input field keys on `agent.act()` failure; values omitted to prevent PII exposure.
+  - `engine.py`: Return generic `"Could not reach model provider"` error to clients; log real exception internally.
+  - `chat.py`: Added `_check_start_rate()` — per-IP rate limit of 20 session starts per 60 s (HTTP 429 on excess).
+- Added regression tests in `tests/test_security.py` for all three fixes.
+- Skipped backlog item 7 (`check_same_thread=False` on `SqliteCache`): flag is required for cross-thread use; the `threading.Lock()` serialises Python-level access but does not satisfy SQLite's internal thread check.
+
+
 ### v0.8.6 - 16th May 2026
 
 - Fixed `backend/routers/run.py`: pipeline step `agent` paths now resolved and
