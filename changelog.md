@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.14 - 17th May 2026
+
+- Fixed `Chatter.svelte`: removed reactive `$effect` that tracked `starting` as an unintended dependency, causing an infinite `startSession()` cascade on every `starting` state change and 429 rate-limit errors.
+  - Replaced with an explicit `startSession()` call at the end of the catalog load for the initial auto-start.
+  - Agent-switch sessions are now handled solely by the `<select>` `onchange` handler.
+
+
 ### v0.8.13 - 17th May 2026
 
 - Tightened page descriptions across all pages — dropped openers that restate the obvious and navigation instructions visible in the UI:

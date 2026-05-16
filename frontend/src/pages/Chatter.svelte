@@ -21,7 +21,10 @@
       .then(data => {
         allAgents = data
         const first = data.find(a => CHATTER_TYPES.has(a.agent_type))
-        if (first) agentName = first.name
+        if (first) {
+          agentName = first.name
+          startSession()
+        }
       })
       .catch(e => { loadError = e.message })
   })
@@ -88,11 +91,6 @@
       sendMessage()
     }
   }
-
-  $effect(() => {
-    // Auto-start when agent changes
-    if (agentName) startSession()
-  })
 </script>
 
 <div class="chatter">
