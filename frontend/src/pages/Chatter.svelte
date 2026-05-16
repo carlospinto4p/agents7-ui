@@ -99,7 +99,7 @@
 
   <div class="page-intro">
     <h1 class="page-title">Chatter</h1>
-    <p class="intro-desc">Chat with conversational agents that maintain context across turns. Select an agent — a session starts automatically. Send messages with Enter (Shift+Enter for a newline). Token counts appear next to each assistant reply. <strong>Reset</strong> clears the conversation and starts a fresh session with the same agent.</p>
+    <p class="intro-desc">Multi-turn conversations with memory. Enter to send, Shift+Enter for a newline. Reset starts a fresh session with the same agent.</p>
   </div>
 
   <div class="controls">

@@ -56,7 +56,7 @@
 <div class="eval-page">
   <div class="page-header">
     <h2>Evaluation</h2>
-    <p class="intro-desc">Run an agent against its golden dataset — a curated set of inputs with known expected outputs — to measure accuracy. The results show an overall accuracy score, a per-category breakdown to reveal which classes the agent handles well, and a mismatch list showing the exact input, expected output, and actual output for every failure.</p>
+    <p class="intro-desc">Measures accuracy against a golden dataset — curated inputs with known expected outputs. Results include an overall score, a per-category breakdown, and a mismatch list for every failure.</p>
   </div>
 
   <div class="controls">

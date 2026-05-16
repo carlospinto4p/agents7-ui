@@ -32,7 +32,7 @@
   <div class="page-header">
     <div>
       <h2>Engine</h2>
-      <p class="intro-desc">Shows all models installed in Ollama, the local model runtime. <strong>Loaded</strong> means the model is currently in GPU memory (VRAM) and will respond without delay. <strong>Idle</strong> means it is installed but not loaded — it will load automatically on the next request.</p>
+      <p class="intro-desc"><strong>Loaded</strong> — in VRAM, responds without delay. <strong>Idle</strong> — installed but not in memory, loads on the next request.</p>
     </div>
     <button onclick={fetchModels} disabled={loading}>
       {loading ? 'Loading…' : 'Refresh'}

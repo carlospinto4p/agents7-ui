@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.13 - 17th May 2026
+
+- Tightened page descriptions across all pages — dropped openers that restate the obvious and navigation instructions visible in the UI:
+  - `Catalog.svelte`: removed "Browse all agents" and "Click any card"; trimmed detail-view section descriptions.
+  - `Runner.svelte`: removed "Run catalog agents with custom inputs" opener and history-location sentence.
+  - `Chatter.svelte`: removed "Chat with conversational agents" and "Token counts appear next to each reply"; kept Enter/Shift-Enter hint.
+  - `Engine.svelte`: removed "Shows all models installed in Ollama" opener; kept Loaded/Idle definitions.
+  - `Eval.svelte`: condensed two-sentence description into one.
+
+
 ### v0.8.12 - 17th May 2026
 
 - Updated `Home.svelte`: replaced redundant "Home" title and navigation-instruction subtitle with "Framework" heading and a one-line description of the library.

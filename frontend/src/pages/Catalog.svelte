@@ -71,7 +71,7 @@
     {#if selected.output_schema}
       <section>
         <h2>Output Schema</h2>
-        <p class="section-desc">The JSON schema for the structured output this agent returns, derived from its Pydantic model.</p>
+        <p class="section-desc">Derived from the agent's Pydantic output model.</p>
         <pre class="code">{JSON.stringify(selected.output_schema, null, 2)}</pre>
       </section>
     {:else if selected.output_model}
@@ -85,7 +85,7 @@
     {#if selected.system_examples?.length}
       <section>
         <h2>Examples ({selected.system_examples.length})</h2>
-        <p class="section-desc">Input/output pairs injected into the system prompt as few-shot examples — they guide the LLM toward the expected output format.</p>
+        <p class="section-desc">Few-shot pairs injected into the system prompt to guide output format.</p>
         <div class="examples">
           {#each selected.system_examples.slice(0, 4) as ex}
             <div class="example">
@@ -109,14 +109,14 @@
     {#if selected.system_prompt}
       <section>
         <h2>System Prompt</h2>
-        <p class="section-desc">The full system prompt sent to the LLM at the start of every request — it defines the agent's role, rules, and output format.</p>
+        <p class="section-desc">Sent to the LLM at the start of every request.</p>
         <pre class="code prompt">{selected.system_prompt}</pre>
       </section>
     {/if}
 
     <section>
       <h2>YAML Source</h2>
-      <p class="section-desc">The raw YAML configuration file that defines this agent's model, provider, system prompt, and examples.</p>
+      <p class="section-desc">The source configuration for this agent.</p>
       <pre class="code yaml-src">{selected.raw_yaml}</pre>
     </section>
   </div>
@@ -126,7 +126,7 @@
   <div class="catalog">
     <div class="page-intro">
       <h1 class="page-title">Catalog</h1>
-      <p class="intro-desc">Browse all agents registered on this instance. <strong>Catalog Agents</strong> are purpose-built for specific tasks. <strong>Framework Examples</strong> are reference implementations bundled with agents7 that demonstrate different agent types. <strong>Integration Tests</strong> are agents used to verify provider compatibility. Click any card to inspect its full configuration.</p>
+      <p class="intro-desc"><strong>Catalog agents</strong> are purpose-built for specific tasks. <strong>Framework examples</strong> are reference implementations bundled with agents7. <strong>Integration tests</strong> verify provider compatibility.</p>
     </div>
     {#if agents.length === 0}
       <p class="muted">No agents found in catalog.</p>

@@ -232,7 +232,7 @@
 
       <div class="page-intro">
         <h1 class="page-title">Runner</h1>
-        <p class="intro-desc">Run catalog agents with custom inputs. <strong>Single</strong> mode lets you type inputs one at a time and inspect the structured output immediately. <strong>Batch</strong> mode accepts a JSONL file (one JSON object per line) and processes up to 4 requests in parallel, showing a pass/fail for each row. Run history is saved locally in your browser.</p>
+        <p class="intro-desc"><strong>Single</strong> — type inputs and get the structured output immediately. <strong>Batch</strong> — paste or upload JSONL to process up to 4 rows in parallel.</p>
       </div>
 
       <div class="runner-header">
