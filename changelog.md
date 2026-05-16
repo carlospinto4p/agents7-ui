@@ -2,6 +2,18 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.6 - 16th May 2026
+
+- Fixed `backend/routers/run.py`: pipeline step `agent` paths now resolved and
+  bounds-checked against `CATALOG_PATH`; paths containing `../../` that escape
+  the catalog root raise a 422 error.
+- Fixed `backend/main.py`: `CORS_ORIGINS` env var validated against
+  `^https?://...` regex at startup; wildcards and malformed URLs raise
+  `ValueError` instead of being passed to FastAPI silently.
+- Added `backend/tests/test_security.py`: 11 unit tests covering both fixes.
+- Added `pytest` to `backend/pyproject.toml` dev dependencies.
+
+
 ### v0.8.5 - 16th May 2026
 
 - Hardened `backend/main.py` security posture:

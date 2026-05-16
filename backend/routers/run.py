@@ -2,7 +2,7 @@ import yaml
 from fastapi import APIRouter, HTTPException, Request
 from pathlib import Path
 
-from routers.catalog import find_config_file
+from routers.catalog import CATALOG_PATH, find_config_file
 
 router = APIRouter(prefix="/api/run", tags=["run"])
 
@@ -22,19 +22,36 @@ def _import_agent_class(dotted_path: str):
     return getattr(module, class_name)
 
 
+def _resolve_agent_path(
+    agent_path: str, config_dir: Path, catalog_root: Path
+) -> str:
+    """Resolve a relative agent path, raising ValueError if it escapes root."""
+    p = Path(agent_path)
+    if p.is_absolute():
+        return agent_path
+    resolved = (config_dir / p).resolve()
+    try:
+        resolved.relative_to(catalog_root)
+    except ValueError:
+        raise ValueError(
+            f"Step agent path escapes catalog root: {agent_path!r}"
+        )
+    return str(resolved)
+
+
 def _build_pipeline(config_file: Path, cfg: dict):
     """Build a Pipeline resolving step agent paths relative to config_file."""
     from agents7.agents import Labeler
     from agents7.agents.pipeline import Pipeline, PipelineStep
     from agents7.agents.utils import import_from_path
 
+    catalog_root = CATALOG_PATH.resolve()
     config_dir = config_file.parent
     steps = []
     for step_cfg in cfg.get("steps", []):
-        agent_path = step_cfg.get("agent", "")
-        p = Path(agent_path)
-        if not p.is_absolute():
-            agent_path = str(config_dir / p)
+        agent_path = _resolve_agent_path(
+            step_cfg.get("agent", ""), config_dir, catalog_root
+        )
 
         step_type_path = step_cfg.get("agent_type")
         if step_type_path:

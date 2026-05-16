@@ -1,6 +1,6 @@
 [project]
 name = "agents7-ui-backend"
-version = "0.8.5"
+version = "0.8.6"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
@@ -9,6 +9,9 @@ dependencies = [
     "pyyaml>=6.0",
     "httpx>=0.28.0",
 ]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
 
 [tool.uv.sources]
 agents7 = { path = "../../agents7_framework", editable = true }

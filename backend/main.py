@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -10,7 +11,24 @@ from routers import catalog, chat, engine, eval, run
 app = FastAPI(title="agents7 UI backend")
 
 _default_origins = "http://localhost:5173,http://localhost:8080"
-_cors_origins = os.getenv("CORS_ORIGINS", _default_origins).split(",")
+_ORIGIN_RE = re.compile(r"^https?://[a-zA-Z0-9._-]+(:\d{1,5})?$")
+
+
+def _parse_cors_origins(raw: str) -> list[str]:
+    origins = []
+    for o in raw.split(","):
+        o = o.strip()
+        if not o:
+            continue
+        if not _ORIGIN_RE.match(o):
+            raise ValueError(f"Invalid CORS origin in CORS_ORIGINS: {o!r}")
+        origins.append(o)
+    return origins
+
+
+_cors_origins = _parse_cors_origins(
+    os.getenv("CORS_ORIGINS", _default_origins)
+)
 
 app.add_middleware(
     CORSMiddleware,
