@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.11 - 17th May 2026
+
+- Added `post_start` hook to `frontend` service in `docker-compose.yml`: prints `Frontend: http://localhost:8080` in the log stream when nginx starts.
+
+
 ### v0.8.10 - 17th May 2026
 
 - Fixed `agents7_ui/.dockerignore`: added `frontend/node_modules` and `frontend/.svelte-kit` so Docker excludes them from the frontend build context (context is `agents7_ui/`, not repo root, so the root `.dockerignore` had no effect).
