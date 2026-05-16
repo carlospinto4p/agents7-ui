@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.8 - 16th May 2026
+
+- Performance fixes (`/scan` pass):
+  - `frontend/src/pages/Engine.svelte`: replaced `$effect(() => { fetchModels() })` with `onMount(fetchModels)` — `onMount` is the correct primitive for "run once on mount"; `$effect` is for reactive tracking.
+  - `backend/routers/engine.py`: replaced two sequential `await client.get(...)` calls with `asyncio.gather(...)` to fetch `/api/tags` and `/api/ps` concurrently.
+
+
 ### v0.8.7 - 16th May 2026
 
 - Fixed security issues in `agents7_ui/backend/routers/`:

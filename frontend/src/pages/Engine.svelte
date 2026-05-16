@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from 'svelte'
+
   let data = $state(null)
   let loading = $state(false)
   let error = $state(null)
@@ -17,7 +19,7 @@
     }
   }
 
-  $effect(() => { fetchModels() })
+  onMount(fetchModels)
 
   function fmtSize(bytes) {
     if (!bytes) return '—'

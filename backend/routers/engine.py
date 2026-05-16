@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 
@@ -14,8 +15,10 @@ OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 async def list_models() -> dict:
     async with httpx.AsyncClient() as client:
         try:
-            tags_r = await client.get(f"{OLLAMA_HOST}/api/tags", timeout=5.0)
-            ps_r = await client.get(f"{OLLAMA_HOST}/api/ps", timeout=5.0)
+            tags_r, ps_r = await asyncio.gather(
+                client.get(f"{OLLAMA_HOST}/api/tags", timeout=5.0),
+                client.get(f"{OLLAMA_HOST}/api/ps", timeout=5.0),
+            )
         except Exception as exc:
             logger.warning(
                 "Failed to reach model provider at %s: %s", OLLAMA_HOST, exc
