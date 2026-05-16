@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.10 - 17th May 2026
+
+- Fixed `agents7_ui/.dockerignore`: added `frontend/node_modules` and `frontend/.svelte-kit` so Docker excludes them from the frontend build context (context is `agents7_ui/`, not repo root, so the root `.dockerignore` had no effect).
+
+
 ### v0.8.9 - 16th May 2026
 
 - Refactored `agents7_ui/backend/routers/`:
