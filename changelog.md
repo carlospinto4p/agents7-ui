@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.12 - 17th May 2026
+
+- Updated `Home.svelte`: replaced redundant "Home" title and navigation-instruction subtitle with "Framework" heading and a one-line description of the library.
+
+
 ### v0.8.11 - 17th May 2026
 
 - Added `post_start` hook to `frontend` service in `docker-compose.yml`: prints `Frontend: http://localhost:8080` in the log stream when nginx starts.

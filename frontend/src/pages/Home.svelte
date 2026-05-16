@@ -23,8 +23,8 @@
 </script>
 
 <div class="page-intro">
-  <h1 class="page-title">Home</h1>
-  <p class="intro-desc">agents7 framework documentation. The README below covers installation, core concepts, and usage examples. Use the tabs above to browse the agent catalog, run agents interactively, chat with conversational agents, or measure their accuracy against a golden dataset.</p>
+  <h1 class="page-title">Framework</h1>
+  <p class="intro-desc">Python library for building LLM-based agents that return structured outputs via Pydantic models.</p>
 </div>
 
 {#if loading}
