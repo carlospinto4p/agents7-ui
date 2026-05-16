@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.5 - 16th May 2026
+
+- Hardened `backend/main.py` security posture:
+  - CORS: restricted `allow_methods` to `["GET", "POST", "DELETE"]` and `allow_headers` to `["Content-Type", "Authorization"]` (was `["*"]` for both).
+  - Auth: added `require_api_key` middleware — when `API_KEY` env var is set, all endpoints except `/api/health` require `Authorization: Bearer <key>`; no-op when unset (local dev unchanged).
+
+
 ### v0.8.4 - 13th May 2026
 
 - Tightened pnpm security posture in `frontend/`:

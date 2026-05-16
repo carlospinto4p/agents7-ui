@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 
 from routers import catalog, chat, engine, eval, run
 
@@ -15,9 +15,28 @@ _cors_origins = os.getenv("CORS_ORIGINS", _default_origins).split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "Authorization"],
 )
+
+_UNPROTECTED = {"/api/health"}
+
+
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    api_key = os.getenv("API_KEY")
+    if (
+        api_key
+        and request.method != "OPTIONS"
+        and request.url.path not in _UNPROTECTED
+    ):
+        auth = request.headers.get("Authorization", "")
+        if auth != f"Bearer {api_key}":
+            return JSONResponse(
+                status_code=401, content={"detail": "Unauthorized"}
+            )
+    return await call_next(request)
+
 
 app.include_router(catalog.router)
 app.include_router(run.router)
