@@ -7,7 +7,9 @@ import uuid
 import yaml
 from fastapi import APIRouter, HTTPException, Request
 
+from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
+from routers.utils import import_class
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
@@ -27,14 +29,6 @@ _session_times: dict[str, float] = {}
 _MAX_STARTS_PER_WINDOW = 20
 _RATE_WINDOW = 60  # seconds
 _start_counts: dict[str, tuple[int, float]] = {}
-
-
-def _import_class(dotted_path: str):
-    import importlib
-
-    module_path, class_name = dotted_path.rsplit(".", 1)
-    module = importlib.import_module(module_path)
-    return getattr(module, class_name)
 
 
 def _check_start_rate(client_ip: str) -> None:
@@ -85,7 +79,7 @@ def start_chat(agent_name: str, request: Request) -> dict:
             ),
         )
 
-    ChatterClass = _import_class(class_path)
+    ChatterClass = import_class(class_path)
     chatter = ChatterClass.from_yaml(str(config_file))
 
     session_id = str(uuid.uuid4())
@@ -109,7 +103,7 @@ async def send_message(session_id: str, request: Request) -> dict:
 
     try:
         response = chatter.chat(message)
-    except Exception as exc:
+    except Agents7Exception as exc:
         logger.exception("Chat error in session %s", session_id)
         raise HTTPException(
             status_code=500, detail="Internal chat error"

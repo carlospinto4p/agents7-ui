@@ -5,9 +5,14 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
+from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
-from routers.run import _AGENT_TYPE_MAP, _import_agent_class
-from routers.utils import _load_config, _load_output_schema
+from routers.utils import (
+    AGENT_TYPE_MAP,
+    _load_config,
+    _load_output_schema,
+    import_class,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +61,7 @@ def eval_agent(agent_name: str) -> dict:
     cfg, _ = _load_config(config_file)
 
     agent_type = (cfg.get("agent_type") or "").lower()
-    class_path = _AGENT_TYPE_MAP.get(agent_type)
+    class_path = AGENT_TYPE_MAP.get(agent_type)
     if not class_path:
         raise HTTPException(
             status_code=422,
@@ -70,7 +75,7 @@ def eval_agent(agent_name: str) -> dict:
         raise HTTPException(status_code=422, detail="Golden set is empty")
 
     input_cols = set(rows[0].keys()) - output_fields - _METADATA_COLUMNS
-    AgentClass = _import_agent_class(class_path)
+    AgentClass = import_class(class_path)
     agent = AgentClass.from_yaml(str(config_file))
 
     # Primary field for per-category breakdown
@@ -92,7 +97,7 @@ def eval_agent(agent_name: str) -> dict:
         try:
             response = agent.act(input_data)
             actual = response.model.model_dump() if response.model else None
-        except Exception as exc:
+        except Agents7Exception as exc:
             logger.warning(
                 "agent.act() failed (input keys: %s): %s",
                 list(input_data.keys()),

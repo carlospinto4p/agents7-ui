@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.9 - 16th May 2026
+
+- Refactored `agents7_ui/backend/routers/`:
+  - Extracted `import_class()` and `AGENT_TYPE_MAP` from `run.py` into `utils.py`; `eval.py` now imports from the shared location instead of crossing into `run.py`
+  - Narrowed broad `except Exception` catches: `run.py` catches `(AgentConfigurationError, PipelineConfigurationError, ValueError, ImportError)`; `chat.py` and `eval.py` catch `Agents7Exception`
+
+
 ### v0.8.8 - 16th May 2026
 
 - Performance fixes (`/scan` pass):

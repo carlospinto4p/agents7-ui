@@ -2,24 +2,14 @@ import yaml
 from fastapi import APIRouter, HTTPException, Request
 from pathlib import Path
 
+from agents7.exceptions import (
+    AgentConfigurationError,
+    PipelineConfigurationError,
+)
 from routers.catalog import CATALOG_PATH, find_config_file
+from routers.utils import AGENT_TYPE_MAP, import_class
 
 router = APIRouter(prefix="/api/run", tags=["run"])
-
-_AGENT_TYPE_MAP = {
-    "classifier": "agents7.agents.Classifier",
-    "labeler": "agents7.agents.Labeler",
-    "detector": "agents7.agents.Detector",
-    "regressor": "agents7.agents.Regressor",
-}
-
-
-def _import_agent_class(dotted_path: str):
-    import importlib
-
-    module_path, class_name = dotted_path.rsplit(".", 1)
-    module = importlib.import_module(module_path)
-    return getattr(module, class_name)
 
 
 def _resolve_agent_path(
@@ -55,7 +45,7 @@ def _build_pipeline(config_file: Path, cfg: dict):
 
         step_type_path = step_cfg.get("agent_type")
         if step_type_path:
-            step_cls = _import_agent_class(step_type_path)
+            step_cls = import_class(step_type_path)
         else:
             step_cls = Labeler
 
@@ -98,7 +88,12 @@ async def run_agent(agent_name: str, request: Request) -> dict:
     if agent_type == "pipeline":
         try:
             agent = _build_pipeline(config_file, cfg)
-        except Exception as exc:
+        except (
+            AgentConfigurationError,
+            PipelineConfigurationError,
+            ValueError,
+            ImportError,
+        ) as exc:
             raise HTTPException(
                 status_code=422, detail=f"Pipeline build failed: {exc}"
             ) from exc
@@ -122,17 +117,17 @@ async def run_agent(agent_name: str, request: Request) -> dict:
             },
         }
 
-    class_path = _AGENT_TYPE_MAP.get(agent_type)
+    class_path = AGENT_TYPE_MAP.get(agent_type)
     if not class_path:
         raise HTTPException(
             status_code=422,
             detail=(
                 f"Unknown agent_type '{agent_type}' in config — "
-                f"must be one of: {list(_AGENT_TYPE_MAP) + ['pipeline']}"
+                f"must be one of: {list(AGENT_TYPE_MAP) + ['pipeline']}"
             ),
         )
 
-    AgentClass = _import_agent_class(class_path)
+    AgentClass = import_class(class_path)
     agent = AgentClass.from_yaml(str(config_file))
     response = agent.act(input_data)
 

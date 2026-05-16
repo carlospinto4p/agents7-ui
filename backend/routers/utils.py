@@ -3,6 +3,22 @@ from pathlib import Path
 import yaml
 
 
+AGENT_TYPE_MAP = {
+    "classifier": "agents7.agents.Classifier",
+    "labeler": "agents7.agents.Labeler",
+    "detector": "agents7.agents.Detector",
+    "regressor": "agents7.agents.Regressor",
+}
+
+
+def import_class(dotted_path: str):
+    import importlib
+
+    module_path, class_name = dotted_path.rsplit(".", 1)
+    module = importlib.import_module(module_path)
+    return getattr(module, class_name)
+
+
 def _load_config(config_file: Path) -> tuple[dict, str]:
     """Load a YAML config file and return (parsed dict, raw text)."""
     with open(config_file, encoding="utf-8") as f:
