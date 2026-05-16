@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.15 - 17th May 2026
+
+- Added `agents7_ui/backlog.md` so UI scan findings have a home.
+- Updated `.claude/rules/`:
+  - `improvement-areas.md`: added Svelte 5 `$effect` dependency leakage section with detection patterns and fix strategies.
+  - `optimization-areas.md`: added bullet for `$effect` leakage causing cascading API calls.
+  - `refactoring-areas.md`: added bullet for hidden reactive dependencies via function calls in effects.
+
+
 ### v0.8.14 - 17th May 2026
 
 - Fixed `Chatter.svelte`: removed reactive `$effect` that tracked `starting` as an unintended dependency, causing an infinite `startSession()` cascade on every `starting` state change and 429 rate-limit errors.
