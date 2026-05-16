@@ -163,18 +163,12 @@
     }
 
     const CONCURRENCY = 4
-    const slots = new Array(CONCURRENCY).fill(Promise.resolve())
-    let slot = 0
-    const all = results
+    const indices = results
       .map((_, i) => i)
       .filter(i => results[i].status !== 'parse-error')
-      .map(i => {
-        const p = slots[slot].then(() => runOne(i))
-        slots[slot] = p
-        slot = (slot + 1) % CONCURRENCY
-        return p
-      })
-    await Promise.allSettled(all)
+    for (let i = 0; i < indices.length; i += CONCURRENCY) {
+      await Promise.all(indices.slice(i, i + CONCURRENCY).map(j => runOne(j)))
+    }
 
     let pass = 0, fail = 0
     for (const r of results) {
@@ -199,18 +193,9 @@
     e.target.value = ''
   }
 
-  const _counts = $derived.by(() => {
-    let pass = 0, fail = 0, done = 0
-    for (const r of results) {
-      if (r.status === 'pass') pass++
-      if (['fail', 'error', 'parse-error'].includes(r.status)) fail++
-      if (!['pending', 'running'].includes(r.status)) done++
-    }
-    return { pass, fail, done }
-  })
-  let passCount = $derived(_counts.pass)
-  let failCount = $derived(_counts.fail)
-  let doneCount = $derived(_counts.done)
+  let passCount = $derived(results.filter(r => r.status === 'pass').length)
+  let failCount = $derived(results.filter(r => ['fail', 'error', 'parse-error'].includes(r.status)).length)
+  let doneCount = $derived(results.filter(r => !['pending', 'running'].includes(r.status)).length)
 
   function truncate(s, n = 60) {
     if (typeof s !== 'string') s = JSON.stringify(s)
