@@ -21,11 +21,12 @@
   // ── Single runner ─────────────────────────────────────────
   let agentDetail   = $state(null)
   let fieldValues   = $state({})
-  let singleRunning  = $state(false)
-  let singleResult   = $state(null)
-  let singleError    = $state(null)
-  let elapsedSingle  = $state(0)
-  let singleDuration = $state(null)
+  let singleRunning   = $state(false)
+  let singleResult    = $state(null)
+  let singleError     = $state(null)
+  let elapsedSingle   = $state(0)
+  let singleDuration  = $state(null)
+  let singleStepsOpen = $state([])
 
   let inputFields = $derived(
     agentDetail?.system_examples?.[0]?.input
@@ -88,6 +89,7 @@
       } else {
         const data = await r.json()
         singleResult = data
+        singleStepsOpen = (data.steps ?? []).map(() => true)
         history.add({
           id: Date.now(), ts: new Date().toISOString(),
           agent: agentName, mode: 'single',
@@ -389,13 +391,15 @@
               <span class="steps-label">Steps</span>
               {#each singleResult.steps as step, i}
                 <div class="step-card">
-                  <div class="step-header">
+                  <button class="step-header" onclick={() => { singleStepsOpen[i] = !singleStepsOpen[i] }}>
                     <span class="step-num">{i + 1}</span>
                     <span class="step-name">{step.name}</span>
                     {#if step.metrics?.tokens}
                       <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s</span>
                     {/if}
-                  </div>
+                    <span class="chevron" class:closed={!singleStepsOpen[i]}>▾</span>
+                  </button>
+                  {#if singleStepsOpen[i]}
                   <div class="step-body">
                     <div class="step-io">
                       <span class="io-label">Input</span>
@@ -428,6 +432,7 @@
                       {/if}
                     </div>
                   </div>
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -988,13 +993,18 @@
     overflow: hidden;
   }
   .step-header {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     padding: 0.45rem 0.85rem;
     background: var(--bg-raised);
+    border: none;
     border-bottom: 1px solid var(--border);
+    text-align: left;
+    cursor: pointer;
   }
+  .step-header:hover { filter: brightness(1.05); }
   .step-num {
     font-size: 0.68rem;
     font-weight: 700;

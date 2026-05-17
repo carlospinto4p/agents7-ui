@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.10 - 17th May 2026
+
+- Made pipeline step cards collapsible (expanded by default):
+  - `frontend/src/pages/Catalog.svelte`: step headers are now buttons with a chevron; clicking toggles the input/output body.
+  - `frontend/src/pages/Runner.svelte`: same collapsible behaviour in the single-run step breakdown.
+
+
 ### v0.9.9 - 17th May 2026
 
 - Added pipeline step I/O breakdown to the Catalog inline runner:
