@@ -4,93 +4,98 @@ import logging
 import time
 import uuid
 
-import yaml
 from fastapi import APIRouter, HTTPException, Request
 
 from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
-from routers.utils import import_class
+from routers.utils import CHATTER_TYPE_MAP, _load_config, import_class
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
 
-_CHATTER_TYPE_MAP = {
-    "chatter": "agents7.agents.Chatter",
-    "personality_chatter": "agents7.agents.PersonalityChatter",
-    "scene_chatter": "agents7.agents.SceneChatter",
-    "guarded_chatter": "agents7.agents.GuardedChatter",
-    "guarded_scene_chatter": "agents7.agents.GuardedSceneChatter",
-}
 
-_SESSION_TTL = 3600  # seconds
-_sessions: dict[str, object] = {}
-_session_times: dict[str, float] = {}
+class _SessionStore:
+    _SESSION_TTL = 3600
+    _MAX_STARTS = 20
+    _RATE_WINDOW = 60
 
-_MAX_STARTS_PER_WINDOW = 20
-_RATE_WINDOW = 60  # seconds
-_start_counts: dict[str, tuple[int, float]] = {}
+    def __init__(self) -> None:
+        self._sessions: dict[str, object] = {}
+        self._session_times: dict[str, float] = {}
+        self._start_counts: dict[str, tuple[int, float]] = {}
+
+    def check_start_rate(self, client_ip: str) -> None:
+        now = time.monotonic()
+        count, window_start = self._start_counts.get(client_ip, (0, now))
+        if now - window_start > self._RATE_WINDOW:
+            count, window_start = 0, now
+        count += 1
+        self._start_counts[client_ip] = (count, window_start)
+        if count > self._MAX_STARTS:
+            raise HTTPException(
+                status_code=429, detail="Too many session requests"
+            )
+
+    def evict_expired(self) -> None:
+        now = time.monotonic()
+        expired = [
+            sid
+            for sid, t in self._session_times.items()
+            if now - t > self._SESSION_TTL
+        ]
+        for sid in expired:
+            self._sessions.pop(sid, None)
+            self._session_times.pop(sid, None)
+
+    def create(self, chatter: object) -> str:
+        session_id = str(uuid.uuid4())
+        self._sessions[session_id] = chatter
+        self._session_times[session_id] = time.monotonic()
+        return session_id
+
+    def get(self, session_id: str) -> object | None:
+        return self._sessions.get(session_id)
+
+    def delete(self, session_id: str) -> None:
+        self._sessions.pop(session_id, None)
+        self._session_times.pop(session_id, None)
 
 
-def _check_start_rate(client_ip: str) -> None:
-    now = time.monotonic()
-    count, window_start = _start_counts.get(client_ip, (0, now))
-    if now - window_start > _RATE_WINDOW:
-        count, window_start = 0, now
-    count += 1
-    _start_counts[client_ip] = (count, window_start)
-    if count > _MAX_STARTS_PER_WINDOW:
-        raise HTTPException(
-            status_code=429, detail="Too many session requests"
-        )
-
-
-def _evict_expired_sessions() -> None:
-    now = time.monotonic()
-    expired = [
-        sid for sid, t in _session_times.items() if now - t > _SESSION_TTL
-    ]
-    for sid in expired:
-        _sessions.pop(sid, None)
-        _session_times.pop(sid, None)
+_store = _SessionStore()
 
 
 @router.post("/start/{agent_name}")
 def start_chat(agent_name: str, request: Request) -> dict:
     client_ip = request.client.host if request.client else "unknown"
-    _check_start_rate(client_ip)
-    _evict_expired_sessions()
+    _store.check_start_rate(client_ip)
+    _store.evict_expired()
     config_file = find_config_file(agent_name)
     if config_file is None:
         raise HTTPException(
             status_code=404, detail=f"Agent '{agent_name}' not found"
         )
 
-    with open(config_file, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
-
+    cfg, _ = _load_config(config_file)
     agent_type = (cfg.get("agent_type") or "").lower()
-    class_path = _CHATTER_TYPE_MAP.get(agent_type)
+    class_path = CHATTER_TYPE_MAP.get(agent_type)
     if not class_path:
         raise HTTPException(
             status_code=422,
             detail=(
                 f"Agent '{agent_name}' has type '{agent_type}', "
-                f"not a chatter. Must be one of: {list(_CHATTER_TYPE_MAP)}"
+                f"not a chatter. Must be one of: {list(CHATTER_TYPE_MAP)}"
             ),
         )
 
     ChatterClass = import_class(class_path)
     chatter = ChatterClass.from_yaml(str(config_file))
-
-    session_id = str(uuid.uuid4())
-    _sessions[session_id] = chatter
-    _session_times[session_id] = time.monotonic()
+    session_id = _store.create(chatter)
     return {"session_id": session_id, "agent": cfg.get("name")}
 
 
 @router.post("/{session_id}/message")
 async def send_message(session_id: str, request: Request) -> dict:
-    chatter = _sessions.get(session_id)
+    chatter = _store.get(session_id)
     if chatter is None:
         raise HTTPException(
             status_code=404, detail=f"Session '{session_id}' not found"
@@ -121,6 +126,5 @@ async def send_message(session_id: str, request: Request) -> dict:
 
 @router.delete("/{session_id}")
 def end_session(session_id: str) -> dict:
-    _sessions.pop(session_id, None)
-    _session_times.pop(session_id, None)
+    _store.delete(session_id)
     return {"ok": True}

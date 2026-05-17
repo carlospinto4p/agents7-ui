@@ -182,43 +182,37 @@ def test_engine_error_response_is_generic():
 
 
 def test_check_start_rate_allows_within_limit():
-    from routers.chat import _check_start_rate, _start_counts
+    from routers.chat import _store
 
-    _start_counts.clear()
-    # Should not raise for first 20 calls
+    _store._start_counts.clear()
     for _ in range(20):
-        _check_start_rate("1.2.3.4")
+        _store.check_start_rate("1.2.3.4")
 
 
 def test_check_start_rate_blocks_excess():
     import pytest
     from fastapi import HTTPException
-    from routers.chat import _check_start_rate, _start_counts
+    from routers.chat import _store
 
-    _start_counts.clear()
+    _store._start_counts.clear()
     for _ in range(20):
-        _check_start_rate("5.6.7.8")
+        _store.check_start_rate("5.6.7.8")
     with pytest.raises(HTTPException) as exc_info:
-        _check_start_rate("5.6.7.8")
+        _store.check_start_rate("5.6.7.8")
     assert exc_info.value.status_code == 429
 
 
 def test_check_start_rate_resets_after_window(monkeypatch):
-    from routers.chat import (
-        _check_start_rate,
-        _start_counts,
-        _MAX_STARTS_PER_WINDOW,
-        _RATE_WINDOW,
+    from routers.chat import _store
+
+    _store._start_counts.clear()
+    for _ in range(_store._MAX_STARTS):
+        _store.check_start_rate("9.9.9.9")
+
+    count, window_start = _store._start_counts["9.9.9.9"]
+    _store._start_counts["9.9.9.9"] = (
+        count,
+        window_start - _store._RATE_WINDOW - 1,
     )
 
-    _start_counts.clear()
-    # Exhaust the window
-    for _ in range(_MAX_STARTS_PER_WINDOW):
-        _check_start_rate("9.9.9.9")
-
-    # Simulate window expiry by back-dating the entry
-    count, window_start = _start_counts["9.9.9.9"]
-    _start_counts["9.9.9.9"] = (count, window_start - _RATE_WINDOW - 1)
-
-    # Should now be allowed again (new window)
-    _check_start_rate("9.9.9.9")
+    _store.check_start_rate("9.9.9.9")

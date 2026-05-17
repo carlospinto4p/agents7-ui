@@ -10,6 +10,14 @@ AGENT_TYPE_MAP = {
     "regressor": "agents7.agents.Regressor",
 }
 
+CHATTER_TYPE_MAP = {
+    "chatter": "agents7.agents.Chatter",
+    "personality_chatter": "agents7.agents.PersonalityChatter",
+    "scene_chatter": "agents7.agents.SceneChatter",
+    "guarded_chatter": "agents7.agents.GuardedChatter",
+    "guarded_scene_chatter": "agents7.agents.GuardedSceneChatter",
+}
+
 
 def import_class(dotted_path: str):
     import importlib

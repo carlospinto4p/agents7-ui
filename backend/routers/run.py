@@ -1,4 +1,3 @@
-import yaml
 from fastapi import APIRouter, HTTPException, Request
 from pathlib import Path
 
@@ -7,7 +6,7 @@ from agents7.exceptions import (
     PipelineConfigurationError,
 )
 from routers.catalog import CATALOG_PATH, find_config_file
-from routers.utils import AGENT_TYPE_MAP, import_class
+from routers.utils import AGENT_TYPE_MAP, _load_config, import_class
 
 router = APIRouter(prefix="/api/run", tags=["run"])
 
@@ -78,9 +77,7 @@ async def run_agent(agent_name: str, request: Request) -> dict:
             status_code=404, detail=f"Agent '{agent_name}' not found"
         )
 
-    with open(config_file, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
-
+    cfg, _ = _load_config(config_file)
     agent_type = (cfg.get("agent_type") or "").lower()
     body = await request.json()
     input_data = body.get("input_data", body)

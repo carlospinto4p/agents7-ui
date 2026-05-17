@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.18 - 17th May 2026
+
+- Refactored `routers/`:
+  - `utils.py`: added `CHATTER_TYPE_MAP` (moved from `chat.py`).
+  - `chat.py`: replaced module-level session dicts with `_SessionStore` class; use `_load_config` and `CHATTER_TYPE_MAP` from `utils`.
+  - `run.py`: use `_load_config` from `utils` instead of inline `yaml.safe_load`.
+  - `eval.py`: normalized unknown-`agent_type` error message to include valid types.
+- Updated `tests/test_security.py`: rate-limit tests use `_store` instance.
+
+
 ### v0.8.17 - 17th May 2026
 
 - Perf/refactor in `frontend/src/pages/`:
@@ -238,13 +248,3 @@
 - Updated `frontend/vite.config.js`: proxy `/api` to port 8001 for local dev.
 
 
-### v0.1.0 - 3rd May 2026
-
-- Added `backend/main.py`: FastAPI app with CORS middleware and health check.
-- Added `backend/routers/`:
-  - `catalog.py`: `GET /api/catalog` — auto-discovers agents from `agents_catalog/` by scanning `config.yml` files.
-  - `engine.py`: placeholder `GET /api/engine/models`.
-  - `run.py`: placeholder `POST /api/run/{agent_name}`.
-- Added `frontend/src/App.svelte`: Svelte 5 SPA with hash-based routing for Catalog, Runner, Engine pages.
-- Added `frontend/src/pages/`: placeholder Catalog, Runner, Engine components.
-- Added Docker Compose with backend (Python/uvicorn) and frontend (Node/nginx) services.

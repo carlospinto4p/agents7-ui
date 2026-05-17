@@ -65,7 +65,10 @@ def eval_agent(agent_name: str) -> dict:
     if not class_path:
         raise HTTPException(
             status_code=422,
-            detail=f"Unknown agent_type '{agent_type}'",
+            detail=(
+                f"Unknown agent_type '{agent_type}' — "
+                f"must be one of: {list(AGENT_TYPE_MAP)}"
+            ),
         )
 
     _, output_fields = _load_output_schema(cfg)
