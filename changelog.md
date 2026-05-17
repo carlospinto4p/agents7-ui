@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.8 - 17th May 2026
+
+- Added pipeline step I/O breakdown in the Runner single-run view:
+  - `backend/routers/run.py`: pipeline response now includes `steps` array with per-step `name`, `input`, `output`, and `metrics`.
+  - `frontend/src/pages/Runner.svelte`: when the result has steps, shows a numbered step cards section below the output card with input/output tables and token·duration metadata per step.
+
+
 ### v0.9.7 - 17th May 2026
 
 - Fixed two pipeline detail regressions:

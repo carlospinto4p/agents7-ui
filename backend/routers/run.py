@@ -102,11 +102,37 @@ async def run_agent(agent_name: str, request: Request) -> dict:
             else None
         )
         step_metrics = [s.metrics for s in response.steps]
+
+        steps_data = []
+        current_input = input_data
+        for pipeline_step, step_resp in zip(agent.steps, response.steps):
+            step_out = (
+                step_resp.model.model_dump()
+                if step_resp.model is not None
+                else None
+            )
+            steps_data.append(
+                {
+                    "name": getattr(pipeline_step.agent, "name", ""),
+                    "input": current_input,
+                    "output": step_out,
+                    "metrics": {
+                        "tokens": step_resp.metrics.tokens,
+                        "prompt_tokens": step_resp.metrics.prompt_tokens,
+                        "total_duration": step_resp.metrics.total_duration,
+                        "cost_cents": step_resp.metrics.cost_cents,
+                    },
+                }
+            )
+            if step_out is not None:
+                current_input = step_out
+
         return {
             "agent": cfg.get("name"),
             "output": output,
             "raw_response": None,
             "parse_error": not response.success,
+            "steps": steps_data,
             "metrics": {
                 "tokens": sum(m.tokens for m in step_metrics),
                 "prompt_tokens": sum(m.prompt_tokens for m in step_metrics),
