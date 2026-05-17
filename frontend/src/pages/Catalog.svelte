@@ -320,6 +320,55 @@
                 </table>
               {/if}
             </div>
+
+          {#if runnerResult.steps?.length > 0}
+            <div class="steps-section">
+              <span class="steps-label">Steps</span>
+              {#each runnerResult.steps as step, i}
+                <div class="step-card">
+                  <div class="step-header">
+                    <span class="step-num">{i + 1}</span>
+                    <span class="step-name">{step.name}</span>
+                    {#if step.metrics?.tokens}
+                      <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s</span>
+                    {/if}
+                  </div>
+                  <div class="step-body">
+                    <div class="step-io">
+                      <span class="io-label">Input</span>
+                      <table class="output-table">
+                        <tbody>
+                          {#each outputEntries(step.input) as [k, v]}
+                            <tr>
+                              <td class="out-key">{k}</td>
+                              <td class="out-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</td>
+                            </tr>
+                          {/each}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="step-io">
+                      <span class="io-label">Output</span>
+                      {#if step.output}
+                        <table class="output-table">
+                          <tbody>
+                            {#each outputEntries(step.output) as [k, v]}
+                              <tr>
+                                <td class="out-key">{k}</td>
+                                <td class="out-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</td>
+                              </tr>
+                            {/each}
+                          </tbody>
+                        </table>
+                      {:else}
+                        <p class="muted">No output (parse error)</p>
+                      {/if}
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
           {/if}
         </div>
       {/if}
@@ -857,4 +906,69 @@
     min-width: 22px;
   }
   .ex-row code { font-family: ui-monospace, monospace; color: var(--text); }
+
+  /* Pipeline steps breakdown */
+  .steps-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .steps-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+  .step-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+  }
+  .step-num {
+    font-size: 0.68rem;
+    font-weight: 700;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+  .step-meta {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .step-body { display: flex; flex-direction: column; }
+  .step-io {
+    padding: 0.5rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-io:last-child { border-bottom: none; }
+  .io-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 0.35rem;
+  }
 </style>
