@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.16 - 17th May 2026
+
+- Performance improvements in `backend/routers/`:
+  - `catalog.py`: build name-to-path index on first request; subsequent calls skip the `rglob` scan entirely.
+  - `engine.py`: create module-level `httpx.AsyncClient` to reuse connection pool across requests.
+
+
 ### v0.8.15 - 17th May 2026
 
 - Added `agents7_ui/backlog.md` so UI scan findings have a home.

@@ -10,6 +10,24 @@ router = APIRouter(prefix="/api/catalog", tags=["catalog"])
 _default = str(Path(__file__).parents[3] / "agents_catalog")
 CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
 
+_catalog_cache: list[Path] | None = None
+_name_index: dict[str, Path] | None = None
+
+
+def _ensure_catalog_loaded() -> None:
+    global _catalog_cache, _name_index
+    if _catalog_cache is not None:
+        return
+    _catalog_cache = []
+    _name_index = {}
+    if CATALOG_PATH.exists():
+        for p in sorted(CATALOG_PATH.rglob("config.yml")):
+            _catalog_cache.append(p)
+            cfg, _ = _load_config(p)
+            name = (cfg.get("name") or "").lower()
+            if name:
+                _name_index[name] = p
+
 
 def _agent_source(config_file: Path) -> str:
     if "examples" in config_file.parts:
@@ -54,20 +72,14 @@ def _parse_detail(config_file: Path) -> dict:
 
 def find_config_file(agent_name: str) -> Path | None:
     """Return config.yml path for agent_name (case-insensitive)."""
-    for config_file in sorted(CATALOG_PATH.rglob("config.yml")):
-        cfg, _ = _load_config(config_file)
-        if (cfg.get("name") or "").lower() == agent_name.lower():
-            return config_file
-    return None
+    _ensure_catalog_loaded()
+    return _name_index.get(agent_name.lower())  # type: ignore[union-attr]
 
 
 @router.get("")
 def list_agents() -> list[dict]:
-    if not CATALOG_PATH.exists():
-        return []
-    return [
-        _parse_summary(c) for c in sorted(CATALOG_PATH.rglob("config.yml"))
-    ]
+    _ensure_catalog_loaded()
+    return [_parse_summary(c) for c in _catalog_cache]  # type: ignore[arg-type]
 
 
 @router.get("/{agent_name}")

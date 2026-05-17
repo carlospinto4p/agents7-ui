@@ -9,21 +9,21 @@ router = APIRouter(prefix="/api/engine", tags=["engine"])
 logger = logging.getLogger(__name__)
 
 OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+_client = httpx.AsyncClient()
 
 
 @router.get("/models")
 async def list_models() -> dict:
-    async with httpx.AsyncClient() as client:
-        try:
-            tags_r, ps_r = await asyncio.gather(
-                client.get(f"{OLLAMA_HOST}/api/tags", timeout=5.0),
-                client.get(f"{OLLAMA_HOST}/api/ps", timeout=5.0),
-            )
-        except Exception as exc:
-            logger.warning(
-                "Failed to reach model provider at %s: %s", OLLAMA_HOST, exc
-            )
-            return {"models": [], "error": "Could not reach model provider"}
+    try:
+        tags_r, ps_r = await asyncio.gather(
+            _client.get(f"{OLLAMA_HOST}/api/tags", timeout=5.0),
+            _client.get(f"{OLLAMA_HOST}/api/ps", timeout=5.0),
+        )
+    except Exception as exc:
+        logger.warning(
+            "Failed to reach model provider at %s: %s", OLLAMA_HOST, exc
+        )
+        return {"models": [], "error": "Could not reach model provider"}
 
     tags = tags_r.json().get("models", []) if tags_r.is_success else []
     loaded_list = ps_r.json().get("models", []) if ps_r.is_success else []

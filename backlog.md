@@ -5,8 +5,8 @@
 
 #### Performance
 
-- [ ] Cache `CATALOG_PATH.rglob()` results in `catalog.py` — `find_config_file()` (line 57) and `list_agents()` (line 69) each scan the full tree; build a name-to-path index on startup instead (HIGH, M)
-- [ ] Create a module-level `httpx.AsyncClient` in `routers/engine.py:16` to reuse connection pool across requests (MED, M)
+- [x] Cache `CATALOG_PATH.rglob()` results in `catalog.py` — `find_config_file()` (line 57) and `list_agents()` (line 69) each scan the full tree; build a name-to-path index on startup instead (HIGH, M)
+- [x] Create a module-level `httpx.AsyncClient` in `routers/engine.py:16` to reuse connection pool across requests (MED, M)
 - [ ] Replace triple `.filter()` in `Runner.svelte:196-198` with a single-pass `$derived` for `passCount`/`failCount`/`doneCount` (MED, S)
 - [ ] Replace triple `.filter()` in `Catalog.svelte:8-12` with single-pass `reduce()` for agent grouping (LOW, S)
 - [ ] Fix multi-pass text parsing in `Runner.svelte:110-122` `parseLines()` — use single-pass JSONL parser (LOW, S)
