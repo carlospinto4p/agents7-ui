@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.19 - 17th May 2026
+
+- Added `frontend/src/components/JsonViewer.svelte`:
+  - Syntax-highlighted JSON rendering with token colors: keys (blue), strings (green), numbers (amber), booleans/null (coral), punctuation (muted).
+  - Uses `white-space: pre-wrap` + `overflow-wrap: anywhere` — no horizontal scrollbar.
+  - Single vertical scroll with a 5px custom scrollbar (webkit + Firefox `scrollbar-width`).
+- Updated `frontend/src/pages/Catalog.svelte`:
+  - Replaced raw `<pre>{JSON.stringify(…)}</pre>` in the Output Schema section with `<JsonViewer>`.
+  - Added custom thin scrollbar styles to `.code` (system prompt and YAML source blocks).
+
+
 ### v0.8.18 - 17th May 2026
 
 - Refactored `routers/`:

@@ -1,4 +1,6 @@
 <script>
+  import JsonViewer from '../components/JsonViewer.svelte';
+
   let agents = $state([])
   let loading = $state(true)
   let error = $state(null)
@@ -73,7 +75,7 @@
       <section>
         <h2>Output Schema</h2>
         <p class="section-desc">Derived from the agent's Pydantic output model.</p>
-        <pre class="code">{JSON.stringify(selected.output_schema, null, 2)}</pre>
+        <JsonViewer value={selected.output_schema} />
       </section>
     {:else if selected.output_model}
       <section>
@@ -284,13 +286,21 @@
     font-size: 0.8rem;
     line-height: 1.55;
     overflow-x: auto;
+    overflow-y: auto;
     white-space: pre;
     margin: 0;
     max-height: 300px;
-    overflow-y: auto;
     font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
     color: var(--text);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
+  .code::-webkit-scrollbar          { width: 5px; height: 5px; }
+  .code::-webkit-scrollbar-track    { background: transparent; }
+  .code::-webkit-scrollbar-corner   { background: transparent; }
+  .code::-webkit-scrollbar-thumb    { background: var(--border); border-radius: 3px; }
+  .code::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
   .code.prompt   { max-height: 220px; }
   .code.yaml-src { max-height: 340px; }
 
