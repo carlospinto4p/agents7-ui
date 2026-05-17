@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.0 - 17th May 2026
+
+- Updated `frontend/src/pages/Catalog.svelte`:
+  - Added inline **Runner** section to each agent's detail page (first section, open by default):
+    - Per-field text inputs when the first example's input is a plain object.
+    - Single text input when the first example's input is a plain string (wraps as `{input_data: value}` per API convention).
+    - Raw JSON textarea fallback when no example input is available.
+    - Output card with pass/fail badge, structured key-value table, parse-error raw response, and token count.
+  - Added **collapsible sections**: Runner, Output Schema, Examples, System Prompt, YAML Source each have a toggle header with animated chevron. Runner/Schema/Examples default to open; System Prompt/YAML default to collapsed.
+
+
 ### v0.8.19 - 17th May 2026
 
 - Added `frontend/src/components/JsonViewer.svelte`:
