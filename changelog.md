@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.7 - 17th May 2026
+
+- Fixed two pipeline detail regressions:
+  - `frontend/src/pages/Catalog.svelte`: detail header badges now derive provider/model from `step_engines` for pipeline agents (same logic as the card), so badges are no longer lost when clicking through.
+  - `agents_catalog/examples/person_to_bio_pipeline/config.yml`: added `output` to the system example so the Examples section shows the expected bio instead of `—`.
+
+
 ### v0.9.6 - 17th May 2026
 
 - Fixed catalog card for pipeline agents:

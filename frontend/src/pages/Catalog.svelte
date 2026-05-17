@@ -193,11 +193,20 @@
         {#if selected.agent_type}
           <span class="badge type">{selected.agent_type}</span>
         {/if}
-        {#if selected.provider}
-          <span class="badge provider">{selected.provider}</span>
-        {/if}
-        {#if selected.model}
-          <span class="badge model">{selected.model}</span>
+        {#if selected.step_engines?.length}
+          {#each [...new Set(selected.step_engines.map(s => s.provider).filter(Boolean))] as p}
+            <span class="badge provider">{p}</span>
+          {/each}
+          {#each [...new Set(selected.step_engines.map(s => s.model).filter(Boolean))] as m}
+            <span class="badge model">{m}</span>
+          {/each}
+        {:else}
+          {#if selected.provider}
+            <span class="badge provider">{selected.provider}</span>
+          {/if}
+          {#if selected.model}
+            <span class="badge model">{selected.model}</span>
+          {/if}
         {/if}
         {#if selected.version != null}
           <span class="badge version">v{selected.version}</span>
