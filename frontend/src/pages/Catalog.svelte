@@ -367,12 +367,10 @@
                     ? ex.input
                     : JSON.stringify(ex.input)}</code>
                 </div>
-                {#if ex.output != null}
-                  <div class="ex-row">
-                    <span class="ex-label">out</span>
-                    <code>{JSON.stringify(ex.output)}</code>
-                  </div>
-                {/if}
+                <div class="ex-row">
+                  <span class="ex-label">out</span>
+                  <code>{ex.output != null ? JSON.stringify(ex.output) : '—'}</code>
+                </div>
               </div>
             {/each}
             {#if selected.system_examples.length > 4}
@@ -435,21 +433,27 @@
           <h2 class="section-heading">{section.label}</h2>
           <div class="grid">
             {#each grouped[section.key] as agent}
+              {@const cardModels = agent.step_engines?.length
+                ? [...new Set(agent.step_engines.map(s => s.model).filter(Boolean))]
+                : (agent.model ? [agent.model] : [])}
+              {@const cardProvider = agent.step_engines?.length
+                ? [...new Set(agent.step_engines.map(s => s.provider).filter(Boolean))].join(', ')
+                : (agent.provider ?? '')}
               <button class="card" onclick={() => openAgent(agent.name)}>
                 <div class="card-name">{agent.display_name ?? agent.name}</div>
                 <div class="card-meta">
                   {#if agent.agent_type}
                     <span class="badge type">{agent.agent_type}</span>
                   {/if}
-                  {#if agent.model}
-                    <span class="badge model">{agent.model}</span>
-                  {/if}
+                  {#each cardModels as model}
+                    <span class="badge model">{model}</span>
+                  {/each}
                 </div>
                 {#if agent.pipeline_steps?.length}
                   <div class="card-steps">{agent.pipeline_steps.join(' → ')}</div>
                 {/if}
                 <div class="card-footer">
-                  {#if agent.provider}{agent.provider}{/if}
+                  {#if cardProvider}{cardProvider}{/if}
                   {#if agent.version != null} · v{agent.version}{/if}
                 </div>
               </button>

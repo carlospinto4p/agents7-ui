@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.6 - 17th May 2026
+
+- Fixed catalog card for pipeline agents:
+  - `frontend/src/pages/Catalog.svelte`: card now derives provider and model badges from `step_engines` (unique values across steps) when `agent_type` is pipeline, so the Ollama/model badges appear correctly.
+  - `frontend/src/pages/Catalog.svelte`: examples "out" row is always rendered; shows `—` when `ex.output` is null/undefined instead of hiding the row entirely.
+
+
 ### v0.9.5 - 17th May 2026
 
 - Fixed three pipeline detail page gaps:
