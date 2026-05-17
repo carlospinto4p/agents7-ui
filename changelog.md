@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.8.17 - 17th May 2026
+
+- Perf/refactor in `frontend/src/pages/`:
+  - `Runner.svelte`: replace triple `.filter()` for `passCount`/`failCount`/`doneCount` (lines 196-198) with a single-pass `$derived.by()`.
+  - `Runner.svelte`: replace chained `.split().map().filter().map()` in `parseLines()` with a single `for` loop.
+  - `Catalog.svelte`: replace triple `.filter()` for agent grouping with a single-pass `reduce()`.
+  - `Chatter.svelte` `$effect` audit: confirmed no hidden reactive dependencies — synchronous body reads no `$state`, so `agentName`/`starting` inside `.then()` are not tracked.
+
+
 ### v0.8.16 - 17th May 2026
 
 - Performance improvements in `backend/routers/`:

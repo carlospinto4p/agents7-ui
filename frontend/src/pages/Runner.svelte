@@ -108,17 +108,18 @@
   let results    = $state([])
 
   function parseLines() {
-    return jsonlText
-      .split('\n')
-      .map(l => l.trim())
-      .filter(l => l.length > 0)
-      .map((l, i) => {
-        try {
-          return { idx: i, raw: l, parsed: JSON.parse(l), parseErr: null }
-        } catch (e) {
-          return { idx: i, raw: l, parsed: null, parseErr: e.message }
-        }
-      })
+    const out = []
+    let idx = 0
+    for (const line of jsonlText.split('\n')) {
+      const l = line.trim()
+      if (!l) continue
+      try {
+        out.push({ idx: idx++, raw: l, parsed: JSON.parse(l), parseErr: null })
+      } catch (e) {
+        out.push({ idx: idx++, raw: l, parsed: null, parseErr: e.message })
+      }
+    }
+    return out
   }
 
   async function runBatch() {
@@ -193,9 +194,15 @@
     e.target.value = ''
   }
 
-  let passCount = $derived(results.filter(r => r.status === 'pass').length)
-  let failCount = $derived(results.filter(r => ['fail', 'error', 'parse-error'].includes(r.status)).length)
-  let doneCount = $derived(results.filter(r => !['pending', 'running'].includes(r.status)).length)
+  let { passCount, failCount, doneCount } = $derived.by(() => {
+    let pass = 0, fail = 0, done = 0
+    for (const r of results) {
+      if (r.status === 'pass') pass++
+      else if (r.status === 'fail' || r.status === 'error' || r.status === 'parse-error') fail++
+      if (r.status !== 'pending' && r.status !== 'running') done++
+    }
+    return { passCount: pass, failCount: fail, doneCount: done }
+  })
 
   function truncate(s, n = 60) {
     if (typeof s !== 'string') s = JSON.stringify(s)

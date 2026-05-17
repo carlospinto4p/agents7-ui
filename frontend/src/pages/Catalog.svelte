@@ -5,11 +5,12 @@
   let selected = $state(null)
   let detailLoading = $state(false)
 
-  let grouped = $derived({
-    catalog: agents.filter(a => a.source === 'catalog'),
-    example: agents.filter(a => a.source === 'example'),
-    integration_test: agents.filter(a => a.source === 'integration_test'),
-  })
+  let grouped = $derived(
+    agents.reduce(
+      (acc, a) => { if (a.source in acc) acc[a.source].push(a); return acc },
+      { catalog: [], example: [], integration_test: [] },
+    )
+  )
 
   $effect(() => {
     fetch('/api/catalog')

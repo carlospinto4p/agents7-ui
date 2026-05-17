@@ -5,13 +5,13 @@
 
 #### Performance
 
-- [ ] Replace triple `.filter()` in `Runner.svelte:196-198` with a single-pass `$derived` for `passCount`/`failCount`/`doneCount` (MED, S)
-- [ ] Replace triple `.filter()` in `Catalog.svelte:8-12` with single-pass `reduce()` for agent grouping (LOW, S)
-- [ ] Fix multi-pass text parsing in `Runner.svelte:110-122` `parseLines()` — use single-pass JSONL parser (LOW, S)
+- [x] Replace triple `.filter()` in `Runner.svelte:196-198` with a single-pass `$derived` for `passCount`/`failCount`/`doneCount` (MED, S)
+- [x] Replace triple `.filter()` in `Catalog.svelte:8-12` with single-pass `reduce()` for agent grouping (LOW, S)
+- [x] Fix multi-pass text parsing in `Runner.svelte:110-122` `parseLines()` — use single-pass JSONL parser (LOW, S)
 
 #### Refactoring
 
-- [ ] Verify `Chatter.svelte:18-30` `$effect` — agents found hidden reactive dependency on `agentName`/`starting`; v0.8.14 may have only partially fixed it. Audit with `untrack()` or move to explicit event handler (HIGH, S)
+- [x] Verify `Chatter.svelte:18-30` `$effect` — agents found hidden reactive dependency on `agentName`/`starting`; v0.8.14 may have only partially fixed it. Audit with `untrack()` or move to explicit event handler (HIGH, S)
 - [ ] Verify `Runner.svelte:37-46` and `Eval.svelte:8-16` for similar untracked `$effect` dependency on fetch — add explicit deps or `untrack()` (MED, S)
 - [ ] Extract duplicate agent type maps in `routers/run.py:6-11` and `routers/chat.py:17-23` into shared util (MED, S)
 - [ ] Extract session storage dicts in `routers/chat.py:26-31` (`_sessions`, `_session_times`, `_start_counts`) into a `SessionStore` class (MED, M)
