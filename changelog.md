@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.3 - 17th May 2026
+
+- Updated catalog card and detail header to show `persona.full_name` as
+  display name when available, falling back to `name`:
+  - `catalog.py`: added `_display_name()` helper; `_parse_summary()` and
+    `_parse_detail()` now include `display_name` in the response.
+  - `Catalog.svelte`: card title and detail `<h1>` use
+    `display_name ?? name`.
+
+
 ### v0.9.2 - 17th May 2026
 
 - Updated `frontend/src/pages/Runner.svelte` and `frontend/src/pages/Catalog.svelte`:

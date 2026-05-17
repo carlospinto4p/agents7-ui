@@ -185,7 +185,7 @@
     <button class="back-btn" onclick={back}>← Catalog</button>
 
     <div class="detail-header">
-      <h1>{selected.name}</h1>
+      <h1>{selected.display_name ?? selected.name}</h1>
       <div class="badges">
         {#if selected.agent_type}
           <span class="badge type">{selected.agent_type}</span>
@@ -421,7 +421,7 @@
           <div class="grid">
             {#each grouped[section.key] as agent}
               <button class="card" onclick={() => openAgent(agent.name)}>
-                <div class="card-name">{agent.name}</div>
+                <div class="card-name">{agent.display_name ?? agent.name}</div>
                 <div class="card-meta">
                   {#if agent.agent_type}
                     <span class="badge type">{agent.agent_type}</span>

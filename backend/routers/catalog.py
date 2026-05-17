@@ -37,11 +37,17 @@ def _agent_source(config_file: Path) -> str:
     return "catalog"
 
 
+def _display_name(cfg: dict) -> str | None:
+    persona = cfg.get("persona") or {}
+    return persona.get("full_name") or cfg.get("name")
+
+
 def _parse_summary(config_file: Path) -> dict:
     cfg, _ = _load_config(config_file)
     engine = cfg.get("engine") or {}
     return {
         "name": cfg.get("name"),
+        "display_name": _display_name(cfg),
         "version": cfg.get("version"),
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),
@@ -57,6 +63,7 @@ def _parse_detail(config_file: Path) -> dict:
 
     return {
         "name": cfg.get("name"),
+        "display_name": _display_name(cfg),
         "version": cfg.get("version"),
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),
