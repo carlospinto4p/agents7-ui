@@ -101,16 +101,20 @@ async def run_agent(agent_name: str, request: Request) -> dict:
             if response.model is not None
             else None
         )
+        step_metrics = [s.metrics for s in response.steps]
         return {
             "agent": cfg.get("name"),
             "output": output,
             "raw_response": None,
             "parse_error": not response.success,
             "metrics": {
-                "tokens": None,
-                "prompt_tokens": None,
-                "total_duration": None,
-                "cost_cents": None,
+                "tokens": sum(m.tokens for m in step_metrics),
+                "prompt_tokens": sum(m.prompt_tokens for m in step_metrics),
+                "total_duration": sum(m.total_duration for m in step_metrics),
+                "cost_cents": (
+                    sum(m.cost_cents for m in step_metrics if m.cost_cents)
+                    or None
+                ),
             },
         }
 

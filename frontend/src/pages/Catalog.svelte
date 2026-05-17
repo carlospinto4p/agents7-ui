@@ -75,7 +75,10 @@
     const parts = []
     if (runnerDuration != null) parts.push(`${runnerDuration}s`)
     if (runnerResult?.metrics?.tokens) parts.push(`${runnerResult.metrics.tokens} tok`)
-    if (selected?.model) parts.push(selected.model)
+    const modelLabel = selected?.step_engines?.length
+      ? selected.step_engines.map(s => s.model).filter(Boolean).join(', ')
+      : selected?.model
+    if (modelLabel) parts.push(modelLabel)
     return parts.join(' · ')
   })
 
@@ -200,7 +203,14 @@
           <span class="badge version">v{selected.version}</span>
         {/if}
       </div>
-      {#if selected.pipeline_steps?.length}
+      {#if selected.step_engines?.length}
+        <div class="detail-step-engines">
+          {#each selected.step_engines as s, i}
+            {#if i > 0}<span class="step-arrow">→</span>{/if}
+            <span class="step-engine">{s.name}{s.provider || s.model ? ` (${[s.provider, s.model].filter(Boolean).join(' / ')})` : ''}</span>
+          {/each}
+        </div>
+      {:else if selected.pipeline_steps?.length}
         <div class="detail-steps">{selected.pipeline_steps.join(' → ')}</div>
       {/if}
     </div>
@@ -357,10 +367,12 @@
                     ? ex.input
                     : JSON.stringify(ex.input)}</code>
                 </div>
-                <div class="ex-row">
-                  <span class="ex-label">out</span>
-                  <code>{JSON.stringify(ex.output)}</code>
-                </div>
+                {#if ex.output != null}
+                  <div class="ex-row">
+                    <span class="ex-label">out</span>
+                    <code>{JSON.stringify(ex.output)}</code>
+                  </div>
+                {/if}
               </div>
             {/each}
             {#if selected.system_examples.length > 4}
@@ -558,6 +570,9 @@
   }
   .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .detail-steps { font-size: 0.82rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem; }
+  .detail-step-engines { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+  .step-arrow { color: var(--text-muted); opacity: 0.5; }
+  .step-engine { font-style: italic; }
 
   /* Section layout */
   .detail section { margin-bottom: 1.75rem; }

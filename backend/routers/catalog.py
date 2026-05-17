@@ -42,38 +42,48 @@ def _display_name(cfg: dict) -> str | None:
     return persona.get("full_name") or cfg.get("name")
 
 
-def _resolve_pipeline_steps(
+def _resolve_pipeline_step_details(
     config_file: Path, steps: list[dict]
-) -> list[str]:
-    names = []
+) -> list[dict]:
+    details = []
     for step in steps:
         agent_ref = step.get("agent")
         if not agent_ref:
             continue
         step_path = (config_file.parent / agent_ref).resolve()
+        entry: dict = {"name": agent_ref, "provider": None, "model": None}
         if step_path.exists():
             try:
                 cfg, _ = _load_config(step_path)
-                names.append(
+                engine = cfg.get("engine") or {}
+                entry["name"] = (
                     _display_name(cfg) or cfg.get("name") or agent_ref
                 )
+                entry["provider"] = engine.get("provider")
+                entry["model"] = engine.get("model")
             except Exception:
-                names.append(agent_ref)
-        else:
-            names.append(agent_ref)
-    return names
+                pass
+        details.append(entry)
+    return details
 
 
-def _pipeline_steps(config_file: Path, cfg: dict) -> list[str] | None:
+def _pipeline_data(
+    config_file: Path, cfg: dict
+) -> tuple[list[str] | None, list[dict] | None]:
     if cfg.get("agent_type") != "pipeline":
-        return None
+        return None, None
     steps = cfg.get("steps") or []
-    return _resolve_pipeline_steps(config_file, steps) if steps else None
+    if not steps:
+        return None, None
+    details = _resolve_pipeline_step_details(config_file, steps)
+    names = [d["name"] for d in details]
+    return names, details
 
 
 def _parse_summary(config_file: Path) -> dict:
     cfg, _ = _load_config(config_file)
     engine = cfg.get("engine") or {}
+    pipeline_steps, step_engines = _pipeline_data(config_file, cfg)
     return {
         "name": cfg.get("name"),
         "display_name": _display_name(cfg),
@@ -81,7 +91,8 @@ def _parse_summary(config_file: Path) -> dict:
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),
         "model": engine.get("model"),
-        "pipeline_steps": _pipeline_steps(config_file, cfg),
+        "pipeline_steps": pipeline_steps,
+        "step_engines": step_engines,
         "source": _agent_source(config_file),
     }
 
@@ -90,6 +101,7 @@ def _parse_detail(config_file: Path) -> dict:
     cfg, raw_yaml = _load_config(config_file)
     engine = cfg.get("engine") or {}
     output_schema, _ = _load_output_schema(cfg)
+    pipeline_steps, step_engines = _pipeline_data(config_file, cfg)
 
     return {
         "name": cfg.get("name"),
@@ -98,7 +110,8 @@ def _parse_detail(config_file: Path) -> dict:
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),
         "model": engine.get("model"),
-        "pipeline_steps": _pipeline_steps(config_file, cfg),
+        "pipeline_steps": pipeline_steps,
+        "step_engines": step_engines,
         "system_prompt": cfg.get("system_prompt"),
         "output_model": cfg.get("output_model"),
         "output_schema": output_schema,

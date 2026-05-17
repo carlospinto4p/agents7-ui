@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.5 - 17th May 2026
+
+- Fixed three pipeline detail page gaps:
+  - `backend/routers/catalog.py`: added `step_engines` (name, provider, model per step) to summary and detail API responses; refactored `_resolve_pipeline_steps` into `_resolve_pipeline_step_details` + `_pipeline_data`.
+  - `backend/routers/run.py`: pipeline runs now aggregate token count, prompt tokens, and total duration across all step responses instead of returning all-`None` metrics.
+  - `frontend/src/pages/Catalog.svelte`: examples section only renders the "out" row when `ex.output != null`; detail header shows per-step provider/model chain; `runnerMetaLine` uses step models for pipelines.
+
+
 ### v0.9.4 - 17th May 2026
 
 - Added pipeline step display to catalog cards and detail headers:
