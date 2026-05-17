@@ -331,6 +331,12 @@
                   <button class="step-header" onclick={() => { stepsOpen[i] = !stepsOpen[i] }}>
                     <span class="step-num">{i + 1}</span>
                     <span class="step-name">{step.name}</span>
+                    {#if selected.step_engines?.[i]?.provider}
+                      <span class="badge provider">{selected.step_engines[i].provider}</span>
+                    {/if}
+                    {#if selected.step_engines?.[i]?.model}
+                      <span class="badge model">{selected.step_engines[i].model}</span>
+                    {/if}
                     {#if step.metrics?.tokens}
                       <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s</span>
                     {/if}

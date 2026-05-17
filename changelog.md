@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.11 - 17th May 2026
+
+- Added provider/model badges to pipeline step card headers:
+  - `frontend/src/pages/Catalog.svelte`: reads from `selected.step_engines[i]`.
+  - `frontend/src/pages/Runner.svelte`: reads from `agentDetail.step_engines[i]`; added badge CSS.
+
+
 ### v0.9.10 - 17th May 2026
 
 - Made pipeline step cards collapsible (expanded by default):

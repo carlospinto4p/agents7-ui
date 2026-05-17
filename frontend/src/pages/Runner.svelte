@@ -394,6 +394,12 @@
                   <button class="step-header" onclick={() => { singleStepsOpen[i] = !singleStepsOpen[i] }}>
                     <span class="step-num">{i + 1}</span>
                     <span class="step-name">{step.name}</span>
+                    {#if agentDetail?.step_engines?.[i]?.provider}
+                      <span class="badge provider">{agentDetail.step_engines[i].provider}</span>
+                    {/if}
+                    {#if agentDetail?.step_engines?.[i]?.model}
+                      <span class="badge model">{agentDetail.step_engines[i].model}</span>
+                    {/if}
                     {#if step.metrics?.tokens}
                       <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s</span>
                     {/if}
@@ -971,6 +977,19 @@
 
   .state-msg { color: var(--text-muted); font-size: 0.95rem; }
   .state-msg.error { color: var(--fail); }
+
+  /* Badges (reused from Catalog inside step headers) */
+  .badge {
+    display: inline-block;
+    padding: 0.1rem 0.38rem;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .badge.model    { background: var(--pass-bg);  color: var(--pass); }
+  .badge.provider { background: var(--warn-bg);  color: var(--warn); }
 
   /* Pipeline steps breakdown */
   .steps-section {
