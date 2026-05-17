@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.2 - 17th May 2026
+
+- Updated `frontend/src/pages/Runner.svelte` and `frontend/src/pages/Catalog.svelte`:
+  - Added animated loading bar with elapsed-seconds counter while an agent is running.
+  - Run button no longer shows "Running…" text — the loading bar replaces that role.
+  - Output card header now shows elapsed time, token count, and model name (`5s · 312 tok · qwen3:8b`) once the run completes.
+  - Empty-input guard: Run button stays disabled until all input fields have non-empty values.
+  - Runner inputs are now pre-populated with the first example's values instead of showing them as placeholder hints.
+  - Batch runner shows per-row progress and elapsed time below the button; total duration appears in the results header after completion.
+
+
 ### v0.9.1 - 17th May 2026
 
 - Added Ollama availability indicator to the app header:

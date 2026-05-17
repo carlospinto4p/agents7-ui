@@ -21,9 +21,11 @@
   // ── Single runner ─────────────────────────────────────────
   let agentDetail   = $state(null)
   let fieldValues   = $state({})
-  let singleRunning = $state(false)
-  let singleResult  = $state(null)
-  let singleError   = $state(null)
+  let singleRunning  = $state(false)
+  let singleResult   = $state(null)
+  let singleError    = $state(null)
+  let elapsedSingle  = $state(0)
+  let singleDuration = $state(null)
 
   let inputFields = $derived(
     agentDetail?.system_examples?.[0]?.input
@@ -36,12 +38,23 @@
 
   $effect(() => {
     if (!agentName) return
-    singleResult = null
-    singleError  = null
-    fieldValues  = {}
+    singleResult   = null
+    singleError    = null
+    singleDuration = null
+    fieldValues    = {}
     fetch(`/api/catalog/${encodeURIComponent(agentName)}`)
       .then(r => r.json())
-      .then(data => { agentDetail = data })
+      .then(data => {
+        agentDetail = data
+        const ex = data?.system_examples?.[0]?.input
+        if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
+          const defaults = {}
+          for (const [k, v] of Object.entries(ex)) {
+            defaults[k] = typeof v === 'object' ? JSON.stringify(v) : String(v)
+          }
+          fieldValues = defaults
+        }
+      })
       .catch(() => { agentDetail = null })
   })
 
@@ -94,8 +107,25 @@
   }
 
   let singleSubmittable = $derived(
-    !singleRunning && !!agentName && inputFields.length > 0
+    !singleRunning && !!agentName && inputFields.length > 0 &&
+    inputFields.every(f => (fieldValues[f.name] ?? '').trim() !== '')
   )
+
+  $effect(() => {
+    if (!singleRunning) return
+    singleDuration = null
+    elapsedSingle = 0
+    const id = setInterval(() => { elapsedSingle++ }, 1000)
+    return () => { clearInterval(id); singleDuration = elapsedSingle }
+  })
+
+  let singleMetaLine = $derived.by(() => {
+    const parts = []
+    if (singleDuration != null) parts.push(`${singleDuration}s`)
+    if (singleResult?.metrics?.tokens) parts.push(`${singleResult.metrics.tokens} tok`)
+    if (agentDetail?.model) parts.push(agentDetail.model)
+    return parts.join(' · ')
+  })
 
   function outputEntries(obj) {
     if (!obj || typeof obj !== 'object') return []
@@ -103,9 +133,19 @@
   }
 
   // ── Batch runner ──────────────────────────────────────────
-  let jsonlText  = $state('')
-  let running    = $state(false)
-  let results    = $state([])
+  let jsonlText    = $state('')
+  let running      = $state(false)
+  let results      = $state([])
+  let elapsedBatch = $state(0)
+  let batchDuration = $state(null)
+
+  $effect(() => {
+    if (!running) return
+    batchDuration = null
+    elapsedBatch = 0
+    const id = setInterval(() => { elapsedBatch++ }, 1000)
+    return () => { clearInterval(id); batchDuration = elapsedBatch }
+  })
 
   function parseLines() {
     const out = []
@@ -299,9 +339,14 @@
             class="run-btn"
             onclick={runSingle}
             disabled={!singleSubmittable}
-          >
-            {singleRunning ? 'Running…' : 'Run'}
-          </button>
+          >Run</button>
+
+          {#if singleRunning}
+            <div class="loading-bar-wrap">
+              <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+              <span class="running-hint">Running… {elapsedSingle}s</span>
+            </div>
+          {/if}
 
           {#if singleError}
             <p class="state-msg error">{singleError}</p>
@@ -316,8 +361,8 @@
                 {:else}
                   <span class="status-badge s-pass">✓ pass</span>
                 {/if}
-                {#if singleResult.metrics?.tokens}
-                  <span class="token-count">{singleResult.metrics.tokens} tokens</span>
+                {#if singleMetaLine}
+                  <span class="token-count">{singleMetaLine}</span>
                 {/if}
               </div>
 
@@ -384,15 +429,20 @@
             class="run-btn"
             onclick={runBatch}
             disabled={running || !agentName || !jsonlText.trim()}
-          >
-            {running ? `Running… (${doneCount}/${results.length})` : 'Run Batch'}
-          </button>
+          >Run Batch</button>
+
+          {#if running}
+            <div class="loading-bar-wrap">
+              <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+              <span class="running-hint">Running… {doneCount}/{results.length} rows · {elapsedBatch}s</span>
+            </div>
+          {/if}
         </div>
 
         {#if results.length > 0}
           <div class="results">
             <div class="results-header">
-              <span class="results-title">Results — {doneCount}/{results.length}</span>
+              <span class="results-title">Results — {doneCount}/{results.length}{batchDuration != null ? ` · ${batchDuration}s` : ''}</span>
               <span class="pill pass">{passCount} passed</span>
               <span class="pill fail">{failCount} failed</span>
             </div>
@@ -669,7 +719,29 @@
     color: var(--text-muted);
     margin-right: 0.25rem;
   }
-  .token-count { margin-left: auto; font-size: 0.78rem; color: var(--text-muted); }
+  .token-count { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); }
+
+  /* Loading bar */
+  .loading-bar-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
+  .loading-bar-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .loading-bar-fill {
+    position: absolute;
+    top: 0; left: 0; height: 100%; width: 35%;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: loading-slide 1.2s ease-in-out infinite;
+  }
+  @keyframes loading-slide {
+    0%   { left: -35%; }
+    100% { left: 110%; }
+  }
+  .running-hint { font-size: 0.75rem; color: var(--text-muted); }
 
   .raw-response {
     margin: 0;

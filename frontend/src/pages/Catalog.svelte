@@ -16,9 +16,11 @@
   // ── Inline runner ──────────────────────────────────────────
   let runnerValues  = $state({})
   let runnerText    = $state('')
-  let runnerRunning = $state(false)
-  let runnerResult  = $state(null)
-  let runnerError   = $state(null)
+  let runnerRunning  = $state(false)
+  let runnerResult   = $state(null)
+  let runnerError    = $state(null)
+  let elapsedRunner  = $state(0)
+  let runnerDuration = $state(null)
 
   let grouped = $derived(
     agents.reduce(
@@ -55,8 +57,27 @@
   let runnerSubmittable = $derived(
     !runnerRunning &&
     !!selected &&
-    (runnerFields.length > 0 || runnerText.trim() !== '')
+    (
+      (runnerFields.length > 0 && runnerFields.every(f => (runnerValues[f.name] ?? '').trim() !== '')) ||
+      (runnerIsText && runnerText.trim() !== '')
+    )
   )
+
+  $effect(() => {
+    if (!runnerRunning) return
+    runnerDuration = null
+    elapsedRunner = 0
+    const id = setInterval(() => { elapsedRunner++ }, 1000)
+    return () => { clearInterval(id); runnerDuration = elapsedRunner }
+  })
+
+  let runnerMetaLine = $derived.by(() => {
+    const parts = []
+    if (runnerDuration != null) parts.push(`${runnerDuration}s`)
+    if (runnerResult?.metrics?.tokens) parts.push(`${runnerResult.metrics.tokens} tok`)
+    if (selected?.model) parts.push(selected.model)
+    return parts.join(' · ')
+  })
 
   $effect(() => {
     fetch('/api/catalog')
@@ -66,19 +87,28 @@
   })
 
   async function openAgent(name) {
-    detailLoading = true
-    selected      = null
-    error         = null
-    runnerValues  = {}
-    runnerText    = ''
-    runnerResult  = null
-    runnerError   = null
+    detailLoading  = true
+    selected       = null
+    error          = null
+    runnerValues   = {}
+    runnerText     = ''
+    runnerResult   = null
+    runnerError    = null
+    runnerDuration = null
     try {
-      const r = await fetch(
-        `/api/catalog/${encodeURIComponent(name)}`
-      )
+      const r = await fetch(`/api/catalog/${encodeURIComponent(name)}`)
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
       selected = await r.json()
+      const ex = selected?.system_examples?.[0]?.input
+      if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
+        const defaults = {}
+        for (const [k, v] of Object.entries(ex)) {
+          defaults[k] = typeof v === 'object' ? JSON.stringify(v) : String(v)
+        }
+        runnerValues = defaults
+      } else if (typeof ex === 'string') {
+        runnerText = ex
+      }
     } catch (e) {
       error = e.message
     } finally {
@@ -223,7 +253,14 @@
             class="run-btn"
             onclick={runAgent}
             disabled={!runnerSubmittable}
-          >{runnerRunning ? 'Running…' : 'Run'}</button>
+          >Run</button>
+
+          {#if runnerRunning}
+            <div class="loading-bar-wrap">
+              <div class="loading-bar-track"><div class="loading-bar-fill"></div></div>
+              <span class="running-hint">Running… {elapsedRunner}s</span>
+            </div>
+          {/if}
 
           {#if runnerError}
             <p class="runner-error">{runnerError}</p>
@@ -238,10 +275,8 @@
                 {:else}
                   <span class="status-badge s-pass">✓ pass</span>
                 {/if}
-                {#if runnerResult.metrics?.tokens}
-                  <span class="token-count">
-                    {runnerResult.metrics.tokens} tokens
-                  </span>
+                {#if runnerMetaLine}
+                  <span class="token-count">{runnerMetaLine}</span>
                 {/if}
               </div>
               {#if runnerResult.parse_error}
@@ -660,6 +695,28 @@
     font-size: 0.75rem;
     color: var(--text-muted);
   }
+
+  /* Loading bar */
+  .loading-bar-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
+  .loading-bar-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .loading-bar-fill {
+    position: absolute;
+    top: 0; left: 0; height: 100%; width: 35%;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: loading-slide 1.2s ease-in-out infinite;
+  }
+  @keyframes loading-slide {
+    0%   { left: -35%; }
+    100% { left: 110%; }
+  }
+  .running-hint { font-size: 0.75rem; color: var(--text-muted); }
   .raw-response {
     margin: 0;
     padding: 0.75rem 0.85rem;
