@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.4 - 17th May 2026
+
+- Added pipeline step display to catalog cards and detail headers:
+  - `backend/routers/catalog.py`: added `_resolve_pipeline_steps()` and `_pipeline_steps()` helpers; `pipeline_steps` included in both summary and detail API responses.
+  - `frontend/src/pages/Catalog.svelte`: card shows step chain (`step1 → step2`) below badges; detail header shows the same chain below the badge row.
+
+
 ### v0.9.3 - 17th May 2026
 
 - Updated catalog card and detail header to show `persona.full_name` as

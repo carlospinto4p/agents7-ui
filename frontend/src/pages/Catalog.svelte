@@ -200,6 +200,9 @@
           <span class="badge version">v{selected.version}</span>
         {/if}
       </div>
+      {#if selected.pipeline_steps?.length}
+        <div class="detail-steps">{selected.pipeline_steps.join(' → ')}</div>
+      {/if}
     </div>
 
     <!-- Runner -->
@@ -430,6 +433,9 @@
                     <span class="badge model">{agent.model}</span>
                   {/if}
                 </div>
+                {#if agent.pipeline_steps?.length}
+                  <div class="card-steps">{agent.pipeline_steps.join(' → ')}</div>
+                {/if}
                 <div class="card-footer">
                   {#if agent.provider}{agent.provider}{/if}
                   {#if agent.version != null} · v{agent.version}{/if}
@@ -510,6 +516,7 @@
   .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.4); border-color: var(--accent); }
   .card-name { font-weight: 600; font-size: 0.97rem; color: var(--text-strong); }
   .card-meta { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .card-steps { font-size: 0.74rem; color: var(--text-muted); font-style: italic; }
   .card-footer { font-size: 0.78rem; color: var(--text-muted); }
 
   /* Badges */
@@ -550,6 +557,7 @@
     color: var(--text-strong);
   }
   .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .detail-steps { font-size: 0.82rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem; }
 
   /* Section layout */
   .detail section { margin-bottom: 1.75rem; }
