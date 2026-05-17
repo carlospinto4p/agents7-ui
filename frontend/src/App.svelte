@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte'
   import Home from './pages/Home.svelte'
   import Catalog from './pages/Catalog.svelte'
   import Runner from './pages/Runner.svelte'
@@ -7,6 +8,7 @@
   import Eval from './pages/Eval.svelte'
 
   let page = $state(getPage())
+  let ollamaStatus = $state('checking')
 
   function getPage() {
     return window.location.hash.replace('#/', '').split('/')[0] || 'home'
@@ -16,6 +18,22 @@
     const onHashChange = () => { page = getPage() }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
+  })
+
+  async function checkOllama() {
+    try {
+      const r = await fetch('/api/engine/status')
+      const data = await r.json()
+      ollamaStatus = data.available ? 'up' : 'down'
+    } catch {
+      ollamaStatus = 'down'
+    }
+  }
+
+  onMount(() => {
+    checkOllama()
+    const id = setInterval(checkOllama, 30000)
+    return () => clearInterval(id)
   })
 </script>
 
@@ -30,6 +48,10 @@
       <a href="#/engine" class:active={page === 'engine'}>Engine</a>
       <a href="#/eval" class:active={page === 'eval'}>Eval</a>
     </nav>
+    <div class="ollama-pill" class:up={ollamaStatus === 'up'} class:down={ollamaStatus === 'down'}>
+      <span class="dot"></span>
+      <span>Ollama</span>
+    </div>
   </div>
 </header>
 
@@ -86,6 +108,34 @@
   nav a.active {
     color: var(--accent);
     font-weight: 600;
+  }
+  .ollama-pill {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--neutral);
+    padding: 0.2rem 0.55rem;
+    border-radius: 10px;
+    background: var(--neutral-bg);
+    border: 1px solid transparent;
+    user-select: none;
+  }
+  .ollama-pill.up {
+    color: var(--pass);
+    background: var(--pass-bg);
+  }
+  .ollama-pill.down {
+    color: var(--fail);
+    background: var(--fail-bg);
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
   }
   main {
     flex: 1;

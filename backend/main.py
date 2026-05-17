@@ -37,7 +37,7 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
-_UNPROTECTED = {"/api/health"}
+_UNPROTECTED = {"/api/health", "/api/engine/status"}
 
 
 @app.middleware("http")

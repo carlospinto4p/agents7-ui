@@ -46,3 +46,12 @@ async def list_models() -> dict:
         )
 
     return {"models": models}
+
+
+@router.get("/status")
+async def ollama_status() -> dict:
+    try:
+        r = await _client.get(f"{OLLAMA_HOST}/api/tags", timeout=2.0)
+        return {"available": r.is_success}
+    except Exception:
+        return {"available": False}

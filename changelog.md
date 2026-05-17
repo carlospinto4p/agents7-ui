@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.1 - 17th May 2026
+
+- Added Ollama availability indicator to the app header:
+  - `backend/routers/engine.py`: new `GET /api/engine/status` endpoint — pings Ollama with a 2 s timeout, returns `{"available": bool}`.
+  - `backend/main.py`: added `/api/engine/status` to `_UNPROTECTED` so it works without an API key.
+  - `frontend/src/App.svelte`: grey/green/red pill in the top-right of the header; polls every 30 s via `onMount`.
+
+
 ### v0.9.0 - 17th May 2026
 
 - Updated `frontend/src/pages/Catalog.svelte`:
