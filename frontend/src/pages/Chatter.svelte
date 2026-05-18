@@ -211,7 +211,7 @@
 
   .field { display: flex; flex-direction: column; gap: 0.3rem; }
   .label {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -282,14 +282,14 @@
     gap: 0.5rem;
   }
   .bubble-role {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
   }
   .bubble-tokens {
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     color: var(--text-muted);
   }
 

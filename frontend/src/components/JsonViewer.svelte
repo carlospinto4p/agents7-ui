@@ -57,7 +57,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 0.85rem 1rem;
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
     line-height: 1.6;
     font-family: ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
     color: var(--text);

@@ -133,7 +133,7 @@
     background: var(--bg-raised);
     font-weight: 600;
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -145,7 +145,7 @@
     display: inline-block;
     padding: 0.1rem 0.45rem;
     border-radius: 10px;
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 500;
   }
   .badge.green { background: var(--pass-bg); color: var(--pass); }

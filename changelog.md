@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.9.12 - 18th May 2026
+
+- Bumped all `font-size` rem values below `0.8125rem` to `0.8125rem` across 7 frontend files (`App.svelte`, `JsonViewer.svelte`, `Catalog.svelte`, `Chatter.svelte`, `Engine.svelte`, `Eval.svelte`, `Runner.svelte`) to enforce the accessibility floor.
+
+
 ### v0.9.11 - 17th May 2026
 
 - Added provider/model badges to pipeline step card headers:

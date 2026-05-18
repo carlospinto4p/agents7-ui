@@ -667,7 +667,7 @@
 
   .field { display: flex; flex-direction: column; gap: 0.35rem; }
   .label {
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -772,14 +772,14 @@
     border-bottom: 1px solid var(--border);
   }
   .output-label {
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
     margin-right: 0.25rem;
   }
-  .token-count { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); }
+  .token-count { margin-left: auto; font-size: 0.8125rem; color: var(--text-muted); }
 
   /* Loading bar */
   .loading-bar-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -801,7 +801,7 @@
     0%   { left: -35%; }
     100% { left: 110%; }
   }
-  .running-hint { font-size: 0.75rem; color: var(--text-muted); }
+  .running-hint { font-size: 0.8125rem; color: var(--text-muted); }
 
   .raw-response {
     margin: 0;
@@ -846,7 +846,7 @@
   }
   .results-title { font-size: 0.88rem; font-weight: 600; color: var(--text-strong); }
   .pill {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     padding: 0.13rem 0.5rem;
     border-radius: 999px;
@@ -857,7 +857,7 @@
   table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
   thead th {
     text-align: left;
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -875,12 +875,12 @@
   .col-status { width: 90px; white-space: nowrap; }
   .col-tokens { width: 70px; text-align: right; color: var(--text-muted); }
 
-  .mono { font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 0.79rem; }
+  .mono { font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 0.8125rem; }
   .err-text { color: var(--fail); }
 
   .status-badge {
     display: inline-block;
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     padding: 0.13rem 0.42rem;
     border-radius: 4px;
@@ -912,7 +912,7 @@
     margin-bottom: 0.5rem;
   }
   .sidebar-title {
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -953,18 +953,18 @@
     justify-content: space-between;
   }
   .entry-mode {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
   .entry-ts {
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     color: var(--text-muted);
   }
 
   .entry-badge {
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     padding: 0.1rem 0.38rem;
     border-radius: 4px;
@@ -983,7 +983,7 @@
     display: inline-block;
     padding: 0.1rem 0.38rem;
     border-radius: 4px;
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1000,7 +1000,7 @@
     max-width: 700px;
   }
   .steps-label {
-    font-size: 0.78rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1025,7 +1025,7 @@
   }
   .step-header:hover { filter: brightness(1.05); }
   .step-num {
-    font-size: 0.68rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     background: var(--accent);
     color: #fff;
@@ -1044,7 +1044,7 @@
   }
   .step-meta {
     margin-left: auto;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: var(--text-muted);
   }
   .step-body { display: flex; flex-direction: column; }
@@ -1055,7 +1055,7 @@
   .step-io:last-child { border-bottom: none; }
   .io-label {
     display: block;
-    font-size: 0.72rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
