@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.12.5 - 6th June 2026
+
+- Documented and prioritised the native (no-Docker) run path so Ollama can stay on plain `localhost` and the app runs without raising the Compose stack.
+  - Added `agents7_ui/README.md` with "Run locally (no Docker)" and "Run with Docker Compose" sections.
+  - `docker-compose.yml`: reverted `OLLAMA_HOST` from the hardcoded docker0 bridge IP back to `host.docker.internal` (+ `extra_hosts`), with a note that the Compose path needs a docker-reachable Ollama bind.
+  - `agents7_ui/.env.example`: `OLLAMA_HOST` defaults to `http://localhost:11434` for native use.
+
+
 ### v0.12.4 - 6th June 2026
 
 - Docker: scoped the host Ollama exposure to the docker0 bridge for security.

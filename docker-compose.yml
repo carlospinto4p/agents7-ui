@@ -9,14 +9,16 @@ services:
       - path: agents7_ui/.env
         required: false
     environment:
-      # Reach the host's Ollama on the docker0 bridge IP. The host service
-      # must bind this address (Environment="OLLAMA_HOST=172.17.0.1:11434"
-      # in its systemd unit, ordered After=docker.service) so it is exposed
-      # to docker containers only — not on the host's LAN interfaces.
-      - OLLAMA_HOST=http://172.17.0.1:11434
+      # Reach the host's Ollama. NOTE: the host service binds localhost by
+      # default, which containers cannot reach — to use this compose stack,
+      # rebind the host Ollama to a docker-reachable address (e.g.
+      # OLLAMA_HOST=0.0.0.0:11434 in its systemd unit). See README.md.
+      - OLLAMA_HOST=http://host.docker.internal:11434
       # Allowed browser origin. Same-origin via nginx in this stack, so the
       # default covers it; set explicitly for a different host/port.
       - CORS_ORIGINS=http://localhost:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   frontend:
     build:
