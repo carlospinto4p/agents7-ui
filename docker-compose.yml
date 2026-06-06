@@ -4,9 +4,22 @@ services:
       context: .
       dockerfile: agents7_ui/Dockerfile.backend
     environment:
-      - OLLAMA_HOST=http://host.docker.internal:11434
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      # Ollama is bundled in this container; the backend talks to it on
+      # localhost and can start it on demand via POST /api/engine/start.
+      - OLLAMA_HOST=http://localhost:11434
+      - ALLOW_ENGINE_START=1
+    volumes:
+      # Persist pulled models across container restarts.
+      - ollama_models:/root/.ollama
+    # GPU (optional): requires the NVIDIA container toolkit on the host.
+    # Uncomment to hand Ollama the GPU; otherwise it runs on CPU.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
   frontend:
     build:
@@ -18,3 +31,6 @@ services:
       - backend
     post_start:
       - command: ["sh", "-c", "echo 'Frontend: http://localhost:8080'"]
+
+volumes:
+  ollama_models:

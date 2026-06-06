@@ -2,6 +2,18 @@
 ## Changelog - agents7 UI
 
 
+### v0.12.0 - 6th June 2026
+
+- `backend/` (`routers/engine.py`):
+  - Added `POST /api/engine/start`: starts a local `ollama serve` on demand, gated by the `ALLOW_ENGINE_START` env flag (default off), refusing a remote `OLLAMA_HOST` and a no-op when already running.
+  - Added `_ollama_up()` and `_start_enabled()` helpers; `GET /api/engine/status` now also returns `can_start`.
+- `frontend/` (`App.svelte`): Added a "Start" button beside the Ollama pill, shown only when Ollama is down and the server reports `can_start`; it posts to `/api/engine/start` and refreshes status.
+- Docker:
+  - `Dockerfile.backend`: bundled the Ollama runtime (needs `zstd` for the installer) so the backend can start it inside its own container.
+  - `docker-compose.yml`: pointed the backend at in-container Ollama (`OLLAMA_HOST=http://localhost:11434`), enabled `ALLOW_ENGINE_START`, added a persistent `ollama_models` volume, and documented optional GPU passthrough.
+- `backend/tests/test_security.py`: Added 4 tests for `POST /api/engine/start` (disabled by default, remote-host refusal, already-running no-op, spawn-and-started).
+
+
 ### v0.11.1 - 6th June 2026
 
 - `frontend/` (`Home.svelte`): Removed the accent status dot from the version badge.

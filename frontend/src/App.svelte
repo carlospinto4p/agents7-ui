@@ -9,6 +9,8 @@
 
   let page = $state(getPage())
   let ollamaStatus = $state('checking')
+  let canStart = $state(false)
+  let starting = $state(false)
 
   function getPage() {
     return window.location.hash.replace('#/', '').split('/')[0] || 'home'
@@ -25,8 +27,24 @@
       const r = await fetch('/api/engine/status')
       const data = await r.json()
       ollamaStatus = data.available ? 'up' : 'down'
+      canStart = !!data.can_start
     } catch {
       ollamaStatus = 'down'
+    }
+  }
+
+  async function startOllama() {
+    if (starting) return
+    starting = true
+    try {
+      // The endpoint blocks until Ollama is ready (or times out),
+      // so a single status refresh afterwards is enough.
+      await fetch('/api/engine/start', { method: 'POST' })
+      await checkOllama()
+    } catch {
+      // leave status as-is; the pill keeps polling
+    } finally {
+      starting = false
     }
   }
 
@@ -48,9 +66,16 @@
       <a href="#/engine" class:active={page === 'engine'}>Engine</a>
       <a href="#/eval" class:active={page === 'eval'}>Eval</a>
     </nav>
-    <div class="ollama-pill" class:up={ollamaStatus === 'up'} class:down={ollamaStatus === 'down'}>
-      <span class="dot"></span>
-      <span>Ollama</span>
+    <div class="engine-status">
+      <div class="ollama-pill" class:up={ollamaStatus === 'up'} class:down={ollamaStatus === 'down'}>
+        <span class="dot"></span>
+        <span>Ollama</span>
+      </div>
+      {#if ollamaStatus === 'down' && canStart}
+        <button class="start-btn" onclick={startOllama} disabled={starting}>
+          {starting ? 'Starting…' : 'Start'}
+        </button>
+      {/if}
     </div>
   </div>
 </header>
@@ -109,8 +134,31 @@
     color: var(--accent);
     font-weight: 600;
   }
-  .ollama-pill {
+  .engine-status {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .start-btn {
+    border: 1px solid var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    padding: 0.2rem 0.7rem;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  .start-btn:hover:not(:disabled) {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .start-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .ollama-pill {
     display: flex;
     align-items: center;
     gap: 0.35rem;

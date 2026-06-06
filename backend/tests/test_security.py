@@ -172,6 +172,75 @@ def test_engine_error_response_is_generic():
     assert "Connection refused" not in result["error"]
 
 
+# ── engine.py start Tests ──────────────────────────────────────────────────
+
+
+def test_engine_start_disabled_by_default(monkeypatch):
+    import asyncio
+
+    from fastapi import HTTPException
+    from routers import engine
+
+    monkeypatch.delenv("ALLOW_ENGINE_START", raising=False)
+    with pytest.raises(HTTPException) as ei:
+        asyncio.run(engine.start_ollama())
+    assert ei.value.status_code == 403
+
+
+def test_engine_start_refuses_remote_host(monkeypatch):
+    import asyncio
+
+    from fastapi import HTTPException
+    from routers import engine
+
+    monkeypatch.setenv("ALLOW_ENGINE_START", "1")
+    monkeypatch.setattr(
+        engine, "OLLAMA_HOST", "http://host.docker.internal:11434"
+    )
+    with pytest.raises(HTTPException) as ei:
+        asyncio.run(engine.start_ollama())
+    assert ei.value.status_code == 400
+
+
+def test_engine_start_noop_when_already_up(monkeypatch):
+    import asyncio
+    import unittest.mock as mock
+
+    from routers import engine
+
+    monkeypatch.setenv("ALLOW_ENGINE_START", "1")
+    monkeypatch.setattr(engine, "OLLAMA_HOST", "http://localhost:11434")
+    ok = mock.Mock(is_success=True)
+    client = mock.AsyncMock()
+    client.get.return_value = ok
+    monkeypatch.setattr(engine, "_client", client)
+
+    result = asyncio.run(engine.start_ollama())
+    assert result == {"status": "already_running"}
+
+
+def test_engine_start_spawns_and_reports_started(monkeypatch):
+    import asyncio
+    import unittest.mock as mock
+
+    from routers import engine
+
+    monkeypatch.setenv("ALLOW_ENGINE_START", "1")
+    monkeypatch.setattr(engine, "OLLAMA_HOST", "http://localhost:11434")
+    down = mock.Mock(is_success=False)
+    up = mock.Mock(is_success=True)
+    client = mock.AsyncMock()
+    client.get.side_effect = [down, up]
+    monkeypatch.setattr(engine, "_client", client)
+    popen = mock.Mock()
+    monkeypatch.setattr(engine.subprocess, "Popen", popen)
+
+    result = asyncio.run(engine.start_ollama())
+    assert result == {"status": "started"}
+    popen.assert_called_once()
+    assert popen.call_args[0][0][:2] == ["ollama", "serve"]
+
+
 # ── /api/info Tests ────────────────────────────────────────────────────────
 
 
