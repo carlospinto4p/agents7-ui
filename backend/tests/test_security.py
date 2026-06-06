@@ -241,6 +241,79 @@ def test_engine_start_spawns_and_reports_started(monkeypatch):
     assert popen.call_args[0][0][:2] == ["ollama", "serve"]
 
 
+# ── engine.py load / unload Tests ──────────────────────────────────────────
+
+
+def test_engine_load_sets_keep_alive_indefinite(monkeypatch):
+    import asyncio
+    import unittest.mock as mock
+
+    from routers import engine
+
+    monkeypatch.setattr(engine, "OLLAMA_HOST", "http://localhost:11434")
+    client = mock.AsyncMock()
+    client.post.return_value = mock.Mock(is_success=True)
+    monkeypatch.setattr(engine, "_client", client)
+
+    result = asyncio.run(engine.load_model(engine.ModelRef(name="qwen3")))
+    assert result == {"status": "loaded", "model": "qwen3"}
+    body = client.post.call_args.kwargs["json"]
+    assert body == {"model": "qwen3", "keep_alive": -1}
+
+
+def test_engine_unload_evicts_model(monkeypatch):
+    import asyncio
+    import unittest.mock as mock
+
+    from routers import engine
+
+    client = mock.AsyncMock()
+    client.post.return_value = mock.Mock(is_success=True)
+    monkeypatch.setattr(engine, "_client", client)
+
+    result = asyncio.run(engine.unload_model(engine.ModelRef(name="qwen3")))
+    assert result == {"status": "unloaded", "model": "qwen3"}
+    assert client.post.call_args.kwargs["json"]["keep_alive"] == 0
+
+
+def test_engine_unload_unreachable_raises_503(monkeypatch):
+    import asyncio
+
+    from fastapi import HTTPException
+    from routers import engine
+
+    async def _boom(*a, **k):
+        raise RuntimeError("connection refused")
+
+    client = type("C", (), {"post": staticmethod(_boom)})()
+    monkeypatch.setattr(engine, "_client", client)
+
+    with pytest.raises(HTTPException) as ei:
+        asyncio.run(engine.unload_model(engine.ModelRef(name="qwen3")))
+    assert ei.value.status_code == 503
+
+
+def test_engine_unload_all_evicts_loaded(monkeypatch):
+    import asyncio
+    import unittest.mock as mock
+
+    from routers import engine
+
+    client = mock.AsyncMock()
+    client.get.return_value = mock.Mock(
+        is_success=True,
+        json=mock.Mock(
+            return_value={"models": [{"name": "a"}, {"name": "b"}]}
+        ),
+    )
+    client.post.return_value = mock.Mock(is_success=True)
+    monkeypatch.setattr(engine, "_client", client)
+
+    result = asyncio.run(engine.unload_all())
+    assert result == {"status": "unloaded", "count": 2}
+    assert client.post.call_count == 2
+
+
 # ── /api/info Tests ────────────────────────────────────────────────────────
 
 

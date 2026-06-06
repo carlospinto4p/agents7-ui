@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.13.0 - 6th June 2026
+
+- Engine model load/unload — free or wake the engine from the UI without touching the host process:
+  - `backend/routers/engine.py`: added `POST /api/engine/load`, `/api/engine/unload`, and `/api/engine/unload-all`. Loading keeps a model resident (`keep_alive: -1`); unloading evicts it (`keep_alive: 0`) to free VRAM/RAM. Added the `ModelRef` body model and `_set_keep_alive()` helper.
+  - `frontend/` (`Engine.svelte`): each model row gains a Load/Unload toggle, plus a "Free all" button to evict every loaded model.
+  - `backend/tests/test_security.py`: added tests for load (`keep_alive -1`), unload (`keep_alive 0`), unreachable → 503, and unload-all evicting each loaded model.
+
+
 ### v0.12.6 - 6th June 2026
 
 - `agents7_ui/README.md`: clarified that a single `0.0.0.0:11434` Ollama bind serves both the native and Docker Compose paths at once (no switching), replacing the earlier either/or framing and the needless docker-bridge suggestion.

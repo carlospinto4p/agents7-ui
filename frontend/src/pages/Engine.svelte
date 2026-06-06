@@ -4,6 +4,12 @@
   let data = $state(null)
   let loading = $state(false)
   let error = $state(null)
+  let busy = $state(new Set())
+  let freeing = $state(false)
+
+  let anyLoaded = $derived(
+    (data?.models ?? []).some(m => m.loaded)
+  )
 
   async function fetchModels() {
     loading = true
@@ -16,6 +22,41 @@
       error = e.message
     } finally {
       loading = false
+    }
+  }
+
+  async function toggle(m) {
+    if (busy.has(m.name)) return
+    busy = new Set(busy).add(m.name)
+    const ep = m.loaded ? 'unload' : 'load'
+    try {
+      const res = await fetch(`/api/engine/${ep}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: m.name }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await fetchModels()
+    } catch (e) {
+      error = e.message
+    } finally {
+      const next = new Set(busy)
+      next.delete(m.name)
+      busy = next
+    }
+  }
+
+  async function freeAll() {
+    if (freeing) return
+    freeing = true
+    try {
+      const res = await fetch('/api/engine/unload-all', { method: 'POST' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      await fetchModels()
+    } catch (e) {
+      error = e.message
+    } finally {
+      freeing = false
     }
   }
 
@@ -34,9 +75,16 @@
       <h2>Engine</h2>
       <p class="intro-desc"><strong>Loaded</strong> — in VRAM, responds without delay. <strong>Idle</strong> — installed but not in memory, loads on the next request.</p>
     </div>
-    <button onclick={fetchModels} disabled={loading}>
-      {loading ? 'Loading…' : 'Refresh'}
-    </button>
+    <div class="header-actions">
+      {#if anyLoaded}
+        <button onclick={freeAll} disabled={freeing}>
+          {freeing ? 'Freeing…' : 'Free all'}
+        </button>
+      {/if}
+      <button onclick={fetchModels} disabled={loading}>
+        {loading ? 'Loading…' : 'Refresh'}
+      </button>
+    </div>
   </div>
 
   {#if error}
@@ -57,6 +105,7 @@
             <th>Size</th>
             <th>Status</th>
             <th>VRAM</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -72,6 +121,20 @@
                 {/if}
               </td>
               <td>{fmtSize(m.size_vram)}</td>
+              <td>
+                <button
+                  class="act"
+                  class:unload={m.loaded}
+                  onclick={() => toggle(m)}
+                  disabled={busy.has(m.name)}
+                >
+                  {#if busy.has(m.name)}
+                    {m.loaded ? 'Unloading…' : 'Loading…'}
+                  {:else}
+                    {m.loaded ? 'Unload' : 'Load'}
+                  {/if}
+                </button>
+              </td>
             </tr>
           {/each}
         </tbody>
@@ -98,6 +161,12 @@
     max-width: 600px;
   }
 
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
   button {
     padding: 0.35rem 0.9rem;
     border: 1px solid var(--border);
@@ -109,6 +178,26 @@
   }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button:hover:not(:disabled) { background: var(--bg-raised); }
+
+  .act {
+    padding: 0.2rem 0.7rem;
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+  .act:hover:not(:disabled) {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .act.unload {
+    border-color: var(--border);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+  }
+  .act.unload:hover:not(:disabled) {
+    background: var(--bg-raised);
+    color: var(--text);
+  }
 
   h3 {
     margin: 0 0 0.75rem;

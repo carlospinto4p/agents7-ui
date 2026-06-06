@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/engine", tags=["engine"])
 logger = logging.getLogger(__name__)
@@ -16,6 +17,12 @@ _client = httpx.AsyncClient()
 # Hostnames for which `ollama serve` can be started in this process's
 # own environment (same machine / same container).
 _LOCAL_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+
+
+class ModelRef(BaseModel):
+    """A reference to an Ollama model by name."""
+
+    name: str
 
 
 def _start_enabled() -> bool:
@@ -44,6 +51,34 @@ async def _ollama_up() -> bool:
         return r.is_success
     except Exception:
         return False
+
+
+async def _set_keep_alive(name: str, keep_alive: int | str) -> None:
+    """Load or unload a model by setting its `keep_alive`.
+
+    An empty-prompt `/api/generate` call with ``keep_alive: -1`` warms
+    the model into memory indefinitely; ``keep_alive: 0`` evicts it.
+
+    :param name: The Ollama model name.
+    :param keep_alive: Residency, e.g. ``-1`` (keep) or ``0`` (evict).
+    :raises HTTPException: 503 if Ollama is unreachable, 502 if it
+        rejects the request.
+    """
+    try:
+        r = await _client.post(
+            f"{OLLAMA_HOST}/api/generate",
+            json={"model": name, "keep_alive": keep_alive},
+            timeout=300.0,
+        )
+    except Exception as exc:
+        logger.warning("keep_alive request for %s failed: %s", name, exc)
+        raise HTTPException(
+            status_code=503, detail="Could not reach model provider"
+        ) from exc
+    if not r.is_success:
+        raise HTTPException(
+            status_code=502, detail=f"Ollama rejected the request for {name}"
+        )
 
 
 @router.get("/models")
@@ -88,6 +123,35 @@ async def ollama_status() -> dict:
         "available": await _ollama_up(),
         "can_start": _start_enabled(),
     }
+
+
+@router.post("/load")
+async def load_model(ref: ModelRef) -> dict:
+    """Warm a model into memory and keep it resident."""
+    await _set_keep_alive(ref.name, -1)
+    return {"status": "loaded", "model": ref.name}
+
+
+@router.post("/unload")
+async def unload_model(ref: ModelRef) -> dict:
+    """Evict a model from memory, freeing its VRAM/RAM."""
+    await _set_keep_alive(ref.name, 0)
+    return {"status": "unloaded", "model": ref.name}
+
+
+@router.post("/unload-all")
+async def unload_all() -> dict:
+    """Evict every currently loaded model, freeing the engine."""
+    try:
+        ps = await _client.get(f"{OLLAMA_HOST}/api/ps", timeout=5.0)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail="Could not reach model provider"
+        ) from exc
+    loaded = ps.json().get("models", []) if ps.is_success else []
+    for m in loaded:
+        await _set_keep_alive(m["name"], 0)
+    return {"status": "unloaded", "count": len(loaded)}
 
 
 @router.post("/start")
