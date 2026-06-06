@@ -593,29 +593,49 @@
     padding: 1rem 1rem 0.85rem;
     text-align: left;
     cursor: pointer;
-    transition: box-shadow 0.15s, border-color 0.15s;
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
+    gap: 0.5rem;
+    min-width: 0;
   }
-  .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.4); border-color: var(--accent); }
-  .card-name { font-weight: 600; font-size: 1.0625rem; color: var(--text-strong); }
-  .card-meta { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .card-name {
+    font-weight: 600;
+    font-size: 1.0625rem;
+    color: var(--text-strong);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .card-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
   .card-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; }
   .card-footer { font-size: 1.0625rem; color: var(--text-muted); }
 
   /* Badges */
   .badge {
-    display: inline-block;
-    padding: 0.13rem 0.42rem;
-    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
     font-size: 1.0625rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    /* Long model names wrap instead of overflowing the card. */
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .badge.type     { background: var(--info-bg);    color: var(--accent); }
-  .badge.model    { background: var(--pass-bg);     color: var(--pass); }
+  .badge.model    {
+    background: var(--pass-bg);
+    color: var(--pass);
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+  }
   .badge.provider { background: var(--warn-bg);     color: var(--warn); }
   .badge.version  { background: var(--neutral-bg);  color: var(--neutral); }
 

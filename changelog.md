@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.15.1 - 6th June 2026
+
+- Beautified the Catalog page badges and cards:
+  - `frontend/src/pages/Catalog.svelte`: badges are now pill-shaped,
+    lighter weight, and no longer uppercase, so long model names no
+    longer overflow card margins. Model badges use a monospace font
+    and wrap (`overflow-wrap`) instead of spilling outside the card.
+    Cards gain a subtle hover lift and can shrink (`min-width: 0`) so
+    their contents wrap cleanly within the grid.
+
+
 ### v0.15.0 - 6th June 2026
 
 - Engine models table columns are now sortable:
