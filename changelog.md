@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.12.4 - 6th June 2026
+
+- Docker: scoped the host Ollama exposure to the docker0 bridge for security.
+  - `docker-compose.yml`: backend targets `http://172.17.0.1:11434` (docker0) and dropped `extra_hosts`; the host service binds that bridge IP, so Ollama is reachable from containers but not on the host's LAN interfaces.
+  - `agents7_ui/.env.example`: updated `OLLAMA_HOST` guidance to the docker0 bridge binding.
+
+
 ### v0.12.3 - 6th June 2026
 
 - Docker: reverted the bundled in-container Ollama in favour of the host's Ollama service (which already holds the models and GPU); the in-container instance started empty and CPU-only.
