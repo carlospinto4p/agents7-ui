@@ -2,6 +2,12 @@
 ## Changelog - agents7 UI
 
 
+### v0.15.2 - 6th June 2026
+
+- `frontend/src/pages/Catalog.svelte`: reduced badge font size to
+  `0.9rem` so the chips read as compact tags rather than body text.
+
+
 ### v0.15.1 - 6th June 2026
 
 - Beautified the Catalog page badges and cards:

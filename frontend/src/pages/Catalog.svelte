@@ -620,9 +620,9 @@
     display: inline-flex;
     align-items: center;
     max-width: 100%;
-    padding: 0.1rem 0.55rem;
+    padding: 0.1rem 0.5rem;
     border-radius: 999px;
-    font-size: 1.0625rem;
+    font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.45;
     letter-spacing: 0.01em;
