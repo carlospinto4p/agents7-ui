@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.12.2 - 6th June 2026
+
+- `agents7_ui/.gitignore`: mirrored the `.env.*` ignore + `!.env.example` exception from the root ignore for defense-in-depth.
+
+
 ### v0.12.1 - 6th June 2026
 
 - Environment variable configuration:
