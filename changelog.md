@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.12.6 - 6th June 2026
+
+- `agents7_ui/README.md`: clarified that a single `0.0.0.0:11434` Ollama bind serves both the native and Docker Compose paths at once (no switching), replacing the earlier either/or framing and the needless docker-bridge suggestion.
+
+
 ### v0.12.5 - 6th June 2026
 
 - Documented and prioritised the native (no-Docker) run path so Ollama can stay on plain `localhost` and the app runs without raising the Compose stack.

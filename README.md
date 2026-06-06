@@ -38,10 +38,11 @@ the backend at `localhost:11434` and the repo's `agents_catalog/`.
 docker compose up -d --build      # frontend on http://localhost:8080
 ```
 
-The backend container reaches Ollama via `host.docker.internal`. Because
-the host Ollama binds `localhost` by default — which containers cannot
-reach — using this stack requires rebinding the host service to a
-docker-reachable address, e.g. in its systemd unit:
+The backend container reaches Ollama via `host.docker.internal`. A
+container cannot reach the host's `localhost`, so the host Ollama must bind
+a non-loopback address. Binding `0.0.0.0` is the simplest option and serves
+**both** the native (`localhost`) and Compose (`host.docker.internal`)
+paths at the same time — no switching between them:
 
 ```ini
 # sudo systemctl edit ollama
@@ -49,9 +50,14 @@ docker-reachable address, e.g. in its systemd unit:
 Environment="OLLAMA_HOST=0.0.0.0:11434"
 ```
 
-`0.0.0.0` exposes Ollama on all host interfaces; scope it tighter (e.g. a
-docker bridge IP) if the box isn't firewalled. This is only needed for the
-Compose path — the local workflow above leaves Ollama on `localhost`.
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart ollama
+```
+
+`0.0.0.0` listens on all host interfaces. On a firewalled dev box that is
+fine; otherwise block port 11434 on external interfaces with a firewall
+rule (no Ollama or Docker change needed).
 
 ## Configuration
 
