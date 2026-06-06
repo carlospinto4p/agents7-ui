@@ -6,6 +6,7 @@
   let error = $state(null)
   let appName = $state('')
   let appVersion = $state('')
+  let readmeEl = $state(null)
 
   $effect(() => {
     fetch('/api/info')
@@ -26,7 +27,7 @@
         return r.text()
       })
       .then(text => {
-        html = marked(text)
+        html = enhanceReadme(marked(text))
         loading = false
       })
       .catch(e => {
@@ -34,6 +35,87 @@
         loading = false
       })
   })
+
+  // Delegate clicks on in-README anchor links (the Table of Contents).
+  // The app uses hash routing, so we must NOT update location.hash —
+  // instead expand the target's collapsed section and scroll to it.
+  $effect(() => {
+    const el = readmeEl
+    if (!el) return
+    el.addEventListener('click', onReadmeClick)
+    return () => el.removeEventListener('click', onReadmeClick)
+  })
+
+  function slugify(text) {
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s/g, '-')
+  }
+
+  // Wrap each top-level (`##`) section in a collapsible <details>,
+  // assign GitHub-style ids to every heading so the in-README Table of
+  // Contents links resolve, and leave everything before the first `##`
+  // (title + intro) always visible.
+  function enhanceReadme(rawHtml) {
+    const tpl = document.createElement('template')
+    tpl.innerHTML = rawHtml
+    const out = document.createElement('div')
+    const seen = new Map()
+
+    const uid = text => {
+      const base = slugify(text)
+      if (!seen.has(base)) {
+        seen.set(base, 0)
+        return base
+      }
+      const n = seen.get(base) + 1
+      seen.set(base, n)
+      return `${base}-${n}`
+    }
+
+    let body = null
+    for (const node of Array.from(tpl.content.childNodes)) {
+      const isHeading =
+        node.nodeType === 1 && /^H[1-6]$/.test(node.tagName)
+      if (node.nodeType === 1 && node.tagName === 'H2') {
+        const details = document.createElement('details')
+        details.className = 'readme-section'
+        details.id = uid(node.textContent)
+        const summary = document.createElement('summary')
+        summary.innerHTML =
+          `<span class="sec-title">${node.innerHTML}</span>`
+        body = document.createElement('div')
+        body.className = 'sec-body'
+        details.append(summary, body)
+        out.appendChild(details)
+      } else {
+        if (isHeading) node.id = uid(node.textContent)
+        ;(body ?? out).appendChild(node)
+      }
+    }
+    return out.innerHTML
+  }
+
+  function onReadmeClick(e) {
+    const a = e.target.closest('a[href^="#"]')
+    if (!a || !readmeEl?.contains(a)) return
+    const href = a.getAttribute('href')
+    if (href.startsWith('#/')) return
+    const id = decodeURIComponent(href.slice(1))
+    const target = id && readmeEl.querySelector(`#${CSS.escape(id)}`)
+    if (!target) return
+    e.preventDefault()
+    for (
+      let d = target.closest('details');
+      d;
+      d = d.parentElement?.closest('details')
+    ) {
+      d.open = true
+    }
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 </script>
 
 <div class="page-intro">
@@ -54,7 +136,7 @@
 {:else if error}
   <p class="state-msg error">{error}</p>
 {:else}
-  <div class="readme">
+  <div class="readme" bind:this={readmeEl}>
     {@html html}
   </div>
 {/if}
@@ -80,22 +162,33 @@
   .version-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 3px 9px;
+    gap: 0.45rem;
+    padding: 0.3rem 0.7rem 0.3rem 0.6rem;
+    border-radius: 999px;
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
     font-family: ui-monospace, 'Cascadia Code', monospace;
     font-size: 1.0625rem;
+    line-height: 1;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .version-badge::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    flex-shrink: 0;
   }
   .version-name {
     font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
+    color: var(--text-strong);
   }
   .version-num {
-    color: var(--text);
-    letter-spacing: 0.04em;
+    color: var(--accent);
+    font-weight: 600;
   }
   .intro-desc {
     color: var(--text-muted);
@@ -125,12 +218,56 @@
     padding-bottom: 0.5rem;
     margin: 0 0 1rem;
   }
-  .readme :global(h2) {
+  /* Collapsible top-level (##) sections */
+  .readme :global(.readme-section) {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    margin: 0.6rem 0;
+    overflow: hidden;
+  }
+  .readme :global(.readme-section > summary) {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.7rem 1rem;
     font-size: 1.3rem;
+    font-weight: 700;
     color: var(--text-strong);
+    user-select: none;
+    transition: background 0.12s ease;
+  }
+  .readme :global(.readme-section > summary::-webkit-details-marker) {
+    display: none;
+  }
+  .readme :global(.readme-section > summary:hover) {
+    background: var(--bg-raised);
+  }
+  .readme :global(.readme-section > summary::before) {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+  }
+  .readme :global(.readme-section[open] > summary::before) {
+    transform: rotate(45deg);
+  }
+  .readme :global(.readme-section[open] > summary) {
     border-bottom: 1px solid var(--border);
-    padding-bottom: 0.35rem;
-    margin: 2rem 0 0.75rem;
+  }
+  .readme :global(.sec-body) {
+    padding: 0.25rem 1.25rem 0.75rem;
+  }
+  /* Tighten the first heading inside an open section */
+  .readme :global(.sec-body > h3:first-child),
+  .readme :global(.sec-body > h4:first-child) {
+    margin-top: 0.75rem;
   }
   .readme :global(h3) {
     font-size: 1.0625rem;

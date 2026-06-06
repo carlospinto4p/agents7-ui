@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.11.0 - 6th June 2026
+
+- `frontend/` (`Home.svelte`):
+  - Wrapped each top-level (`##`) README section in a collapsible `<details>`, collapsed by default, so the page is short and scannable; everything before the first section (title + intro) stays visible.
+  - Assigned GitHub-style ids to all README headings so the in-README Table of Contents links resolve, and intercepted those clicks to expand the target section and scroll to it without touching `location.hash` (which the hash router would treat as navigation).
+  - Restyled the version badge as an accent pill with a status dot.
+
+
 ### v0.10.1 - 6th June 2026
 
 - `frontend/`: Moved the version badge out of the top bar (where it enlarged the header and broke its layout) into the `Home` page intro, beside the title.
