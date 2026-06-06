@@ -582,8 +582,8 @@
   .section-heading:first-child { margin-top: 0; }
 
   .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
   }
   .card {
@@ -597,7 +597,11 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    min-width: 0;
+    /* Grow to fill the row, but a long title widens its own card
+       (min-width defaults to content, so the nowrap title sets the
+       floor) instead of wrapping. */
+    flex: 1 1 200px;
+    max-width: 360px;
   }
   .card:hover {
     box-shadow: 0 4px 16px rgba(0,0,0,0.4);
@@ -609,7 +613,7 @@
     font-size: 1.0625rem;
     color: var(--text-strong);
     line-height: 1.35;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
   }
   .card-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
   .card-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; }

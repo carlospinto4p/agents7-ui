@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.15.3 - 6th June 2026
+
+- `frontend/src/pages/Catalog.svelte`: card grid is now a flex-wrap
+  layout so a long agent title (e.g. `DemoTemperatureDetector`) widens
+  its own card and stays on one line instead of wrapping; other cards
+  keep their size.
+
+
 ### v0.15.2 - 6th June 2026
 
 - `frontend/src/pages/Catalog.svelte`: reduced badge font size to
