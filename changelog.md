@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.10.1 - 6th June 2026
+
+- `frontend/`: Moved the version badge out of the top bar (where it enlarged the header and broke its layout) into the `Home` page intro, beside the title.
+
+
 ### v0.10.0 - 6th June 2026
 
 - `backend/main.py`:

@@ -4,6 +4,20 @@
   let html = $state('')
   let loading = $state(true)
   let error = $state(null)
+  let appName = $state('')
+  let appVersion = $state('')
+
+  $effect(() => {
+    fetch('/api/info')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (data) {
+          appName = data.name ?? ''
+          appVersion = data.version ?? ''
+        }
+      })
+      .catch(() => {})
+  })
 
   $effect(() => {
     fetch('/api/readme')
@@ -23,7 +37,15 @@
 </script>
 
 <div class="page-intro">
-  <h1 class="page-title">Framework</h1>
+  <div class="intro-head">
+    <h1 class="page-title">Framework</h1>
+    {#if appVersion}
+      <div class="version-badge">
+        <span class="version-name">{appName}</span>
+        <span class="version-num">v{appVersion}</span>
+      </div>
+    {/if}
+  </div>
   <p class="intro-desc">Python library for building LLM-based agents that return structured outputs via Pydantic models.</p>
 </div>
 
@@ -42,11 +64,38 @@
     max-width: 900px;
     margin: 0 auto 1.75rem;
   }
+  .intro-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 0.4rem;
+  }
   .page-title {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--text-strong);
-    margin: 0 0 0.4rem;
+    margin: 0;
+  }
+  .version-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 1.0625rem;
+  }
+  .version-name {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+  .version-num {
+    color: var(--text);
+    letter-spacing: 0.04em;
   }
   .intro-desc {
     color: var(--text-muted);
