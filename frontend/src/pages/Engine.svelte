@@ -92,7 +92,7 @@
   .page-header h2 { margin: 0 0 0.35rem; color: var(--text-strong); }
   .intro-desc {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
     max-width: 600px;
@@ -105,14 +105,14 @@
     background: var(--bg-surface);
     color: var(--text);
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
   }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button:hover:not(:disabled) { background: var(--bg-raised); }
 
   h3 {
     margin: 0 0 0.75rem;
-    font-size: 1rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-strong);
   }
@@ -121,7 +121,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
   }
   th, td {
     padding: 0.5rem 0.75rem;
@@ -133,19 +133,19 @@
     background: var(--bg-raised);
     font-weight: 600;
     color: var(--text-muted);
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
   tr.loaded { background: rgba(63, 201, 126, 0.06); }
 
-  .mono { font-family: monospace; font-size: 0.82rem; }
+  .mono { font-family: monospace; font-size: 1.0625rem; }
 
   .badge {
     display: inline-block;
     padding: 0.1rem 0.45rem;
     border-radius: 10px;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 500;
   }
   .badge.green { background: var(--pass-bg); color: var(--pass); }

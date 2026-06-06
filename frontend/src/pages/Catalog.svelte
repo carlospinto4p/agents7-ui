@@ -536,9 +536,9 @@
 {/if}
 
 <style>
-  .state-msg { color: var(--text-muted); font-size: 0.95rem; margin: 2rem 0; }
+  .state-msg { color: var(--text-muted); font-size: 1.0625rem; margin: 2rem 0; }
   .state-msg.error { color: var(--fail); }
-  .muted { color: var(--text-muted); font-size: 0.88rem; margin: 0.25rem 0 0; }
+  .muted { color: var(--text-muted); font-size: 1.0625rem; margin: 0.25rem 0 0; }
 
   /* Page intro */
   .page-intro { margin-bottom: 1.75rem; }
@@ -550,7 +550,7 @@
   }
   .intro-desc {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
     max-width: 700px;
@@ -558,7 +558,7 @@
 
   .section-desc {
     color: var(--text-muted);
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     line-height: 1.5;
     margin: 0 0 0.6rem;
   }
@@ -570,7 +570,7 @@
   .detail { max-width: 900px; margin: 0 auto; }
 
   .section-heading {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -599,17 +599,17 @@
     gap: 0.45rem;
   }
   .card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.4); border-color: var(--accent); }
-  .card-name { font-weight: 600; font-size: 0.97rem; color: var(--text-strong); }
+  .card-name { font-weight: 600; font-size: 1.0625rem; color: var(--text-strong); }
   .card-meta { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-  .card-steps { font-size: 0.8125rem; color: var(--text-muted); font-style: italic; }
-  .card-footer { font-size: 0.8125rem; color: var(--text-muted); }
+  .card-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; }
+  .card-footer { font-size: 1.0625rem; color: var(--text-muted); }
 
   /* Badges */
   .badge {
     display: inline-block;
     padding: 0.13rem 0.42rem;
     border-radius: 4px;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -625,7 +625,7 @@
     border: none;
     color: var(--accent);
     cursor: pointer;
-    font-size: 0.88rem;
+    font-size: 1.0625rem;
     padding: 0;
     margin-bottom: 1.25rem;
     display: inline-flex;
@@ -642,8 +642,8 @@
     color: var(--text-strong);
   }
   .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-  .detail-steps { font-size: 0.82rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem; }
-  .detail-step-engines { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
+  .detail-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem; }
+  .detail-step-engines { font-size: 1.0625rem; color: var(--text-muted); margin-top: 0.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
   .step-arrow { color: var(--text-muted); opacity: 0.5; }
   .step-engine { font-style: italic; }
 
@@ -667,7 +667,7 @@
   .sec-hdr:hover h2 { color: var(--text); }
 
   .detail section .sec-hdr h2 {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.07em;
@@ -677,7 +677,7 @@
   }
 
   .chevron {
-    font-size: 1rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
     line-height: 1;
     transition: transform 0.18s;
@@ -706,7 +706,7 @@
     gap: 0.3rem;
   }
   .field-label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -716,7 +716,7 @@
     padding: 0.4rem 0.6rem;
     border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 0.9rem;
+    font-size: 1.0625rem;
     font-family: ui-monospace, 'Cascadia Code', monospace;
     width: 100%;
     box-sizing: border-box;
@@ -729,7 +729,7 @@
     padding: 0.55rem 0.7rem;
     border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     font-family: ui-monospace, 'Cascadia Code', monospace;
     resize: vertical;
     width: 100%;
@@ -747,7 +747,7 @@
     color: #fff;
     border: none;
     border-radius: 6px;
-    font-size: 0.88rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     cursor: pointer;
     width: fit-content;
@@ -761,7 +761,7 @@
 
   .runner-error {
     color: var(--fail);
-    font-size: 0.88rem;
+    font-size: 1.0625rem;
     margin: 0;
   }
 
@@ -780,7 +780,7 @@
     border-bottom: 1px solid var(--border);
   }
   .output-label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -788,7 +788,7 @@
   }
   .token-count {
     margin-left: auto;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
   }
 
@@ -812,11 +812,11 @@
     0%   { left: -35%; }
     100% { left: 110%; }
   }
-  .running-hint { font-size: 0.8125rem; color: var(--text-muted); }
+  .running-hint { font-size: 1.0625rem; color: var(--text-muted); }
   .raw-response {
     margin: 0;
     padding: 0.75rem 0.85rem;
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     font-family: ui-monospace, 'Cascadia Code', monospace;
     white-space: pre-wrap;
     word-break: break-all;
@@ -828,7 +828,7 @@
   .output-table tr:last-child { border-bottom: none; }
   .out-key {
     padding: 0.45rem 0.85rem;
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-muted);
     width: 140px;
@@ -838,7 +838,7 @@
   }
   .out-val {
     padding: 0.45rem 0.85rem;
-    font-size: 0.88rem;
+    font-size: 1.0625rem;
     color: var(--text);
     font-family: ui-monospace, 'Cascadia Code', monospace;
     word-break: break-all;
@@ -846,7 +846,7 @@
   }
   .status-badge {
     display: inline-block;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     padding: 0.12rem 0.42rem;
     border-radius: 4px;
@@ -860,7 +860,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     padding: 0.85rem 1rem;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     line-height: 1.55;
     overflow-x: auto;
     overflow-y: auto;
@@ -886,7 +886,7 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 0.2rem 0.5rem;
-    font-size: 0.85rem;
+    font-size: 1.0625rem;
     font-family: ui-monospace, monospace;
     color: var(--text);
   }
@@ -906,10 +906,10 @@
     display: flex;
     gap: 0.65rem;
     align-items: baseline;
-    font-size: 0.83rem;
+    font-size: 1.0625rem;
   }
   .ex-label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -925,7 +925,7 @@
     gap: 0.6rem;
   }
   .steps-label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -950,7 +950,7 @@
   }
   .step-header:hover { background: var(--bg-raised); filter: brightness(1.05); }
   .step-num {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     background: var(--accent);
     color: #fff;
@@ -963,13 +963,13 @@
     flex-shrink: 0;
   }
   .step-name {
-    font-size: 0.85rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-strong);
   }
   .step-meta {
     margin-left: auto;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
   }
   .step-body { display: flex; flex-direction: column; }
@@ -980,7 +980,7 @@
   .step-io:last-child { border-bottom: none; }
   .io-label {
     display: block;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;

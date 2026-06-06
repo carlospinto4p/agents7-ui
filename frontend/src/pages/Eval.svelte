@@ -169,7 +169,7 @@
   .page-header h2 { margin: 0; color: var(--text-strong); }
   .intro-desc {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
     max-width: 680px;
@@ -186,7 +186,7 @@
     padding: 0.35rem 0.6rem;
     border: 1px solid var(--border);
     border-radius: 4px;
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     min-width: 200px;
     background: var(--bg-surface);
     color: var(--text);
@@ -200,7 +200,7 @@
     background: var(--bg-surface);
     color: var(--text);
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
   }
   button:disabled { opacity: 0.4; cursor: not-allowed; }
   button:hover:not(:disabled) { background: var(--bg-raised); }
@@ -220,7 +220,7 @@
     align-items: baseline;
     margin-bottom: 0.5rem;
   }
-  .accuracy-label { font-weight: 600; font-size: 0.9rem; color: var(--text-muted); }
+  .accuracy-label { font-weight: 600; font-size: 1.0625rem; color: var(--text-muted); }
   .accuracy-value { font-size: 1.5rem; font-weight: 700; color: var(--text-strong); }
 
   .accuracy-bar {
@@ -239,14 +239,14 @@
   .accuracy-fill.yellow { background: var(--warn); }
   .accuracy-fill.red    { background: var(--fail); }
 
-  .meta { margin: 0; font-size: 0.82rem; color: var(--text-muted); }
+  .meta { margin: 0; font-size: 1.0625rem; color: var(--text-muted); }
 
   /* Tables */
   section { margin-bottom: 1.75rem; }
 
   h3 {
     margin: 0 0 0.75rem;
-    font-size: 1rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-strong);
   }
@@ -255,7 +255,7 @@
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
   }
   th, td {
     padding: 0.5rem 0.75rem;
@@ -267,7 +267,7 @@
     background: var(--bg-raised);
     font-weight: 600;
     color: var(--text-muted);
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -276,7 +276,7 @@
     display: inline-block;
     padding: 0.1rem 0.45rem;
     border-radius: 10px;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
   }
   .badge.green  { background: var(--pass-bg); color: var(--pass); }
@@ -292,13 +292,13 @@
     border: 1px solid var(--border);
     border-radius: 5px;
     padding: 0.75rem;
-    font-size: 0.85rem;
+    font-size: 1.0625rem;
     background: var(--bg-surface);
   }
 
   .mismatch-num {
     color: var(--text-muted);
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     min-width: 24px;
     padding-top: 2px;
   }
@@ -312,7 +312,7 @@
   }
 
   .label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-muted);
     min-width: 54px;
@@ -320,7 +320,7 @@
     letter-spacing: 0.03em;
   }
 
-  .mono { font-family: monospace; font-size: 0.82rem; word-break: break-all; color: var(--text); }
+  .mono { font-family: monospace; font-size: 1.0625rem; word-break: break-all; color: var(--text); }
   .expected { color: var(--pass); }
   .actual   { color: var(--fail); }
 

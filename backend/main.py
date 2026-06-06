@@ -1,5 +1,6 @@
 import os
 import re
+import tomllib
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -37,7 +38,7 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 
-_UNPROTECTED = {"/api/health", "/api/engine/status"}
+_UNPROTECTED = {"/api/health", "/api/engine/status", "/api/info"}
 
 
 @app.middleware("http")
@@ -70,6 +71,26 @@ def get_readme() -> str:
     if not _README.exists():
         raise HTTPException(status_code=404, detail="README not found")
     return _README.read_text(encoding="utf-8")
+
+
+_PYPROJECT = Path(__file__).parent / "pyproject.toml"
+
+
+def _read_version() -> str:
+    """Read the app version from ``pyproject.toml``.
+
+    :return: The semver string, or ``"unknown"`` if it cannot be read.
+    """
+    try:
+        data = tomllib.loads(_PYPROJECT.read_text(encoding="utf-8"))
+        return data["project"]["version"]
+    except (OSError, KeyError, tomllib.TOMLDecodeError):
+        return "unknown"
+
+
+@app.get("/api/info")
+def get_info() -> dict:
+    return {"name": "agents7-ui", "version": _read_version()}
 
 
 @app.get("/api/health")

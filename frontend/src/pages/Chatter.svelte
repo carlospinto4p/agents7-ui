@@ -188,7 +188,7 @@
   }
   .intro-desc {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
   }
@@ -211,7 +211,7 @@
 
   .field { display: flex; flex-direction: column; gap: 0.3rem; }
   .label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -222,7 +222,7 @@
     padding: 0.4rem 0.6rem;
     border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 0.92rem;
+    font-size: 1.0625rem;
     background: var(--bg-surface);
     color: var(--text);
     min-width: 220px;
@@ -235,7 +235,7 @@
     border-radius: 6px;
     background: var(--bg-surface);
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: 1.0625rem;
     cursor: pointer;
   }
   .reset-btn:hover:not(:disabled) {
@@ -244,9 +244,9 @@
   }
   .reset-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .err-msg { color: var(--fail); font-size: 0.88rem; }
-  .err     { color: var(--fail); font-size: 0.88rem; }
-  .muted   { color: var(--text-muted); font-size: 0.88rem; }
+  .err-msg { color: var(--fail); font-size: 1.0625rem; }
+  .err     { color: var(--fail); font-size: 1.0625rem; }
+  .muted   { color: var(--text-muted); font-size: 1.0625rem; }
 
   .transcript {
     flex: 1;
@@ -262,7 +262,7 @@
 
   .empty-msg {
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 1.0625rem;
     text-align: center;
     margin: auto;
   }
@@ -282,14 +282,14 @@
     gap: 0.5rem;
   }
   .bubble-role {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
   }
   .bubble-tokens {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
   }
 
@@ -298,7 +298,7 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 0.6rem 0.85rem;
-    font-size: 0.9rem;
+    font-size: 1.0625rem;
     line-height: 1.55;
     white-space: pre-wrap;
     word-break: break-word;
@@ -324,7 +324,7 @@
     padding: 0.55rem 0.75rem;
     border: 1px solid var(--border);
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 1.0625rem;
     font-family: inherit;
     resize: none;
     background: var(--bg-surface);
@@ -341,7 +341,7 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;

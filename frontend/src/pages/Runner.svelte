@@ -598,7 +598,7 @@
   }
   .intro-desc {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
   }
@@ -628,7 +628,7 @@
     padding: 0.35rem 0.85rem;
     border: none;
     background: var(--bg-surface);
-    font-size: 0.88rem;
+    font-size: 1.0625rem;
     font-weight: 500;
     color: var(--text-muted);
     cursor: pointer;
@@ -649,7 +649,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     background: var(--bg-surface);
-    font-size: 0.85rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
     cursor: pointer;
     transition: background 0.12s, border-color 0.12s;
@@ -667,7 +667,7 @@
 
   .field { display: flex; flex-direction: column; gap: 0.35rem; }
   .label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -678,7 +678,7 @@
     padding: 0.4rem 0.6rem;
     border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 0.92rem;
+    font-size: 1.0625rem;
     background: var(--bg-surface);
     color: var(--text);
     width: fit-content;
@@ -690,7 +690,7 @@
     padding: 0.4rem 0.6rem;
     border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 0.92rem;
+    font-size: 1.0625rem;
     font-family: ui-monospace, 'Cascadia Code', monospace;
     width: 100%;
     box-sizing: border-box;
@@ -706,7 +706,7 @@
     padding: 0.6rem 0.75rem;
     border: 1px solid var(--border);
     border-radius: 6px;
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     font-family: ui-monospace, 'Cascadia Code', monospace;
     resize: vertical;
     width: 100%;
@@ -721,7 +721,7 @@
   .textarea-actions { display: flex; gap: 0.6rem; align-items: center; }
 
   .upload-btn {
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     color: var(--accent);
     cursor: pointer;
     padding: 0.25rem 0;
@@ -732,7 +732,7 @@
   .clear-btn {
     background: none;
     border: none;
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
     cursor: pointer;
     padding: 0.25rem 0;
@@ -746,7 +746,7 @@
     color: #fff;
     border: none;
     border-radius: 6px;
-    font-size: 0.92rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     cursor: pointer;
     width: fit-content;
@@ -772,14 +772,14 @@
     border-bottom: 1px solid var(--border);
   }
   .output-label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
     margin-right: 0.25rem;
   }
-  .token-count { margin-left: auto; font-size: 0.8125rem; color: var(--text-muted); }
+  .token-count { margin-left: auto; font-size: 1.0625rem; color: var(--text-muted); }
 
   /* Loading bar */
   .loading-bar-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -801,12 +801,12 @@
     0%   { left: -35%; }
     100% { left: 110%; }
   }
-  .running-hint { font-size: 0.8125rem; color: var(--text-muted); }
+  .running-hint { font-size: 1.0625rem; color: var(--text-muted); }
 
   .raw-response {
     margin: 0;
     padding: 0.75rem 0.85rem;
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     font-family: ui-monospace, 'Cascadia Code', monospace;
     white-space: pre-wrap;
     word-break: break-all;
@@ -819,7 +819,7 @@
   .output-table tr:last-child { border-bottom: none; }
   .out-key {
     padding: 0.45rem 0.85rem;
-    font-size: 0.82rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-muted);
     width: 140px;
@@ -829,7 +829,7 @@
   }
   .out-val {
     padding: 0.45rem 0.85rem;
-    font-size: 0.88rem;
+    font-size: 1.0625rem;
     color: var(--text);
     font-family: ui-monospace, 'Cascadia Code', monospace;
     word-break: break-all;
@@ -844,9 +844,9 @@
     gap: 0.6rem;
     margin-bottom: 0.75rem;
   }
-  .results-title { font-size: 0.88rem; font-weight: 600; color: var(--text-strong); }
+  .results-title { font-size: 1.0625rem; font-weight: 600; color: var(--text-strong); }
   .pill {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     padding: 0.13rem 0.5rem;
     border-radius: 999px;
@@ -854,10 +854,10 @@
   .pill.pass { background: var(--pass-bg); color: var(--pass); }
   .pill.fail { background: var(--fail-bg); color: var(--fail); }
 
-  table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 1.0625rem; }
   thead th {
     text-align: left;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -875,12 +875,12 @@
   .col-status { width: 90px; white-space: nowrap; }
   .col-tokens { width: 70px; text-align: right; color: var(--text-muted); }
 
-  .mono { font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 0.8125rem; }
+  .mono { font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 1.0625rem; }
   .err-text { color: var(--fail); }
 
   .status-badge {
     display: inline-block;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     padding: 0.13rem 0.42rem;
     border-radius: 4px;
@@ -912,7 +912,7 @@
     margin-bottom: 0.5rem;
   }
   .sidebar-title {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -940,7 +940,7 @@
     margin-bottom: 0.2rem;
   }
   .entry-agent {
-    font-size: 0.83rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-strong);
     overflow: hidden;
@@ -953,18 +953,18 @@
     justify-content: space-between;
   }
   .entry-mode {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }
   .entry-ts {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
   }
 
   .entry-badge {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     padding: 0.1rem 0.38rem;
     border-radius: 4px;
@@ -975,7 +975,7 @@
   .badge-fail  { background: var(--fail-bg); color: var(--fail); }
   .badge-error { background: var(--warn-bg); color: var(--warn); }
 
-  .state-msg { color: var(--text-muted); font-size: 0.95rem; }
+  .state-msg { color: var(--text-muted); font-size: 1.0625rem; }
   .state-msg.error { color: var(--fail); }
 
   /* Badges (reused from Catalog inside step headers) */
@@ -983,7 +983,7 @@
     display: inline-block;
     padding: 0.1rem 0.38rem;
     border-radius: 4px;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -1000,7 +1000,7 @@
     max-width: 700px;
   }
   .steps-label {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1025,7 +1025,7 @@
   }
   .step-header:hover { filter: brightness(1.05); }
   .step-num {
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     background: var(--accent);
     color: #fff;
@@ -1038,13 +1038,13 @@
     flex-shrink: 0;
   }
   .step-name {
-    font-size: 0.85rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     color: var(--text-strong);
   }
   .step-meta {
     margin-left: auto;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
   }
   .step-body { display: flex; flex-direction: column; }
@@ -1055,7 +1055,7 @@
   .step-io:last-child { border-bottom: none; }
   .io-label {
     display: block;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;

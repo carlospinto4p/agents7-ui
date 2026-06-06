@@ -50,7 +50,7 @@
   }
   .intro-desc {
     color: var(--text-muted);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
     max-width: 680px;
@@ -84,12 +84,12 @@
     margin: 2rem 0 0.75rem;
   }
   .readme :global(h3) {
-    font-size: 1.05rem;
+    font-size: 1.0625rem;
     color: var(--text-strong);
     margin: 1.5rem 0 0.5rem;
   }
   .readme :global(h4) {
-    font-size: 0.95rem;
+    font-size: 1.0625rem;
     color: var(--text-strong);
     margin: 1.25rem 0 0.4rem;
   }
@@ -111,7 +111,7 @@
     padding: 0.1em 0.35em;
     border-radius: 3px;
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-    font-size: 0.865em;
+    font-size: 1.0625rem;
     color: var(--accent);
   }
 
@@ -129,7 +129,7 @@
     border: none;
     padding: 0;
     color: var(--text);
-    font-size: 0.875rem;
+    font-size: 1.0625rem;
   }
 
   /* Lists */
@@ -146,7 +146,7 @@
     border-collapse: collapse;
     width: 100%;
     margin: 0.75rem 0;
-    font-size: 0.9rem;
+    font-size: 1.0625rem;
   }
   .readme :global(th),
   .readme :global(td) {

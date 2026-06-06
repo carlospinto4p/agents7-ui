@@ -158,24 +158,41 @@ def test_eval_log_does_not_expose_input_values(monkeypatch):
 def test_engine_error_response_is_generic():
     import asyncio
     import unittest.mock as mock
-    from routers.engine import list_models
+    from routers import engine
 
     async def _run():
         mock_client = mock.AsyncMock()
         mock_client.get.side_effect = Exception("Connection refused")
-        with mock.patch("routers.engine.httpx.AsyncClient") as MockClient:
-            MockClient.return_value.__aenter__ = mock.AsyncMock(
-                return_value=mock_client
-            )
-            MockClient.return_value.__aexit__ = mock.AsyncMock(
-                return_value=False
-            )
-            return await list_models()
+        with mock.patch.object(engine, "_client", mock_client):
+            return await engine.list_models()
 
     result = asyncio.run(_run())
     assert result["models"] == []
     assert result["error"] == "Could not reach model provider"
     assert "Connection refused" not in result["error"]
+
+
+# ── /api/info Tests ────────────────────────────────────────────────────────
+
+
+def test_info_reports_name_and_version():
+    import main
+
+    info = main.get_info()
+    assert info["name"] == "agents7-ui"
+    assert info["version"] != "unknown"
+    assert info["version"][0].isdigit()
+
+
+def test_info_version_matches_pyproject():
+    import tomllib
+    from pathlib import Path
+
+    import main
+
+    pyproject = Path(main.__file__).parent / "pyproject.toml"
+    expected = tomllib.loads(pyproject.read_text())["project"]["version"]
+    assert main.get_info()["version"] == expected
 
 
 # ── chat.py rate limit Tests ───────────────────────────────────────────────

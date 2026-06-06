@@ -2,6 +2,18 @@
 ## Changelog - agents7 UI
 
 
+### v0.10.0 - 6th June 2026
+
+- `backend/main.py`:
+  - Added `GET /api/info` returning `{name, version}`, with the version read from `pyproject.toml`.
+  - Added `/api/info` to the unprotected route set so the badge loads without an API key.
+- `frontend/`: Added a version badge to `App.svelte` that fetches `/api/info` on mount and renders `{name} v{version}` in document flow above the header.
+- Fixed `font-size` floor: raised 112 sub-17px declarations across 9 frontend files to `1.0625rem` (17px) — v0.9.12 had enforced a 13px floor by mistake.
+- `backend/tests/test_security.py`:
+  - Fixed `test_engine_error_response_is_generic` to patch the module-level `_client` instead of the `httpx.AsyncClient` class (the class was patched after instantiation, so the test only passed when no Ollama was running).
+  - Added `test_info_reports_name_and_version` and `test_info_version_matches_pyproject`.
+
+
 ### v0.9.12 - 18th May 2026
 
 - Bumped all `font-size` rem values below `0.8125rem` to `0.8125rem` across 7 frontend files (`App.svelte`, `JsonViewer.svelte`, `Catalog.svelte`, `Chatter.svelte`, `Engine.svelte`, `Eval.svelte`, `Runner.svelte`) to enforce the accessibility floor.

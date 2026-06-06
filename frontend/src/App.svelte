@@ -9,6 +9,8 @@
 
   let page = $state(getPage())
   let ollamaStatus = $state('checking')
+  let appName = $state('')
+  let appVersion = $state('')
 
   function getPage() {
     return window.location.hash.replace('#/', '').split('/')[0] || 'home'
@@ -30,12 +32,33 @@
     }
   }
 
+  async function loadInfo() {
+    try {
+      const res = await fetch('/api/info')
+      if (res.ok) {
+        const data = await res.json()
+        appName = data.name ?? ''
+        appVersion = data.version ?? ''
+      }
+    } catch (_) {}
+  }
+
   onMount(() => {
+    loadInfo()
     checkOllama()
     const id = setInterval(checkOllama, 30000)
     return () => clearInterval(id)
   })
 </script>
+
+{#if appVersion}
+  <div class="version-bar">
+    <div class="version-badge">
+      <span class="version-name">{appName}</span>
+      <span class="version-num">v{appVersion}</span>
+    </div>
+  </div>
+{/if}
 
 <header>
   <div class="header-inner">
@@ -74,6 +97,34 @@
 </main>
 
 <style>
+  .version-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 1.5rem 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .version-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 9px;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 1.0625rem;
+  }
+  .version-name {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+  .version-num {
+    color: var(--text);
+    letter-spacing: 0.04em;
+  }
   header {
     border-bottom: 1px solid var(--border);
     background: var(--bg-header);
@@ -103,7 +154,7 @@
   nav a {
     text-decoration: none;
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 1.0625rem;
   }
   nav a.active {
     color: var(--accent);
@@ -114,7 +165,7 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--neutral);
     padding: 0.2rem 0.55rem;
     border-radius: 10px;
