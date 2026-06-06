@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.11.1 - 6th June 2026
+
+- `frontend/` (`Home.svelte`): Removed the accent status dot from the version badge.
+
+
 ### v0.11.0 - 6th June 2026
 
 - `frontend/` (`Home.svelte`):

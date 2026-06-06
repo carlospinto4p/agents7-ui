@@ -173,15 +173,6 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .version-badge::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
-    flex-shrink: 0;
-  }
   .version-name {
     font-weight: 700;
     color: var(--text-strong);
