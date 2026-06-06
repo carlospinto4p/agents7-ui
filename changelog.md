@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.12.3 - 6th June 2026
+
+- Docker: reverted the bundled in-container Ollama in favour of the host's Ollama service (which already holds the models and GPU); the in-container instance started empty and CPU-only.
+  - `docker-compose.yml`: backend points at `host.docker.internal:11434`, restored `extra_hosts`, and dropped `ALLOW_ENGINE_START`, the `ollama_models` volume, and the GPU stanza.
+  - `Dockerfile.backend`: removed the Ollama runtime install.
+  - `agents7_ui/.env.example`: updated `OLLAMA_HOST` / `ALLOW_ENGINE_START` guidance — the host service must bind a docker-reachable address (e.g. `0.0.0.0:11434`), not loopback.
+  - `POST /api/engine/start` and the Start button remain but are dormant (gated off); they apply only when the backend runs natively on a host with a local `ollama` binary.
+
+
 ### v0.12.2 - 6th June 2026
 
 - `agents7_ui/.gitignore`: mirrored the `.env.*` ignore + `!.env.example` exception from the root ignore for defense-in-depth.
