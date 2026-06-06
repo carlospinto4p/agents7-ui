@@ -8,9 +8,57 @@
   let freeing = $state(false)
   let pollHandle = null
 
+  let sortKey = $state('name')
+  let sortDir = $state('asc')
+
   let anyLoaded = $derived(
     (data?.models ?? []).some(m => m.loaded)
   )
+
+  // `loaded` sorts above `loading` above `idle`.
+  function statusRank(m) {
+    if (m.loaded) return 2
+    if (m.loading) return 1
+    return 0
+  }
+
+  function sortValue(m, key) {
+    switch (key) {
+      case 'name':
+        return m.name ?? ''
+      case 'size':
+        return m.size ?? 0
+      case 'status':
+        return statusRank(m)
+      case 'vram':
+        return m.size_vram ?? 0
+      default:
+        return ''
+    }
+  }
+
+  let sortedModels = $derived.by(() => {
+    const models = [...(data?.models ?? [])]
+    const dir = sortDir === 'asc' ? 1 : -1
+    models.sort((a, b) => {
+      const av = sortValue(a, sortKey)
+      const bv = sortValue(b, sortKey)
+      if (typeof av === 'string') {
+        return av.localeCompare(bv) * dir
+      }
+      return (av - bv) * dir
+    })
+    return models
+  })
+
+  function sortBy(key) {
+    if (sortKey === key) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc'
+    } else {
+      sortKey = key
+      sortDir = 'asc'
+    }
+  }
 
   function anyLoadingNow() {
     return (data?.models ?? []).some(m => m.loading)
@@ -129,15 +177,23 @@
       <table>
         <thead>
           <tr>
-            <th>Name</th>
-            <th>Size</th>
-            <th>Status</th>
-            <th>VRAM</th>
+            <th class="sortable" class:active={sortKey === 'name'} onclick={() => sortBy('name')}>
+              Name<span class="arrow">{sortKey === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</span>
+            </th>
+            <th class="sortable" class:active={sortKey === 'size'} onclick={() => sortBy('size')}>
+              Size<span class="arrow">{sortKey === 'size' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</span>
+            </th>
+            <th class="sortable" class:active={sortKey === 'status'} onclick={() => sortBy('status')}>
+              Status<span class="arrow">{sortKey === 'status' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</span>
+            </th>
+            <th class="sortable" class:active={sortKey === 'vram'} onclick={() => sortBy('vram')}>
+              VRAM<span class="arrow">{sortKey === 'vram' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</span>
+            </th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {#each data.models as m}
+          {#each sortedModels as m}
             <tr class:loaded={m.loaded}>
               <td class="mono">{m.name}</td>
               <td>{fmtSize(m.size)}</td>
@@ -260,6 +316,19 @@
     font-size: 1.0625rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+  th.sortable {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  th.sortable:hover { color: var(--text); }
+  th.active { color: var(--text); }
+  .arrow {
+    display: inline-block;
+    width: 1em;
+    margin-left: 0.15em;
+    font-size: 0.85em;
   }
   tr.loaded { background: rgba(63, 201, 126, 0.06); }
 

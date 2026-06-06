@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.15.0 - 6th June 2026
+
+- Engine models table columns are now sortable:
+  - `frontend/src/pages/Engine.svelte`: clicking the Name, Size,
+    Status, or VRAM header sorts the table by that column; clicking
+    again toggles ascending/descending. The active column shows a
+    direction arrow. Status sorts loaded → loading → idle.
+
+
 ### v0.14.0 - 6th June 2026
 
 - Engine model loading is now non-blocking and navigation-safe, with spinner icons:
