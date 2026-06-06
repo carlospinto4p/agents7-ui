@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.14.0 - 6th June 2026
+
+- Engine model loading is now non-blocking and navigation-safe, with spinner icons:
+  - `backend/routers/engine.py`: `POST /api/engine/load` fires the warm-up as a background task and returns `{"status": "loading"}` immediately, so large-model loads no longer risk a proxy timeout. In-flight loads are tracked server-side and surfaced via a new `loading` flag on each `GET /api/engine/models` entry — correct for any client and surviving page navigation.
+  - `frontend/` (`Engine.svelte`): polls `/models` every 2s while any model is loading (and stops when none are); shows a spinner + "loading" badge and a disabled "Loading…" action while a model warms, plus spinner icons on the Refresh / Free all / row buttons while busy.
+  - `backend/tests/test_security.py`: updated the load test for the background/`loading` contract and added a `loading`-flag test.
+
+
 ### v0.13.0 - 6th June 2026
 
 - Engine model load/unload — free or wake the engine from the UI without touching the host process:

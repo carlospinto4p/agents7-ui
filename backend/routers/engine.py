@@ -18,6 +18,12 @@ _client = httpx.AsyncClient()
 # own environment (same machine / same container).
 _LOCAL_HOSTS = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
 
+# Models with an in-flight load. Tracked server-side so every client —
+# on any page, in any tab — sees the loading state and it survives
+# navigation. Names are removed when the background load settles.
+_loading: set[str] = set()
+_load_tasks: set[asyncio.Task] = set()
+
 
 class ModelRef(BaseModel):
     """A reference to an Ollama model by name."""
@@ -68,7 +74,7 @@ async def _set_keep_alive(name: str, keep_alive: int | str) -> None:
         r = await _client.post(
             f"{OLLAMA_HOST}/api/generate",
             json={"model": name, "keep_alive": keep_alive},
-            timeout=300.0,
+            timeout=600.0,
         )
     except Exception as exc:
         logger.warning("keep_alive request for %s failed: %s", name, exc)
@@ -79,6 +85,23 @@ async def _set_keep_alive(name: str, keep_alive: int | str) -> None:
         raise HTTPException(
             status_code=502, detail=f"Ollama rejected the request for {name}"
         )
+
+
+async def _load_bg(name: str) -> None:
+    """Warm a model in the background, clearing `_loading` when done.
+
+    Errors are logged rather than raised — no client is awaiting this.
+    """
+    try:
+        await _client.post(
+            f"{OLLAMA_HOST}/api/generate",
+            json={"model": name, "keep_alive": -1},
+            timeout=600.0,
+        )
+    except Exception as exc:
+        logger.warning("Background load of %s failed: %s", name, exc)
+    finally:
+        _loading.discard(name)
 
 
 @router.get("/models")
@@ -102,11 +125,13 @@ async def list_models() -> dict:
     for m in tags:
         name = m["name"]
         loaded_info = loaded_map.get(name)
+        loaded = name in loaded_map
         models.append(
             {
                 "name": name,
                 "size": m.get("size"),
-                "loaded": name in loaded_map,
+                "loaded": loaded,
+                "loading": name in _loading and not loaded,
                 "size_vram": (
                     loaded_info.get("size_vram") if loaded_info else None
                 ),
@@ -127,9 +152,18 @@ async def ollama_status() -> dict:
 
 @router.post("/load")
 async def load_model(ref: ModelRef) -> dict:
-    """Warm a model into memory and keep it resident."""
-    await _set_keep_alive(ref.name, -1)
-    return {"status": "loaded", "model": ref.name}
+    """Start warming a model into memory; returns immediately.
+
+    The load runs in the background (it can take a while for large
+    models); poll `/models` and watch the `loading` / `loaded` flags
+    to follow progress. Idempotent while a load is already in flight.
+    """
+    if ref.name not in _loading:
+        _loading.add(ref.name)
+        task = asyncio.create_task(_load_bg(ref.name))
+        _load_tasks.add(task)
+        task.add_done_callback(_load_tasks.discard)
+    return {"status": "loading", "model": ref.name}
 
 
 @router.post("/unload")

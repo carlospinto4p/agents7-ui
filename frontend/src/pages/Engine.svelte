@@ -6,27 +6,48 @@
   let error = $state(null)
   let busy = $state(new Set())
   let freeing = $state(false)
+  let pollHandle = null
 
   let anyLoaded = $derived(
     (data?.models ?? []).some(m => m.loaded)
   )
 
-  async function fetchModels() {
-    loading = true
-    error = null
+  function anyLoadingNow() {
+    return (data?.models ?? []).some(m => m.loading)
+  }
+
+  // Loads run server-side, so a model can be `loading` regardless of
+  // which page started it. Poll while any model is loading; stop when
+  // none are. Survives navigation: the state is refetched on mount.
+  function syncPolling() {
+    const need = anyLoadingNow()
+    if (need && pollHandle === null) {
+      pollHandle = setInterval(() => refetch(true), 2000)
+    } else if (!need && pollHandle !== null) {
+      clearInterval(pollHandle)
+      pollHandle = null
+    }
+  }
+
+  async function refetch(silent = false) {
+    if (!silent) {
+      loading = true
+      error = null
+    }
     try {
       const res = await fetch('/api/engine/models')
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       data = await res.json()
     } catch (e) {
-      error = e.message
+      if (!silent) error = e.message
     } finally {
-      loading = false
+      if (!silent) loading = false
     }
+    syncPolling()
   }
 
   async function toggle(m) {
-    if (busy.has(m.name)) return
+    if (busy.has(m.name) || m.loading) return
     busy = new Set(busy).add(m.name)
     const ep = m.loaded ? 'unload' : 'load'
     try {
@@ -36,7 +57,7 @@
         body: JSON.stringify({ name: m.name }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      await fetchModels()
+      await refetch()
     } catch (e) {
       error = e.message
     } finally {
@@ -52,7 +73,7 @@
     try {
       const res = await fetch('/api/engine/unload-all', { method: 'POST' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      await fetchModels()
+      await refetch()
     } catch (e) {
       error = e.message
     } finally {
@@ -60,7 +81,12 @@
     }
   }
 
-  onMount(fetchModels)
+  onMount(() => {
+    refetch()
+    return () => {
+      if (pollHandle !== null) clearInterval(pollHandle)
+    }
+  })
 
   function fmtSize(bytes) {
     if (!bytes) return '—'
@@ -78,10 +104,12 @@
     <div class="header-actions">
       {#if anyLoaded}
         <button onclick={freeAll} disabled={freeing}>
+          {#if freeing}<span class="spinner"></span>{/if}
           {freeing ? 'Freeing…' : 'Free all'}
         </button>
       {/if}
-      <button onclick={fetchModels} disabled={loading}>
+      <button onclick={() => refetch()} disabled={loading}>
+        {#if loading}<span class="spinner"></span>{/if}
         {loading ? 'Loading…' : 'Refresh'}
       </button>
     </div>
@@ -116,24 +144,31 @@
               <td>
                 {#if m.loaded}
                   <span class="badge green">loaded</span>
+                {:else if m.loading}
+                  <span class="badge warn"><span class="spinner"></span> loading</span>
                 {:else}
                   <span class="badge grey">idle</span>
                 {/if}
               </td>
               <td>{fmtSize(m.size_vram)}</td>
               <td>
-                <button
-                  class="act"
-                  class:unload={m.loaded}
-                  onclick={() => toggle(m)}
-                  disabled={busy.has(m.name)}
-                >
-                  {#if busy.has(m.name)}
-                    {m.loaded ? 'Unloading…' : 'Loading…'}
-                  {:else}
+                {#if m.loading}
+                  <button class="act" disabled>
+                    <span class="spinner"></span> Loading…
+                  </button>
+                {:else}
+                  <button
+                    class="act"
+                    class:unload={m.loaded}
+                    onclick={() => toggle(m)}
+                    disabled={busy.has(m.name)}
+                  >
+                    {#if busy.has(m.name)}
+                      <span class="spinner"></span>
+                    {/if}
                     {m.loaded ? 'Unload' : 'Load'}
-                  {/if}
-                </button>
+                  </button>
+                {/if}
               </td>
             </tr>
           {/each}
@@ -239,6 +274,21 @@
   }
   .badge.green { background: var(--pass-bg); color: var(--pass); }
   .badge.grey  { background: var(--neutral-bg); color: var(--neutral); }
+  .badge.warn  { background: var(--warn-bg); color: var(--warn); }
+
+  .spinner {
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -0.12em;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 
   .msg { padding: 0.5rem 0; }
   .error { color: var(--fail); }

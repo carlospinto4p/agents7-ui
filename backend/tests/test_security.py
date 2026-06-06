@@ -244,7 +244,7 @@ def test_engine_start_spawns_and_reports_started(monkeypatch):
 # ── engine.py load / unload Tests ──────────────────────────────────────────
 
 
-def test_engine_load_sets_keep_alive_indefinite(monkeypatch):
+def test_engine_load_fires_background_keep_alive_indefinite(monkeypatch):
     import asyncio
     import unittest.mock as mock
 
@@ -254,11 +254,44 @@ def test_engine_load_sets_keep_alive_indefinite(monkeypatch):
     client = mock.AsyncMock()
     client.post.return_value = mock.Mock(is_success=True)
     monkeypatch.setattr(engine, "_client", client)
+    engine._loading.clear()
 
-    result = asyncio.run(engine.load_model(engine.ModelRef(name="qwen3")))
-    assert result == {"status": "loaded", "model": "qwen3"}
+    async def _run():
+        result = await engine.load_model(engine.ModelRef(name="qwen3"))
+        # Returns immediately, marking the model as loading.
+        assert result == {"status": "loading", "model": "qwen3"}
+        assert "qwen3" in engine._loading
+        # Let the background load run to completion.
+        await asyncio.gather(*engine._load_tasks)
+
+    asyncio.run(_run())
     body = client.post.call_args.kwargs["json"]
     assert body == {"model": "qwen3", "keep_alive": -1}
+    assert "qwen3" not in engine._loading  # cleared once settled
+
+
+def test_engine_models_reports_loading_flag(monkeypatch):
+    import asyncio
+    import unittest.mock as mock
+
+    from routers import engine
+
+    tags = mock.Mock(
+        is_success=True,
+        json=mock.Mock(return_value={"models": [{"name": "x", "size": 1}]}),
+    )
+    ps = mock.Mock(
+        is_success=True, json=mock.Mock(return_value={"models": []})
+    )
+    client = mock.AsyncMock()
+    client.get.side_effect = [tags, ps]
+    monkeypatch.setattr(engine, "_client", client)
+    monkeypatch.setattr(engine, "_loading", {"x"})
+
+    result = asyncio.run(engine.list_models())
+    m = result["models"][0]
+    assert m["loaded"] is False
+    assert m["loading"] is True
 
 
 def test_engine_unload_evicts_model(monkeypatch):
