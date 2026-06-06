@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.12.1 - 6th June 2026
+
+- Environment variable configuration:
+  - Added `agents7_ui/.env.example` documenting every variable (Ollama, CORS, `API_KEY`, provider keys, tuning), including the caveat that the bundled UI sends no auth header so `API_KEY` 401s it.
+  - `docker-compose.yml`: backend loads an optional `agents7_ui/.env` via `env_file` and sets `CORS_ORIGINS` explicitly.
+  - `.gitignore`: ignore all `.env.*` variants except the committed `.env.example`.
+
+
 ### v0.12.0 - 6th June 2026
 
 - `backend/` (`routers/engine.py`):

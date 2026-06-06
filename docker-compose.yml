@@ -3,11 +3,19 @@ services:
     build:
       context: .
       dockerfile: agents7_ui/Dockerfile.backend
+    # Secrets (API_KEY, provider keys) go here; gitignored, optional.
+    # See agents7_ui/.env.example for the documented variables.
+    env_file:
+      - path: agents7_ui/.env
+        required: false
     environment:
       # Ollama is bundled in this container; the backend talks to it on
       # localhost and can start it on demand via POST /api/engine/start.
       - OLLAMA_HOST=http://localhost:11434
       - ALLOW_ENGINE_START=1
+      # Allowed browser origin. Same-origin via nginx in this stack, so the
+      # default covers it; set explicitly for a different host/port.
+      - CORS_ORIGINS=http://localhost:8080
     volumes:
       # Persist pulled models across container restarts.
       - ollama_models:/root/.ollama
