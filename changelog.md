@@ -2,6 +2,20 @@
 ## Changelog - agents7 UI
 
 
+### v0.15.5 - 6th June 2026
+
+- Fixed packaged catalog agents (e.g. Tagger agent) appearing twice in
+  the catalog list:
+  - `backend/routers/catalog.py`: the config scan now skips build /
+    install artifacts (`build/`, `dist/`, `.venv`, `*.egg-info`,
+    `__pycache__`, `site-packages`, `node_modules`), which each hold a
+    duplicate `config.yml`.
+  - `Dockerfile.backend`: remove in-tree `build/` and `*.egg-info`
+    left by installing the catalog packages.
+  - `backend/tests/test_catalog.py`: regression tests for
+    `_is_catalog_config`.
+
+
 ### v0.15.4 - 6th June 2026
 
 - `Dockerfile.backend`: install catalog agents that ship as packages so

@@ -29,6 +29,12 @@ RUN for d in agents_catalog/*/; do \
     done
 RUN uv pip install --system "rapidfuzz>=3.0.0"
 
+# Building the catalog packages leaves in-tree artifacts (build/,
+# *.egg-info) that contain a duplicate config.yml; remove them so the
+# catalog scan doesn't list each packaged agent twice.
+RUN find agents_catalog -type d -name build -prune -exec rm -rf {} + \
+ && find agents_catalog -type d -name "*.egg-info" -prune -exec rm -rf {} +
+
 COPY agents7_ui/backend/ backend/
 
 ENV CATALOG_PATH=/app/agents_catalog

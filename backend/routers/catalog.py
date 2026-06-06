@@ -13,6 +13,27 @@ CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
 _catalog_cache: list[Path] | None = None
 _name_index: dict[str, Path] | None = None
 
+# Directories that hold build/install artifacts, not real agent configs.
+# Catalog agents that ship as packages get a copy of their config.yml
+# under build/ (e.g. build/lib/<pkg>/config.yml) and inside any local
+# virtualenv's site-packages; scanning those would list the agent twice.
+_SKIP_DIRS = {
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "node_modules",
+    "site-packages",
+}
+
+
+def _is_catalog_config(p: Path) -> bool:
+    """Return ``True`` if ``p`` is a real agent config, not an artifact."""
+    return not any(
+        part in _SKIP_DIRS or part.endswith(".egg-info") for part in p.parts
+    )
+
 
 def _ensure_catalog_loaded() -> None:
     global _catalog_cache, _name_index
@@ -22,6 +43,8 @@ def _ensure_catalog_loaded() -> None:
     _name_index = {}
     if CATALOG_PATH.exists():
         for p in sorted(CATALOG_PATH.rglob("config.yml")):
+            if not _is_catalog_config(p):
+                continue
             _catalog_cache.append(p)
             cfg, _ = _load_config(p)
             name = (cfg.get("name") or "").lower()
