@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.15.4 - 6th June 2026
+
+- `Dockerfile.backend`: install catalog agents that ship as packages so
+  their custom `output_model` is importable at run time. Previously
+  `POST /api/run/Tagger agent` failed with
+  `ModuleNotFoundError: No module named 'tagger_agent'` because the
+  image copied `agents_catalog/` without installing the agent packages.
+  Each catalog package is now installed (`--no-deps`) plus its
+  third-party runtime deps (`rapidfuzz`).
+
+
 ### v0.15.3 - 6th June 2026
 
 - `frontend/src/pages/Catalog.svelte`: card grid is now a flex-wrap

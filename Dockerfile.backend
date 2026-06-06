@@ -15,6 +15,20 @@ RUN uv pip install --system agents7_framework/
 RUN uv pip install --system "fastapi>=0.115.0" "uvicorn[standard]>=0.34.0" "pyyaml>=6.0" "httpx>=0.28.0"
 
 COPY agents_catalog/ agents_catalog/
+
+# Catalog agents that ship as installable packages (e.g. a custom
+# output_model like tagger_agent.models.NickTag) must be importable by
+# their dotted path at run time, or POST /api/run/<agent> fails with
+# ModuleNotFoundError. Install each package with --no-deps (agents7 is
+# already installed from a local path and is not on PyPI), then install
+# their third-party runtime deps.
+RUN for d in agents_catalog/*/; do \
+        if [ -f "${d}pyproject.toml" ]; then \
+            uv pip install --system --no-deps "$d"; \
+        fi; \
+    done
+RUN uv pip install --system "rapidfuzz>=3.0.0"
+
 COPY agents7_ui/backend/ backend/
 
 ENV CATALOG_PATH=/app/agents_catalog
