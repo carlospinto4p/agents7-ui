@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.15.6 - 7th June 2026
+
+- Removed the redundant `version` field from `frontend/package.json`:
+  it drifted from the canonical app version in `backend/pyproject.toml`
+  and was read by nothing — the version badge sources `/api/info`,
+  which reads `backend/pyproject.toml`. The package is `private`, so no
+  `version` field is required.
+
+
 ### v0.15.5 - 6th June 2026
 
 - Fixed packaged catalog agents (e.g. Tagger agent) appearing twice in
