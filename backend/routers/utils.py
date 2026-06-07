@@ -12,8 +12,12 @@ AGENT_TYPE_MAP = {
 
 CHATTER_TYPE_MAP = {
     "chatter": "agents7.agents.Chatter",
-    "personality_chatter": "agents7.agents.PersonalityChatter",
-    "scene_chatter": "agents7.agents.SceneChatter",
+    # PersonalityChatter/SceneChatter were removed in agents7
+    # v4.0.0; persona/scene are now Chatter composition plugins,
+    # so these legacy agent_types map to Chatter (which loads the
+    # persona/scene YAML sections).
+    "personality_chatter": "agents7.agents.Chatter",
+    "scene_chatter": "agents7.agents.Chatter",
     "guarded_chatter": "agents7.agents.GuardedChatter",
     "guarded_scene_chatter": "agents7.agents.GuardedSceneChatter",
 }

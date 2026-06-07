@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.17.1 - 7th June 2026
+
+- Updated `backend/routers/utils.py` `CHATTER_TYPE_MAP`: the
+  legacy `personality_chatter` / `scene_chatter` agent types now
+  map to `Chatter` (agents7 v4.0.0 removed the
+  `PersonalityChatter` / `SceneChatter` classes; persona/scene
+  are Chatter composition plugins). Existing configs with those
+  agent types still load.
+
+
 ### v0.17.0 - 7th June 2026
 
 - Show a persona/scene blurb for the selected agent on the Chatter
