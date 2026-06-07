@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.17.0 - 7th June 2026
+
+- Show a persona/scene blurb for the selected agent on the Chatter
+  page:
+  - `backend/routers/catalog.py`: detail endpoint now returns the
+    `persona` and `scene` config blocks.
+  - `pages/Chatter.svelte`: fetches the agent detail on selection and
+    renders a blurb (occupation · nationality, personality traits,
+    backstory or system prompt, and scene setting for scene chatters).
+
+
 ### v0.16.2 - 7th June 2026
 
 - Chatter page polish (`frontend/`):

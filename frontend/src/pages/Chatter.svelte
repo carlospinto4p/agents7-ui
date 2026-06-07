@@ -12,6 +12,28 @@
     allAgents.find(a => a.name === agentName) ?? null
   )
 
+  // Per-agent detail (persona / scene / system prompt) for the blurb.
+  let detail  = $state(null)
+  let persona = $derived(detail?.persona ?? null)
+  let scene   = $derived(detail?.scene ?? null)
+  let personaFacts = $derived.by(() => {
+    if (!persona) return ''
+    return [persona.occupation, persona.nationality]
+      .filter(Boolean)
+      .join(' · ')
+  })
+
+  // Fetch the selected agent's detail whenever the selection changes.
+  $effect(() => {
+    const name = agentName
+    detail = null
+    if (!name) return
+    fetch(`/api/catalog/${encodeURIComponent(name)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (name === agentName) detail = d })
+      .catch(() => {})
+  })
+
   // Allow deep links from the catalog (#/chatter/<name>) to
   // preselect a specific agent.
   function agentFromHash() {
@@ -90,6 +112,33 @@
           <span class="badge version">v{selectedAgent.version}</span>
         {/if}
       </div>
+
+      {#if persona?.backstory || detail?.system_prompt || scene}
+        <div class="persona-blurb">
+          {#if personaFacts}
+            <p class="persona-facts">{personaFacts}</p>
+          {/if}
+          {#if persona?.personality?.length}
+            <div class="trait-tags">
+              {#each persona.personality as trait}
+                <span class="trait">{trait}</span>
+              {/each}
+            </div>
+          {/if}
+          {#if persona?.backstory}
+            <p class="blurb-text">{persona.backstory}</p>
+          {:else if detail?.system_prompt}
+            <p class="blurb-text">{detail.system_prompt}</p>
+          {/if}
+          {#if scene}
+            <p class="blurb-text">
+              <span class="blurb-label">Scene</span>{scene.setting}{scene.situation
+                ? ' ' + scene.situation
+                : ''}
+            </p>
+          {/if}
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -208,6 +257,46 @@
   }
   .badge.provider { background: var(--warn-bg);    color: var(--warn); }
   .badge.version  { background: var(--neutral-bg); color: var(--neutral); }
+
+  /* Persona / scene blurb */
+  .persona-blurb {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 9rem;
+    overflow-y: auto;
+    margin-top: 0.1rem;
+  }
+  .persona-facts {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+    text-transform: capitalize;
+  }
+  .trait-tags { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+  .trait {
+    font-size: 0.9rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .blurb-text {
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 0;
+  }
+  .blurb-label {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-right: 0.4rem;
+  }
 
   .panel-wrap { flex: 1; min-height: 0; display: flex; }
 

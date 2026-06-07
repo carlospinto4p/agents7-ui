@@ -136,6 +136,8 @@ def _parse_detail(config_file: Path) -> dict:
         "pipeline_steps": pipeline_steps,
         "step_engines": step_engines,
         "system_prompt": cfg.get("system_prompt"),
+        "persona": cfg.get("persona"),
+        "scene": cfg.get("scene"),
         "output_model": cfg.get("output_model"),
         "output_schema": output_schema,
         "system_examples": cfg.get("system_examples"),

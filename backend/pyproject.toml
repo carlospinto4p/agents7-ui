@@ -1,6 +1,6 @@
 [project]
 name = "agents7-ui-backend"
-version = "0.16.2"
+version = "0.17.0"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
