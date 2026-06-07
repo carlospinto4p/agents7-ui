@@ -8,6 +8,10 @@
   let loadError = $state(null)
   let chatPanel = $state(null)
 
+  let selectedAgent = $derived(
+    allAgents.find(a => a.name === agentName) ?? null
+  )
+
   // Allow deep links from the catalog (#/chatter/<name>) to
   // preselect a specific agent.
   function agentFromHash() {
@@ -66,6 +70,28 @@
       Reset
     </button>
   </div>
+
+  {#if selectedAgent}
+    <div class="agent-meta">
+      {#if selectedAgent.display_name && selectedAgent.display_name !== selectedAgent.name}
+        <span class="agent-display-name">{selectedAgent.display_name}</span>
+      {/if}
+      <div class="meta-badges">
+        {#if selectedAgent.agent_type}
+          <span class="badge type">{selectedAgent.agent_type}</span>
+        {/if}
+        {#if selectedAgent.provider}
+          <span class="badge provider">{selectedAgent.provider}</span>
+        {/if}
+        {#if selectedAgent.model}
+          <span class="badge model">{selectedAgent.model}</span>
+        {/if}
+        {#if selectedAgent.version != null}
+          <span class="badge version">v{selectedAgent.version}</span>
+        {/if}
+      </div>
+    </div>
+  {/if}
 
   {#if agentName}
     <div class="panel-wrap">
@@ -147,6 +173,41 @@
 
   .err   { color: var(--fail); font-size: 1.0625rem; }
   .muted { color: var(--text-muted); font-size: 1.0625rem; }
+
+  /* Selected-agent summary */
+  .agent-meta {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .agent-display-name {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+  .meta-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .badge.type     { background: var(--info-bg);   color: var(--accent); }
+  .badge.model    {
+    background: var(--pass-bg);
+    color: var(--pass);
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+  }
+  .badge.provider { background: var(--warn-bg);    color: var(--warn); }
+  .badge.version  { background: var(--neutral-bg); color: var(--neutral); }
 
   .panel-wrap { flex: 1; min-height: 0; display: flex; }
 

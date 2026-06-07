@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.16.2 - 7th June 2026
+
+- Chatter page polish (`frontend/`):
+  - `components/ChatPanel.svelte`: added `width: 100%` so the panel
+    fills its container instead of shrinking to content width when the
+    transcript is empty.
+  - `pages/Chatter.svelte`: show the selected agent's summary (display
+    name + type / provider / model / version badges) below the dropdown,
+    not just the name.
+
+
 ### v0.16.1 - 7th June 2026
 
 - Updated `components/ChatPanel.svelte`: assistant message bubbles now
