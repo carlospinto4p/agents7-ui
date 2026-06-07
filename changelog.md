@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.16.1 - 7th June 2026
+
+- Updated `components/ChatPanel.svelte`: assistant message bubbles now
+  show response time alongside token count (`123 tok · 1.2s`), matching
+  the metrics format used elsewhere in the catalog.
+
+
 ### v0.16.0 - 7th June 2026
 
 - Added inline chat for chatter-family agents on the catalog detail

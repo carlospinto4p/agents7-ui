@@ -96,13 +96,24 @@
         const d = await r.json()
         messages = [
           ...messages,
-          { role: 'assistant', text: d.response, tokens: d.metrics?.tokens },
+          { role: 'assistant', text: d.response, meta: metricsLine(d.metrics) },
         ]
       }
     } catch (e) {
       chatError = e.message
     }
     sending = false
+  }
+
+  // Format per-message metrics like the catalog runner: "123 tok · 1.2s".
+  function metricsLine(m) {
+    if (!m) return ''
+    const parts = []
+    if (m.tokens) parts.push(`${m.tokens} tok`)
+    if (m.total_duration != null) {
+      parts.push(`${m.total_duration.toFixed(1)}s`)
+    }
+    return parts.join(' · ')
   }
 
   function handleKeydown(e) {
@@ -132,8 +143,8 @@
             <span class="bubble-role">
               {msg.role === 'user' ? 'You' : agentName}
             </span>
-            {#if msg.tokens}
-              <span class="bubble-tokens">{msg.tokens} tokens</span>
+            {#if msg.meta}
+              <span class="bubble-tokens">{msg.meta}</span>
             {/if}
           </div>
           <p class="bubble-text">{msg.text}</p>
