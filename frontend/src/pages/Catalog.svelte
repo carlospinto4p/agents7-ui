@@ -1,5 +1,7 @@
 <script>
   import JsonViewer from '../components/JsonViewer.svelte';
+  import ChatPanel from '../components/ChatPanel.svelte';
+  import { CHATTER_TYPES } from '../constants.js';
 
   let agents       = $state([])
   let loading      = $state(true)
@@ -31,6 +33,15 @@
       },
       { catalog: [], example: [], integration_test: [] },
     )
+  )
+
+  let catalogChat = $state(null)
+
+  // Chatter-family agents run through the stateful chat API, not the
+  // one-shot /api/run runner — so the detail page embeds a chat panel
+  // instead of a JSON input.
+  let isChatterAgent = $derived(
+    !!selected && CHATTER_TYPES.has(selected.agent_type)
   )
 
   let runnerExInput = $derived(
@@ -234,44 +245,66 @@
       </button>
       {#if open.runner}
         <div class="runner-body">
-          {#if runnerFields.length > 0}
-            <div class="runner-fields">
-              {#each runnerFields as f}
-                <label class="runner-field">
-                  <span class="field-label">{f.name}</span>
-                  <input
-                    type="text"
-                    placeholder={f.placeholder}
-                    bind:value={runnerValues[f.name]}
-                    disabled={runnerRunning}
-                    spellcheck="false"
-                  />
-                </label>
-              {/each}
+          {#if isChatterAgent}
+            <p class="section-desc">
+              Conversational agent with memory. Send it a message
+              below, or open the full
+              <a
+                class="chatter-link"
+                href={`#/chatter/${encodeURIComponent(selected.name)}`}
+              >Chatter page →</a>
+            </p>
+            <div class="inline-chat">
+              <ChatPanel bind:this={catalogChat} agentName={selected.name} />
             </div>
-          {:else if runnerIsText}
-            <label class="runner-field">
-              <span class="field-label">Input</span>
-              <input
-                type="text"
-                placeholder={runnerExInput ?? 'Enter input…'}
-                bind:value={runnerText}
-                disabled={runnerRunning}
-                spellcheck="false"
-              />
-            </label>
+            <button
+              class="reset-conv-btn"
+              onclick={() => catalogChat?.restart()}
+            >Reset conversation</button>
           {:else}
-            <label class="runner-field">
-              <span class="field-label">JSON Input</span>
-              <textarea
-                rows="3"
-                placeholder={'{ "field": "value" }'}
-                bind:value={runnerText}
-                disabled={runnerRunning}
-                spellcheck="false"
-              ></textarea>
-            </label>
-          {/if}
+            <p class="section-desc">
+              {runnerFields.length > 0 || runnerIsText
+                ? 'Prefilled from a sample input — edit the values and Run.'
+                : "Enter a JSON object matching this agent's input."}
+            </p>
+            {#if runnerFields.length > 0}
+              <div class="runner-fields">
+                {#each runnerFields as f}
+                  <label class="runner-field">
+                    <span class="field-label">{f.name}</span>
+                    <input
+                      type="text"
+                      placeholder={f.placeholder}
+                      bind:value={runnerValues[f.name]}
+                      disabled={runnerRunning}
+                      spellcheck="false"
+                    />
+                  </label>
+                {/each}
+              </div>
+            {:else if runnerIsText}
+              <label class="runner-field">
+                <span class="field-label">Input</span>
+                <input
+                  type="text"
+                  placeholder={runnerExInput ?? 'Enter input…'}
+                  bind:value={runnerText}
+                  disabled={runnerRunning}
+                  spellcheck="false"
+                />
+              </label>
+            {:else}
+              <label class="runner-field">
+                <span class="field-label">JSON Input</span>
+                <textarea
+                  rows="3"
+                  placeholder={'{ "field": "value" }'}
+                  bind:value={runnerText}
+                  disabled={runnerRunning}
+                  spellcheck="false"
+                ></textarea>
+              </label>
+            {/if}
 
           <button
             class="run-btn"
@@ -379,6 +412,7 @@
                 </div>
               {/each}
             </div>
+          {/if}
           {/if}
           {/if}
         </div>
@@ -787,6 +821,29 @@
     color: var(--fail);
     font-size: 1.0625rem;
     margin: 0;
+  }
+
+  /* Inline chat (chatter-family agents) */
+  .inline-chat { height: 460px; }
+  .chatter-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .chatter-link:hover { text-decoration: underline; }
+  .reset-conv-btn {
+    align-self: flex-start;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    cursor: pointer;
+  }
+  .reset-conv-btn:hover {
+    background: var(--bg-raised);
+    color: var(--text);
   }
 
   /* Output card */

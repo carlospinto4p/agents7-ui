@@ -2,6 +2,22 @@
 ## Changelog - agents7 UI
 
 
+### v0.16.0 - 7th June 2026
+
+- Added inline chat for chatter-family agents on the catalog detail
+  page (`frontend/`):
+  - `components/ChatPanel.svelte`: reusable multi-turn chat panel
+    owning the `/api/chat` session lifecycle for one agent; seeds a
+    ready-to-send sample message and exposes `restart()`.
+  - `constants.js`: shared `CHATTER_TYPES` set and `isChatter()`.
+  - `pages/Catalog.svelte`: chatter agents now embed `ChatPanel` plus
+    an "Open in Chatter" deep link instead of a non-functional JSON
+    input (the one-shot `/api/run` endpoint rejects chatter types);
+    task agents gain a one-line guidance hint above the runner.
+  - `pages/Chatter.svelte`: refactored onto `ChatPanel`; preselects an
+    agent from a `#/chatter/<name>` deep link.
+
+
 ### v0.15.6 - 7th June 2026
 
 - Removed the redundant `version` field from `frontend/package.json`:
