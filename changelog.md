@@ -255,5 +255,3 @@
 - Added pipeline step I/O breakdown in the Runner single-run view:
   - `backend/routers/run.py`: pipeline response now includes `steps` array with per-step `name`, `input`, `output`, and `metrics`.
   - `frontend/src/pages/Runner.svelte`: when the result has steps, shows a numbered step cards section below the output card with input/output tables and token·duration metadata per step.
-
-
