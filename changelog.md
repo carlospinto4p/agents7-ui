@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.17.2 - 13th June 2026
+
+- `frontend/package.json`: aligned the pnpm pin `11.1.1` → `11.5.3`
+  (fleet canonical version, matching corepack). The stale pin hard-failed
+  `pnpm run build` — corepack's global default refuses to switch down.
+  See the `pnpm-for-frontend` rule.
+
+
 ### v0.17.1 - 7th June 2026
 
 - Updated `backend/routers/utils.py` `CHATTER_TYPE_MAP`: the
