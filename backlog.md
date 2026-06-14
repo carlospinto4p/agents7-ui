@@ -3,7 +3,7 @@
 
 ### 2026.06.09 (logging pattern)
 
-- [ ] Logging: adopt the canonical file-based error/warning pattern (file-based error and warning logs). The `backend` service entry point (`agents7_ui/backend/main.py`) wires no file logging — routers use `getLogger(__name__)` (`routers/chat.py:14`, `routers/engine.py:12`). Add WARNING → `logs/warnings/` and ERROR → `logs/errors/` `RotatingFileHandler`s with a clean level split (WARNING-only filter on the warning handler), one file per process start, UTC timestamps; forward `uvicorn.error`. Gitignore `logs/`, bind-mount `./logs` in the root compose. Frontend is nginx (third-party) → `docker compose logs`. Optionally add `fix-errors`/`fix-warnings` skills. — MEDIUM — M
+- [x] Logging: adopt the canonical file-based error/warning pattern (file-based error and warning logs). The `backend` service entry point (`agents7_ui/backend/main.py`) wires no file logging — routers use `getLogger(__name__)` (`routers/chat.py:14`, `routers/engine.py:12`). Add WARNING → `logs/warnings/` and ERROR → `logs/errors/` `RotatingFileHandler`s with a clean level split (WARNING-only filter on the warning handler), one file per process start, UTC timestamps; forward `uvicorn.error`. Gitignore `logs/`, bind-mount `./logs` in the root compose. Frontend is nginx (third-party) → `docker compose logs`. Optionally add `fix-errors`/`fix-warnings` skills. — MEDIUM — M
 
 ### Scan findings — 2026.06.07
 

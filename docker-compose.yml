@@ -17,6 +17,12 @@ services:
       # Allowed browser origin. Same-origin via nginx in this stack, so the
       # default covers it; set explicitly for a different host/port.
       - CORS_ORIGINS=http://localhost:8080
+      # Root for file-based WARNING/ERROR logs (-> /app/logs, bind-mounted
+      # below). See agents7_ui/backend/logging_setup.py.
+      - LOGS_DIR=/app
+    volumes:
+      # First-party WARNING/ERROR records, surfaced on the host.
+      - ./agents7_ui/logs:/app/logs
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

@@ -64,3 +64,22 @@ rule (no Ollama or Docker change needed).
 See [`.env.example`](.env.example) for all environment variables
 (`OLLAMA_HOST`, `CORS_ORIGINS`, `API_KEY`, provider keys, tuning). Copy it
 to `.env` for the Compose stack; secrets never belong in `docker-compose.yml`.
+
+## Logs
+
+The **backend** writes its own `WARNING` and `ERROR`/`CRITICAL` records to
+level-segregated folders, one file per process start (rotated by size):
+
+```
+logs/
+  warnings/   # WARNING records only
+  errors/     # ERROR and CRITICAL records
+```
+
+In the Compose stack the backend's `LOGS_DIR=/app` is bind-mounted to
+`agents7_ui/logs/` on the host. Running locally, files land under
+`backend/logs/`. The folder is gitignored.
+
+Scope: these folders hold **first-party backend code's** warnings and
+errors only. The frontend is nginx (third-party) — use
+`docker compose logs frontend` for it.

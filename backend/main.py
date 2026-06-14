@@ -7,7 +7,10 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from logging_setup import configure_logging
 from routers import catalog, chat, engine, eval, run
+
+configure_logging()
 
 app = FastAPI(title="agents7 UI backend")
 

@@ -7,6 +7,10 @@ __pycache__/
 .env.*
 !.env.example
 
+# File-based WARNING/ERROR logs (local-dev observability)
+logs/
+*.log
+
 # Claude runtime artifacts (local/ephemeral — never commit)
 .claude/settings.local.json
 .claude/scheduled_tasks.lock

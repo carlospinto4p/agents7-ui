@@ -2,6 +2,26 @@
 ## Changelog - agents7 UI
 
 
+### v0.18.0 - 14th June 2026
+
+- Added `backend/logging_setup.py`: file-based WARNING/ERROR logging
+  following the canonical local-dev observability pattern.
+  - `configure_logging()`: console + level-segregated rotating file
+    handlers — WARNING → `logs/warnings/`, ERROR/CRITICAL →
+    `logs/errors/`, one file per process start, UTC timestamps, clean
+    level split. Attached to the root logger (captures `routers.*`)
+    and to `uvicorn.error`.
+  - Log root anchored to `$LOGS_DIR/logs`, falling back to
+    `backend/logs/`.
+- Updated `backend/main.py`: call `configure_logging()` at startup.
+- Updated `docker-compose.yml`: `LOGS_DIR=/app` and bind-mount
+  `./agents7_ui/logs:/app/logs` on the backend service.
+- Added `backend/tests/test_logging.py`: env anchoring, clean level
+  split, idempotency.
+- Updated `.gitignore` (`logs/`, `*.log`) and `README.md` (Logs
+  section).
+
+
 ### v0.17.2 - 13th June 2026
 
 - `frontend/package.json`: aligned the pnpm pin `11.1.1` → `11.5.3`
