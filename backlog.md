@@ -5,4 +5,4 @@
 
 Test coverage:
 
-- [ ] `import_class` and `_load_output_schema` error paths untested (`backend/routers/utils.py`) — missing module/class, malformed dotted path, ImportError/AttributeError suppression. (LOW, S)
+- [x] `import_class` and `_load_output_schema` error paths untested (`backend/routers/utils.py`) — missing module/class, malformed dotted path, ImportError/AttributeError suppression. (LOW, S)

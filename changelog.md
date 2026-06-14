@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.18.5 - 14th June 2026
+
+- Added `backend/tests/test_utils.py`: error-path coverage for
+  `import_class` (missing module, missing attribute, malformed dotted
+  path) and `_load_output_schema` (absent/empty path, suppressed
+  import/attribute errors, valid-model schema).
+
+
 ### v0.18.4 - 14th June 2026
 
 - `frontend/src/pages/Catalog.svelte`, `Chatter.svelte`: moved the
