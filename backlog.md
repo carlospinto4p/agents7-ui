@@ -1,10 +1,6 @@
 
 # Backlog - agents7 UI
 
-### 2026.06.09 (logging pattern)
-
-- [x] Logging: adopt the canonical file-based error/warning pattern (file-based error and warning logs). The `backend` service entry point (`agents7_ui/backend/main.py`) wires no file logging — routers use `getLogger(__name__)` (`routers/chat.py:14`, `routers/engine.py:12`). Add WARNING → `logs/warnings/` and ERROR → `logs/errors/` `RotatingFileHandler`s with a clean level split (WARNING-only filter on the warning handler), one file per process start, UTC timestamps; forward `uvicorn.error`. Gitignore `logs/`, bind-mount `./logs` in the root compose. Frontend is nginx (third-party) → `docker compose logs`. Optionally add `fix-errors`/`fix-warnings` skills. — MEDIUM — M
-
 ### Scan findings — 2026.06.07
 
 Security:
@@ -29,11 +25,3 @@ Frontend:
 Test coverage:
 
 - [ ] `import_class` and `_load_output_schema` error paths untested (`backend/routers/utils.py`) — missing module/class, malformed dotted path, ImportError/AttributeError suppression. (LOW, S)
-
-
-### 2026.06.06
-
-- [x] `frontend/package.json` version (`0.7.1`) is stale and drifts from the
-  canonical app version in `backend/pyproject.toml` (`0.10.0`). Decide whether
-  to keep it in sync on each release or drop the redundant version field.
-  (Resolved v0.15.6 — dropped the redundant field; `private` package needs none.)
