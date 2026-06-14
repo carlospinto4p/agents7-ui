@@ -3,16 +3,6 @@
 
 ### Scan findings — 2026.06.07
 
-Security:
-
-- [x] Path traversal in catalog pipeline-step resolution. `_resolve_pipeline_step_details` (`backend/routers/catalog.py:76`) builds `(config_file.parent / agent_ref).resolve()` from a pipeline YAML's `agent` field with **no** `relative_to(catalog_root)` guard — `run.py:21-23` has exactly that guard. A crafted pipeline config can read arbitrary YAML/JSON-parseable files and leak their contents in the API response. Mirror `run.py`'s `_resolve_agent_path` validation. (HIGH, S)
-
-Performance:
-
-- [x] `/api/info` reads `pyproject.toml` from disk on every request (`backend/main.py:85`) — cache the version after first read (it never changes at runtime). (MED, S)
-- [x] `/api/readme` reads `README.md` on every request (`backend/main.py:73`) — cache the content. (LOW, S)
-- [x] Expired chat sessions are evicted only on demand in `_SessionStore` (`backend/routers/chat.py`); long-idle sessions linger. Consider periodic cleanup. (LOW, S)
-
 Refactoring:
 
 - [ ] `import_class` missing return type annotation (`backend/routers/utils.py:26`). (LOW, S)
