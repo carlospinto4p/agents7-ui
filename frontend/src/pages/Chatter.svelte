@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte'
   import ChatPanel from '../components/ChatPanel.svelte'
   import { CHATTER_TYPES } from '../constants.js'
 
@@ -43,7 +44,9 @@
       : ''
   }
 
-  $effect(() => {
+  // Load the agent list once on mount (preselect via deep link).
+  // Not a reactive effect, so it never re-fires on state changes.
+  onMount(() => {
     fetch('/api/catalog')
       .then(r => r.json())
       .then(data => {

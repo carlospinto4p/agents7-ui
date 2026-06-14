@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.18.4 - 14th June 2026
+
+- `frontend/src/pages/Catalog.svelte`, `Chatter.svelte`: moved the
+  top-level `/api/catalog` fetch from a `$effect` to `onMount`, so the
+  one-time load can never re-fire on unrelated state changes. The
+  `agentName`-driven detail fetch in `Chatter.svelte` stays a
+  reactive `$effect` (it correctly depends on the selection).
+
+
 ### v0.18.3 - 14th June 2026
 
 - `backend/routers/utils.py`: added the `-> type` return annotation

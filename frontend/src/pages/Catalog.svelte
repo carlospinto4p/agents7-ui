@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from 'svelte';
   import JsonViewer from '../components/JsonViewer.svelte';
   import ChatPanel from '../components/ChatPanel.svelte';
   import { CHATTER_TYPES } from '../constants.js';
@@ -94,7 +95,9 @@
     return parts.join(' · ')
   })
 
-  $effect(() => {
+  // Load the catalog once on mount — not a reactive effect, so it
+  // can never re-fire on unrelated state changes.
+  onMount(() => {
     fetch('/api/catalog')
       .then(r => r.json())
       .then(data => { agents = data; loading = false })

@@ -10,7 +10,7 @@ Refactoring:
 
 Frontend:
 
-- [ ] Catalog/Chatter top-level fetch `$effect` has no scoped dependencies and may re-run on unrelated state changes (`frontend/src/pages/Catalog.svelte`, `Chatter.svelte`) — verify against the `$effect`-leakage rule; scope with `untrack()` or move to an explicit on-mount call. (MED, S)
+- [x] Catalog/Chatter top-level fetch `$effect` has no scoped dependencies and may re-run on unrelated state changes (`frontend/src/pages/Catalog.svelte`, `Chatter.svelte`) — verify against the `$effect`-leakage rule; scope with `untrack()` or move to an explicit on-mount call. (MED, S)
 
 Test coverage:
 
