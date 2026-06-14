@@ -47,12 +47,13 @@ class _FakeRequest:
         return self._body
 
 
-def _resp(tokens=5, prompt_tokens=3, duration=1.2):
+def _resp(tokens=5, prompt_tokens=3, duration=1.2, cost_cents=None):
     return SimpleNamespace(
         metrics=SimpleNamespace(
             tokens=tokens,
             prompt_tokens=prompt_tokens,
             total_duration=duration,
+            cost_cents=cost_cents,
         )
     )
 
@@ -100,7 +101,9 @@ def test_stream_requires_message():
 
 def test_stream_emits_deltas_then_done():
     sid = _store.create(
-        _FakeChatter(["He", "llo"], _resp(tokens=7, duration=0.5))
+        _FakeChatter(
+            ["He", "llo"], _resp(tokens=7, duration=0.5, cost_cents=0.12)
+        )
     )
 
     async def _run():
@@ -118,6 +121,7 @@ def test_stream_emits_deltas_then_done():
     assert "event: done" in text
     assert '"tokens": 7' in text
     assert '"total_duration": 0.5' in text
+    assert '"cost_cents": 0.12' in text
 
 
 def test_stream_done_with_no_chat_response_sends_empty_metrics():

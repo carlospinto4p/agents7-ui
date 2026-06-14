@@ -134,6 +134,7 @@ async def send_message(session_id: str, request: Request) -> dict:
             "tokens": response.metrics.tokens,
             "prompt_tokens": response.metrics.prompt_tokens,
             "total_duration": response.metrics.total_duration,
+            "cost_cents": response.metrics.cost_cents,
         },
     }
 
@@ -178,6 +179,7 @@ async def stream_message(
                     "tokens": resp.metrics.tokens,
                     "prompt_tokens": resp.metrics.prompt_tokens,
                     "total_duration": resp.metrics.total_duration,
+                    "cost_cents": resp.metrics.cost_cents,
                 }
                 if resp is not None
                 else {}

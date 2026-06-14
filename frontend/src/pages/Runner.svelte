@@ -1,5 +1,6 @@
 <script>
   import { history } from '../stores/history.js'
+  import { fmtCost, copyText, downloadJson } from '../lib/format.js'
 
   // ── Shared state ─────────────────────────────────────────
   let agents     = $state([])
@@ -125,6 +126,8 @@
     const parts = []
     if (singleDuration != null) parts.push(`${singleDuration}s`)
     if (singleResult?.metrics?.tokens) parts.push(`${singleResult.metrics.tokens} tok`)
+    const cost = fmtCost(singleResult?.metrics?.cost_cents)
+    if (cost) parts.push(cost)
     if (agentDetail?.model) parts.push(agentDetail.model)
     return parts.join(' · ')
   })
@@ -132,6 +135,27 @@
   function outputEntries(obj) {
     if (!obj || typeof obj !== 'object') return []
     return Object.entries(obj)
+  }
+
+  let copiedSingle = $state(false)
+  async function copySingleOutput() {
+    const ok = await copyText(
+      JSON.stringify(singleResult.output ?? singleResult.raw_response, null, 2),
+    )
+    if (ok) {
+      copiedSingle = true
+      setTimeout(() => { copiedSingle = false }, 1200)
+    }
+  }
+  function downloadSingleOutput() {
+    downloadJson(`${agentName || 'output'}.json`, {
+      agent: agentName,
+      input: Object.fromEntries(
+        inputFields.map(f => [f.name, fieldValues[f.name] ?? '']),
+      ),
+      output: singleResult.output,
+      metrics: singleResult.metrics,
+    })
   }
 
   // ── Batch runner ──────────────────────────────────────────
@@ -256,6 +280,19 @@
     'parse-error': '⚠ json', running: '…', pending: '—',
   }
 
+  function downloadBatch() {
+    downloadJson(`${agentName || 'batch'}-results.json`,
+      results.map(r => ({
+        idx: r.idx,
+        input: r.raw,
+        status: r.status,
+        output: r.output,
+        error: r.apiError ?? r.parseErr ?? null,
+        metrics: r.metrics,
+      })),
+    )
+  }
+
   // ── History helpers ───────────────────────────────────────
   function fmtTs(iso) {
     const d = new Date(iso)
@@ -366,6 +403,16 @@
                 {#if singleMetaLine}
                   <span class="token-count">{singleMetaLine}</span>
                 {/if}
+                <div class="card-actions">
+                  <button class="tool-btn" onclick={copySingleOutput}>
+                    {copiedSingle ? '✓ Copied' : 'Copy'}
+                  </button>
+                  {#if !singleResult.parse_error && singleResult.output}
+                    <button class="tool-btn" onclick={downloadSingleOutput}>
+                      ⬇ JSON
+                    </button>
+                  {/if}
+                </div>
               </div>
 
               {#if singleResult.parse_error}
@@ -401,7 +448,7 @@
                       <span class="badge model">{agentDetail.step_engines[i].model}</span>
                     {/if}
                     {#if step.metrics?.tokens}
-                      <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s</span>
+                      <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s{fmtCost(step.metrics.cost_cents) ? ` · ${fmtCost(step.metrics.cost_cents)}` : ''}</span>
                     {/if}
                     <span class="chevron" class:closed={!singleStepsOpen[i]}>▾</span>
                   </button>
@@ -505,6 +552,11 @@
               <span class="results-title">Results — {doneCount}/{results.length}{batchDuration != null ? ` · ${batchDuration}s` : ''}</span>
               <span class="pill pass">{passCount} passed</span>
               <span class="pill fail">{failCount} failed</span>
+              {#if doneCount > 0}
+                <button class="tool-btn results-dl" onclick={downloadBatch}>
+                  ⬇ JSON
+                </button>
+              {/if}
             </div>
             <table>
               <thead>
@@ -780,6 +832,20 @@
     margin-right: 0.25rem;
   }
   .token-count { margin-left: auto; font-size: 1.0625rem; color: var(--text-muted); }
+
+  .card-actions { display: flex; gap: 0.4rem; margin-left: auto; }
+  .tool-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    padding: 0.15rem 0.55rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tool-btn:hover { background: var(--bg-surface); color: var(--text); }
+  .results-dl { margin-left: auto; }
 
   /* Loading bar */
   .loading-bar-wrap { display: flex; flex-direction: column; gap: 0.3rem; }

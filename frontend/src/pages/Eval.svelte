@@ -1,4 +1,6 @@
 <script>
+  import { downloadJson } from '../lib/format.js'
+
   let agents = $state([])
   let selectedAgent = $state('')
   let result = $state(null)
@@ -68,6 +70,12 @@
     <button onclick={runEval} disabled={loading || !selectedAgent}>
       {loading ? 'Running…' : 'Run Eval'}
     </button>
+    {#if result}
+      <button
+        class="dl-btn"
+        onclick={() => downloadJson(`${selectedAgent}-eval.json`, result)}
+      >⬇ JSON</button>
+    {/if}
   </div>
 
   {#if error}

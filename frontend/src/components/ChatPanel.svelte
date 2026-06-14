@@ -1,4 +1,6 @@
 <script>
+  import { metricsLine, downloadJson } from '../lib/format.js'
+
   // Reusable multi-turn chat panel for Chatter-family agents.
   // Owns the /api/chat session lifecycle for a single agent and
   // (re)starts the session whenever `agentName` changes. Used by
@@ -156,15 +158,9 @@
     }
   }
 
-  // Format per-message metrics like the catalog runner: "123 tok · 1.2s".
-  function metricsLine(m) {
-    if (!m) return ''
-    const parts = []
-    if (m.tokens) parts.push(`${m.tokens} tok`)
-    if (m.total_duration != null) {
-      parts.push(`${m.total_duration.toFixed(1)}s`)
-    }
-    return parts.join(' · ')
+  function downloadTranscript() {
+    const name = agentName || 'chat'
+    downloadJson(`chat-${name}.json`, messages)
   }
 
   function handleKeydown(e) {
@@ -178,6 +174,14 @@
 <div class="chat-panel">
   {#if chatError}
     <p class="err-msg">{chatError}</p>
+  {/if}
+
+  {#if messages.length > 0}
+    <div class="chat-toolbar">
+      <button class="tool-btn" onclick={downloadTranscript}>
+        ⬇ Transcript
+      </button>
+    </div>
   {/if}
 
   <div class="transcript" bind:this={transcriptEl}>
@@ -232,6 +236,18 @@
   }
 
   .err-msg { color: var(--fail); font-size: 1.0625rem; margin: 0; }
+
+  .chat-toolbar { display: flex; justify-content: flex-end; }
+  .tool-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    padding: 0.2rem 0.6rem;
+    cursor: pointer;
+  }
+  .tool-btn:hover { background: var(--bg-raised); color: var(--text); }
 
   .transcript {
     flex: 1;

@@ -2,6 +2,25 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.0 - 14th June 2026
+
+- Added `frontend/src/lib/format.js`: shared `fmtCost`,
+  `metricsLine`, `copyText`, `downloadText`, and `downloadJson`
+  helpers.
+- Added cost display: run (single + steps) and chat metrics now
+  show `cost_cents` when present (omitted for local providers
+  that report no cost).
+  - `backend/routers/chat.py`: include `cost_cents` in the chat
+    stream `done` frame and the `/message` response metrics.
+- Added export & copy:
+  - Download JSON for run output, batch results, eval results,
+    and chat transcripts.
+  - Copy-to-clipboard buttons on the run output and YAML source
+    blocks.
+- Added a catalog search/filter box that filters agents by name,
+  type, provider, or model.
+
+
 ### v0.19.0 - 14th June 2026
 
 - Added token-by-token chat streaming:

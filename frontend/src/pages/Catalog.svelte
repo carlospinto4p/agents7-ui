@@ -3,6 +3,7 @@
   import JsonViewer from '../components/JsonViewer.svelte';
   import ChatPanel from '../components/ChatPanel.svelte';
   import { CHATTER_TYPES } from '../constants.js';
+  import { fmtCost, copyText, downloadJson } from '../lib/format.js';
 
   let agents       = $state([])
   let loading      = $state(true)
@@ -26,14 +27,39 @@
   let runnerDuration = $state(null)
   let stepsOpen      = $state([])
 
-  let grouped = $derived(
-    agents.reduce(
+  let query = $state('')
+
+  // Match an agent against the search box over name, type, provider,
+  // and model — the fields a user would search by.
+  function matchesQuery(a, q) {
+    if (!q) return true
+    const models = a.step_engines?.length
+      ? a.step_engines.map(s => s.model)
+      : [a.model]
+    const providers = a.step_engines?.length
+      ? a.step_engines.map(s => s.provider)
+      : [a.provider]
+    const hay = [
+      a.name, a.display_name, a.agent_type, ...models, ...providers,
+    ].filter(Boolean).join(' ').toLowerCase()
+    return hay.includes(q)
+  }
+
+  let grouped = $derived.by(() => {
+    const q = query.trim().toLowerCase()
+    return agents.reduce(
       (acc, a) => {
-        if (a.source in acc) acc[a.source].push(a)
+        if (a.source in acc && matchesQuery(a, q)) acc[a.source].push(a)
         return acc
       },
       { catalog: [], example: [], integration_test: [] },
     )
+  })
+
+  let totalMatches = $derived(
+    grouped.catalog.length +
+    grouped.example.length +
+    grouped.integration_test.length
   )
 
   let catalogChat = $state(null)
@@ -88,6 +114,8 @@
     const parts = []
     if (runnerDuration != null) parts.push(`${runnerDuration}s`)
     if (runnerResult?.metrics?.tokens) parts.push(`${runnerResult.metrics.tokens} tok`)
+    const cost = fmtCost(runnerResult?.metrics?.cost_cents)
+    if (cost) parts.push(cost)
     const modelLabel = selected?.step_engines?.length
       ? selected.step_engines.map(s => s.model).filter(Boolean).join(', ')
       : selected?.model
@@ -189,6 +217,22 @@
   function outputEntries(obj) {
     if (!obj || typeof obj !== 'object') return []
     return Object.entries(obj)
+  }
+
+  // Transient "copied" flags keyed by which block was copied.
+  let copied = $state({ output: false, yaml: false })
+  async function copyBlock(key, text) {
+    if (await copyText(text)) {
+      copied[key] = true
+      setTimeout(() => { copied[key] = false }, 1200)
+    }
+  }
+  function downloadOutput() {
+    downloadJson(`${selected.name}.json`, {
+      agent: selected.name,
+      output: runnerResult.output,
+      metrics: runnerResult.metrics,
+    })
   }
 </script>
 
@@ -338,6 +382,15 @@
                 {#if runnerMetaLine}
                   <span class="token-count">{runnerMetaLine}</span>
                 {/if}
+                <div class="card-actions">
+                  <button
+                    class="tool-btn"
+                    onclick={() => copyBlock('output', JSON.stringify(runnerResult.output ?? runnerResult.raw_response, null, 2))}
+                  >{copied.output ? '✓ Copied' : 'Copy'}</button>
+                  {#if !runnerResult.parse_error && runnerResult.output}
+                    <button class="tool-btn" onclick={downloadOutput}>⬇ JSON</button>
+                  {/if}
+                </div>
               </div>
               {#if runnerResult.parse_error}
                 <pre class="raw-response">{runnerResult.raw_response}</pre>
@@ -374,7 +427,7 @@
                       <span class="badge model">{selected.step_engines[i].model}</span>
                     {/if}
                     {#if step.metrics?.tokens}
-                      <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s</span>
+                      <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s{fmtCost(step.metrics.cost_cents) ? ` · ${fmtCost(step.metrics.cost_cents)}` : ''}</span>
                     {/if}
                     <span class="chevron" class:closed={!stepsOpen[i]}>▾</span>
                   </button>
@@ -515,6 +568,12 @@
         <p class="section-desc">
           The source configuration for this agent.
         </p>
+        <div class="block-actions">
+          <button
+            class="tool-btn"
+            onclick={() => copyBlock('yaml', selected.raw_yaml)}
+          >{copied.yaml ? '✓ Copied' : 'Copy'}</button>
+        </div>
         <pre class="code yaml-src">{selected.raw_yaml}</pre>
       {/if}
     </section>
@@ -530,6 +589,21 @@
     {#if agents.length === 0}
       <p class="muted">No agents found in catalog.</p>
     {:else}
+      <div class="search-row">
+        <input
+          class="search-box"
+          type="search"
+          placeholder="Search agents by name, type, provider, or model…"
+          bind:value={query}
+          spellcheck="false"
+        />
+        {#if query.trim()}
+          <span class="search-count">{totalMatches} match{totalMatches === 1 ? '' : 'es'}</span>
+        {/if}
+      </div>
+      {#if totalMatches === 0}
+        <p class="muted">No agents match “{query}”.</p>
+      {/if}
       {#each [
         { key: 'catalog', label: 'Catalog Agents' },
         { key: 'example', label: 'Framework Examples' },
@@ -875,6 +949,46 @@
     font-size: 1.0625rem;
     color: var(--text-muted);
   }
+
+  /* Search box */
+  .search-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .search-box {
+    flex: 1;
+    max-width: 480px;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1.0625rem;
+    background: var(--bg-surface);
+    color: var(--text);
+  }
+  .search-box:focus { outline: none; border-color: var(--accent); }
+  .search-box::placeholder { color: var(--text-muted); }
+  .search-count { font-size: 1.0625rem; color: var(--text-muted); }
+
+  /* Copy / download buttons */
+  .card-actions { display: flex; gap: 0.4rem; margin-left: auto; }
+  .block-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 0.4rem;
+  }
+  .tool-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    padding: 0.15rem 0.55rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .tool-btn:hover { background: var(--bg-surface); color: var(--text); }
 
   /* Loading bar */
   .loading-bar-wrap { display: flex; flex-direction: column; gap: 0.3rem; }
