@@ -6,26 +6,14 @@ from agents7.exceptions import (
     PipelineConfigurationError,
 )
 from routers.catalog import CATALOG_PATH, find_config_file
-from routers.utils import AGENT_TYPE_MAP, _load_config, import_class
+from routers.utils import (
+    AGENT_TYPE_MAP,
+    _load_config,
+    _resolve_agent_path,
+    import_class,
+)
 
 router = APIRouter(prefix="/api/run", tags=["run"])
-
-
-def _resolve_agent_path(
-    agent_path: str, config_dir: Path, catalog_root: Path
-) -> str:
-    """Resolve a relative agent path, raising ValueError if it escapes root."""
-    p = Path(agent_path)
-    if p.is_absolute():
-        return agent_path
-    resolved = (config_dir / p).resolve()
-    try:
-        resolved.relative_to(catalog_root)
-    except ValueError:
-        raise ValueError(
-            f"Step agent path escapes catalog root: {agent_path!r}"
-        )
-    return str(resolved)
 
 
 def _build_pipeline(config_file: Path, cfg: dict):

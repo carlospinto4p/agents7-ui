@@ -3,7 +3,11 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
-from routers.utils import _load_config, _load_output_schema
+from routers.utils import (
+    _load_config,
+    _load_output_schema,
+    _resolve_agent_path,
+)
 
 router = APIRouter(prefix="/api/catalog", tags=["catalog"])
 
@@ -68,13 +72,27 @@ def _display_name(cfg: dict) -> str | None:
 def _resolve_pipeline_step_details(
     config_file: Path, steps: list[dict]
 ) -> list[dict]:
+    catalog_root = CATALOG_PATH.resolve()
     details = []
     for step in steps:
         agent_ref = step.get("agent")
         if not agent_ref:
             continue
-        step_path = (config_file.parent / agent_ref).resolve()
         entry: dict = {"name": agent_ref, "provider": None, "model": None}
+        # Guard against path traversal: a crafted pipeline config
+        # must not make us read (and leak) files outside the catalog.
+        try:
+            step_path = Path(
+                _resolve_agent_path(
+                    agent_ref,
+                    config_file.parent,
+                    catalog_root,
+                    allow_absolute=False,
+                )
+            )
+        except ValueError:
+            details.append(entry)
+            continue
         if step_path.exists():
             try:
                 cfg, _ = _load_config(step_path)

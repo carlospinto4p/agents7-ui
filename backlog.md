@@ -5,7 +5,7 @@
 
 Security:
 
-- [ ] Path traversal in catalog pipeline-step resolution. `_resolve_pipeline_step_details` (`backend/routers/catalog.py:76`) builds `(config_file.parent / agent_ref).resolve()` from a pipeline YAML's `agent` field with **no** `relative_to(catalog_root)` guard — `run.py:21-23` has exactly that guard. A crafted pipeline config can read arbitrary YAML/JSON-parseable files and leak their contents in the API response. Mirror `run.py`'s `_resolve_agent_path` validation. (HIGH, S)
+- [x] Path traversal in catalog pipeline-step resolution. `_resolve_pipeline_step_details` (`backend/routers/catalog.py:76`) builds `(config_file.parent / agent_ref).resolve()` from a pipeline YAML's `agent` field with **no** `relative_to(catalog_root)` guard — `run.py:21-23` has exactly that guard. A crafted pipeline config can read arbitrary YAML/JSON-parseable files and leak their contents in the API response. Mirror `run.py`'s `_resolve_agent_path` validation. (HIGH, S)
 
 Performance:
 

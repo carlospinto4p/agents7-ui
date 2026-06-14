@@ -116,6 +116,75 @@ def test_resolve_agent_path_absolute_passthrough(tmp_path):
     assert result == absolute
 
 
+def test_resolve_agent_path_rejects_absolute_when_disallowed(tmp_path):
+    catalog = tmp_path / "catalog"
+    absolute = str(tmp_path / "elsewhere" / "config.yml")
+    with pytest.raises(ValueError, match="must be relative"):
+        _resolve_agent_path(absolute, catalog, catalog, allow_absolute=False)
+
+
+# ── catalog pipeline-step path traversal Tests ─────────────────────────────
+
+
+def test_pipeline_step_details_skips_escaping_path(tmp_path):
+    """A step agent path escaping the catalog root is not read/leaked."""
+    from routers import catalog
+
+    catalog_root = tmp_path / "catalog"
+    pipeline_dir = catalog_root / "my_pipeline"
+    pipeline_dir.mkdir(parents=True)
+    config_file = pipeline_dir / "config.yml"
+    config_file.write_text("name: p\n")
+
+    # A secret outside the catalog the attacker tries to leak.
+    secret = tmp_path / "secret.yml"
+    secret.write_text("name: SECRET\nengine:\n  provider: leaked\n")
+
+    monkeypatched = catalog.CATALOG_PATH
+    catalog.CATALOG_PATH = catalog_root
+    try:
+        steps = [{"agent": "../../secret.yml"}]
+        details = catalog._resolve_pipeline_step_details(config_file, steps)
+    finally:
+        catalog.CATALOG_PATH = monkeypatched
+
+    assert len(details) == 1
+    entry = details[0]
+    # The escaping path is reported verbatim, never read.
+    assert entry["name"] == "../../secret.yml"
+    assert entry["provider"] is None
+    assert entry["model"] is None
+
+
+def test_pipeline_step_details_reads_in_catalog_path(tmp_path):
+    """A step within the catalog root is resolved and read normally."""
+    from routers import catalog
+
+    catalog_root = tmp_path / "catalog"
+    pipeline_dir = catalog_root / "my_pipeline"
+    pipeline_dir.mkdir(parents=True)
+    config_file = pipeline_dir / "config.yml"
+    config_file.write_text("name: p\n")
+
+    step_dir = catalog_root / "step_agent"
+    step_dir.mkdir()
+    (step_dir / "config.yml").write_text(
+        "name: StepAgent\nengine:\n  provider: ollama\n  model: qwen3\n"
+    )
+
+    monkeypatched = catalog.CATALOG_PATH
+    catalog.CATALOG_PATH = catalog_root
+    try:
+        steps = [{"agent": "../step_agent/config.yml"}]
+        details = catalog._resolve_pipeline_step_details(config_file, steps)
+    finally:
+        catalog.CATALOG_PATH = monkeypatched
+
+    assert details[0]["name"] == "StepAgent"
+    assert details[0]["provider"] == "ollama"
+    assert details[0]["model"] == "qwen3"
+
+
 # ── eval.py PII logging Tests ─────────────────────────────────────────────
 
 

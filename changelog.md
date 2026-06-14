@@ -2,6 +2,21 @@
 ## Changelog - agents7 UI
 
 
+### v0.18.1 - 14th June 2026
+
+- Fixed path traversal in catalog pipeline-step display:
+  - `routers/utils.py`: extracted `_resolve_agent_path()` (shared
+    guard, with an `allow_absolute` flag) from `run.py`.
+  - `routers/catalog.py`: `_resolve_pipeline_step_details` now
+    resolves step paths through the guard (`allow_absolute=False`)
+    and skips reading any path escaping the catalog root, so a
+    crafted pipeline config can no longer leak arbitrary files.
+  - `routers/run.py`: imports the shared guard (behaviour
+    unchanged).
+- Added `tests/test_security.py` cases for the catalog guard and the
+  absolute-path rejection.
+
+
 ### v0.18.0 - 14th June 2026
 
 - Added `backend/logging_setup.py`: file-based WARNING/ERROR logging
