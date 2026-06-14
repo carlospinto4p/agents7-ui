@@ -9,9 +9,9 @@ Security:
 
 Performance:
 
-- [ ] `/api/info` reads `pyproject.toml` from disk on every request (`backend/main.py:85`) — cache the version after first read (it never changes at runtime). (MED, S)
-- [ ] `/api/readme` reads `README.md` on every request (`backend/main.py:73`) — cache the content. (LOW, S)
-- [ ] Expired chat sessions are evicted only on demand in `_SessionStore` (`backend/routers/chat.py`); long-idle sessions linger. Consider periodic cleanup. (LOW, S)
+- [x] `/api/info` reads `pyproject.toml` from disk on every request (`backend/main.py:85`) — cache the version after first read (it never changes at runtime). (MED, S)
+- [x] `/api/readme` reads `README.md` on every request (`backend/main.py:73`) — cache the content. (LOW, S)
+- [x] Expired chat sessions are evicted only on demand in `_SessionStore` (`backend/routers/chat.py`); long-idle sessions linger. Consider periodic cleanup. (LOW, S)
 
 Refactoring:
 

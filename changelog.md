@@ -2,6 +2,22 @@
 ## Changelog - agents7 UI
 
 
+### v0.18.2 - 14th June 2026
+
+- `backend/main.py`:
+  - Cached `/api/info` version via `_read_version()` (`lru_cache`) —
+    `pyproject.toml` is read once, not per request.
+  - Cached `/api/readme` via `_read_readme()` (`lru_cache`) —
+    `README.md` is read once, not per request.
+  - Added an app lifespan that runs a periodic chat-session cleanup
+    task.
+- `backend/routers/chat.py`: added `_SessionStore.run_periodic_cleanup()`
+  (evicts expired sessions every 5 min), complementing the on-demand
+  eviction so idle sessions are reclaimed without new chats.
+- Added `tests/test_security.py` cases: version/README caching, expired
+  eviction, periodic cleanup.
+
+
 ### v0.18.1 - 14th June 2026
 
 - Fixed path traversal in catalog pipeline-step display:

@@ -1,5 +1,6 @@
 """Stateful chat sessions for Chatter-family agents."""
 
+import asyncio
 import logging
 import time
 import uuid
@@ -18,6 +19,7 @@ class _SessionStore:
     _SESSION_TTL = 3600
     _MAX_STARTS = 20
     _RATE_WINDOW = 60
+    _CLEANUP_INTERVAL = 300
 
     def __init__(self) -> None:
         self._sessions: dict[str, object] = {}
@@ -46,6 +48,16 @@ class _SessionStore:
         for sid in expired:
             self._sessions.pop(sid, None)
             self._session_times.pop(sid, None)
+
+    async def run_periodic_cleanup(self) -> None:
+        """Evict expired sessions on a fixed interval until cancelled.
+
+        Complements the on-demand eviction in ``start_chat`` so idle
+        sessions are reclaimed even when no new chats are started.
+        """
+        while True:
+            await asyncio.sleep(self._CLEANUP_INTERVAL)
+            self.evict_expired()
 
     def create(self, chatter: object) -> str:
         session_id = str(uuid.uuid4())

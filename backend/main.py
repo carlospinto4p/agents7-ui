@@ -1,6 +1,9 @@
+import asyncio
+import functools
 import os
 import re
 import tomllib
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -12,7 +15,18 @@ from routers import catalog, chat, engine, eval, run
 
 configure_logging()
 
-app = FastAPI(title="agents7 UI backend")
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Run a periodic chat-session cleanup task for the app's lifetime."""
+    task = asyncio.create_task(chat._store.run_periodic_cleanup())
+    try:
+        yield
+    finally:
+        task.cancel()
+
+
+app = FastAPI(title="agents7 UI backend", lifespan=_lifespan)
 
 _default_origins = "http://localhost:5173,http://localhost:8080"
 _ORIGIN_RE = re.compile(r"^https?://[a-zA-Z0-9._-]+(:\d{1,5})?$")
@@ -69,18 +83,29 @@ app.include_router(chat.router)
 _README = Path(__file__).parents[1] / "agents7_framework" / "README.md"
 
 
+@functools.lru_cache(maxsize=1)
+def _read_readme() -> str:
+    """Read the framework README (cached; it never changes at runtime)."""
+    return _README.read_text(encoding="utf-8")
+
+
 @app.get("/api/readme", response_class=PlainTextResponse)
 def get_readme() -> str:
-    if not _README.exists():
+    try:
+        return _read_readme()
+    except OSError:
         raise HTTPException(status_code=404, detail="README not found")
-    return _README.read_text(encoding="utf-8")
 
 
 _PYPROJECT = Path(__file__).parent / "pyproject.toml"
 
 
+@functools.lru_cache(maxsize=1)
 def _read_version() -> str:
-    """Read the app version from ``pyproject.toml``.
+    """Read the app version from ``pyproject.toml`` (cached).
+
+    The version is fixed for a process, so it is read once and
+    cached.
 
     :return: The semver string, or ``"unknown"`` if it cannot be read.
     """

@@ -477,3 +477,73 @@ def test_check_start_rate_resets_after_window(monkeypatch):
     )
 
     _store.check_start_rate("9.9.9.9")
+
+
+# ── chat.py periodic cleanup Tests ─────────────────────────────────────────
+
+
+def test_evict_expired_removes_only_stale_sessions():
+    import time
+
+    from routers.chat import _SessionStore
+
+    store = _SessionStore()
+    fresh = store.create(object())
+    stale = store.create(object())
+    store._session_times[stale] = time.monotonic() - store._SESSION_TTL - 1
+
+    store.evict_expired()
+
+    assert store.get(fresh) is not None
+    assert store.get(stale) is None
+
+
+def test_periodic_cleanup_evicts_expired(monkeypatch):
+    import asyncio
+    import time
+
+    from routers.chat import _SessionStore
+
+    store = _SessionStore()
+    monkeypatch.setattr(store, "_CLEANUP_INTERVAL", 0.01)
+    sid = store.create(object())
+    store._session_times[sid] = time.monotonic() - store._SESSION_TTL - 1
+
+    async def _run():
+        task = asyncio.create_task(store.run_periodic_cleanup())
+        await asyncio.sleep(0.05)
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+    asyncio.run(_run())
+    assert store.get(sid) is None
+
+
+# ── main.py response caching Tests ─────────────────────────────────────────
+
+
+def test_read_version_is_cached(monkeypatch):
+    import main
+
+    main._read_version.cache_clear()
+    first = main._read_version()
+    # Once cached, a broken pyproject path is never consulted again.
+    monkeypatch.setattr(main, "_PYPROJECT", Path("/nonexistent/p.toml"))
+    assert main._read_version() == first
+    main._read_version.cache_clear()
+
+
+def test_read_readme_is_cached(monkeypatch, tmp_path):
+    import main
+
+    main._read_readme.cache_clear()
+    readme = tmp_path / "README.md"
+    readme.write_text("hello readme")
+    monkeypatch.setattr(main, "_README", readme)
+    assert main._read_readme() == "hello readme"
+    readme.write_text("changed on disk")
+    assert main._read_readme() == "hello readme"  # served from cache
+    main._read_readme.cache_clear()
