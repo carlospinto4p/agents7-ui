@@ -83,26 +83,77 @@
     chatError = null
     messages = [...messages, { role: 'user', text }]
 
+    // Append an empty assistant bubble that fills as tokens stream in.
+    const idx = messages.length
+    messages = [...messages, { role: 'assistant', text: '', meta: '' }]
+
     try {
-      const r = await fetch(`/api/chat/${sessionId}/message`, {
+      const r = await fetch(`/api/chat/${sessionId}/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
       })
-      if (!r.ok) {
+      if (!r.ok || !r.body) {
         const d = await r.json().catch(() => ({}))
         chatError = d.detail || `HTTP ${r.status}`
+        messages = messages.slice(0, idx)
       } else {
-        const d = await r.json()
-        messages = [
-          ...messages,
-          { role: 'assistant', text: d.response, meta: metricsLine(d.metrics) },
-        ]
+        await consumeSse(r.body, idx)
+        // If the stream errored before any token, drop the empty bubble.
+        if (chatError && !messages[idx]?.text) {
+          messages = messages.slice(0, idx)
+        }
       }
     } catch (e) {
       chatError = e.message
+      messages = messages.slice(0, idx)
     }
     sending = false
+  }
+
+  // Read an SSE response body and dispatch each frame to handleFrame.
+  async function consumeSse(body, idx) {
+    const reader = body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      let sep
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        handleFrame(buffer.slice(0, sep), idx)
+        buffer = buffer.slice(sep + 2)
+      }
+    }
+  }
+
+  // Parse one SSE frame and apply it to the streaming bubble at `idx`.
+  function handleFrame(frame, idx) {
+    let event = 'message'
+    let data = ''
+    for (const line of frame.split('\n')) {
+      if (line.startsWith('event:')) event = line.slice(6).trim()
+      else if (line.startsWith('data:')) data += line.slice(5).trim()
+    }
+    if (!data) return
+    let payload
+    try {
+      payload = JSON.parse(data)
+    } catch {
+      return
+    }
+
+    if (event === 'error') {
+      chatError = payload.error || 'Chat error'
+    } else if (event === 'done') {
+      const meta = metricsLine(payload.metrics)
+      messages = messages.map((m, i) => (i === idx ? { ...m, meta } : m))
+    } else if (payload.delta) {
+      messages = messages.map((m, i) =>
+        i === idx ? { ...m, text: m.text + payload.delta } : m,
+      )
+    }
   }
 
   // Format per-message metrics like the catalog runner: "123 tok · 1.2s".
@@ -138,7 +189,7 @@
       <p class="empty-msg">Session started — say something.</p>
     {:else}
       {#each messages as msg}
-        <div class="bubble {msg.role}">
+        <div class="bubble {msg.role}" class:thinking={!msg.text}>
           <div class="bubble-header">
             <span class="bubble-role">
               {msg.role === 'user' ? 'You' : agentName}
@@ -147,14 +198,9 @@
               <span class="bubble-tokens">{msg.meta}</span>
             {/if}
           </div>
-          <p class="bubble-text">{msg.text}</p>
+          <p class="bubble-text">{msg.text || '…'}</p>
         </div>
       {/each}
-      {#if sending}
-        <div class="bubble assistant thinking">
-          <p class="bubble-text">…</p>
-        </div>
-      {/if}
     {/if}
   </div>
 

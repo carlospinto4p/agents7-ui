@@ -1,11 +1,13 @@
 """Stateful chat sessions for Chatter-family agents."""
 
 import asyncio
+import json
 import logging
 import time
 import uuid
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 
 from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
@@ -134,6 +136,65 @@ async def send_message(session_id: str, request: Request) -> dict:
             "total_duration": response.metrics.total_duration,
         },
     }
+
+
+def _sse(data: dict, event: str | None = None) -> str:
+    """Format a Server-Sent Events frame from a JSON payload."""
+    prefix = f"event: {event}\n" if event else ""
+    return f"{prefix}data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@router.post("/{session_id}/stream")
+async def stream_message(
+    session_id: str, request: Request
+) -> StreamingResponse:
+    """Stream a chat reply token-by-token via Server-Sent Events.
+
+    Emits one ``data: {"delta": "..."}`` frame per text chunk,
+    then a final ``event: done`` frame carrying the turn metrics.
+    A framework error mid-stream is reported as ``event: error``
+    rather than an HTTP status, since the response has already
+    started.
+    """
+    chatter = _store.get(session_id)
+    if chatter is None:
+        raise HTTPException(
+            status_code=404, detail=f"Session '{session_id}' not found"
+        )
+
+    body = await request.json()
+    message = body.get("message", "")
+    if not message:
+        raise HTTPException(status_code=422, detail="message is required")
+
+    async def event_stream():
+        try:
+            stream = await chatter.chat_stream_async(message)
+            async for chunk in stream:
+                yield _sse({"delta": chunk})
+            resp = stream.chat_response
+            metrics = (
+                {
+                    "tokens": resp.metrics.tokens,
+                    "prompt_tokens": resp.metrics.prompt_tokens,
+                    "total_duration": resp.metrics.total_duration,
+                }
+                if resp is not None
+                else {}
+            )
+            yield _sse({"metrics": metrics}, event="done")
+        except Agents7Exception:
+            logger.exception("Chat stream error in session %s", session_id)
+            yield _sse({"error": "Internal chat error"}, event="error")
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.delete("/{session_id}")

@@ -2,6 +2,21 @@
 ## Changelog - agents7 UI
 
 
+### v0.19.0 - 14th June 2026
+
+- Added token-by-token chat streaming:
+  - `backend/routers/chat.py`: new `POST /api/chat/{session_id}/stream`
+    endpoint that streams the reply as Server-Sent Events (one
+    `delta` frame per chunk, a final `done` frame with metrics,
+    and an `error` frame on framework failure). Built on the
+    framework's `chat_stream_async`.
+  - `frontend/src/components/ChatPanel.svelte`: consume the SSE
+    stream, appending tokens to a live assistant bubble instead
+    of waiting for the whole response.
+  - `backend/tests/test_chat.py`: cover the SSE framing and the
+    delta / done / error paths.
+
+
 ### v0.18.5 - 14th June 2026
 
 - Added `backend/tests/test_utils.py`: error-path coverage for
