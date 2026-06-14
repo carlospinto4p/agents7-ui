@@ -23,7 +23,7 @@ CHATTER_TYPE_MAP = {
 }
 
 
-def import_class(dotted_path: str):
+def import_class(dotted_path: str) -> type:
     import importlib
 
     module_path, class_name = dotted_path.rsplit(".", 1)

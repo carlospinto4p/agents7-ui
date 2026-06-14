@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.18.3 - 14th June 2026
+
+- `backend/routers/utils.py`: added the `-> type` return annotation
+  to `import_class`.
+- `backend/routers/catalog.py`: `_resolve_pipeline_step_details` now
+  logs a warning when a step config can't be read instead of
+  swallowing the error silently (listing stays resilient).
+- Added `tests/test_security.py`: malformed-step-config resilience.
+
+
 ### v0.18.2 - 14th June 2026
 
 - `backend/main.py`:

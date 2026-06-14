@@ -185,6 +185,46 @@ def test_pipeline_step_details_reads_in_catalog_path(tmp_path):
     assert details[0]["model"] == "qwen3"
 
 
+def test_pipeline_step_details_malformed_step_is_resilient(tmp_path):
+    """A malformed step config is logged, not raised; listing survives."""
+    import logging
+
+    from routers import catalog
+
+    catalog_root = tmp_path / "catalog"
+    pipeline_dir = catalog_root / "my_pipeline"
+    pipeline_dir.mkdir(parents=True)
+    config_file = pipeline_dir / "config.yml"
+    config_file.write_text("name: p\n")
+
+    step_dir = catalog_root / "broken"
+    step_dir.mkdir()
+    (step_dir / "config.yml").write_text("name: [unclosed\n")
+
+    captured = []
+
+    class _Handler(logging.Handler):
+        def emit(self, record):
+            captured.append(record.getMessage())
+
+    handler = _Handler()
+    catalog.logger.addHandler(handler)
+    catalog.logger.setLevel(logging.WARNING)
+
+    monkeypatched = catalog.CATALOG_PATH
+    catalog.CATALOG_PATH = catalog_root
+    try:
+        steps = [{"agent": "../broken/config.yml"}]
+        details = catalog._resolve_pipeline_step_details(config_file, steps)
+    finally:
+        catalog.CATALOG_PATH = monkeypatched
+        catalog.logger.removeHandler(handler)
+
+    assert details[0]["name"] == "../broken/config.yml"
+    assert details[0]["provider"] is None
+    assert any("pipeline step config" in m for m in captured)
+
+
 # ── eval.py PII logging Tests ─────────────────────────────────────────────
 
 

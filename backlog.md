@@ -5,8 +5,8 @@
 
 Refactoring:
 
-- [ ] `import_class` missing return type annotation (`backend/routers/utils.py:26`). (LOW, S)
-- [ ] Bare `except Exception` without logging in `_resolve_pipeline_step_details` (`backend/routers/catalog.py:87`) — log or narrow. (MED, S)
+- [x] `import_class` missing return type annotation (`backend/routers/utils.py:26`). (LOW, S)
+- [x] Bare `except Exception` without logging in `_resolve_pipeline_step_details` (`backend/routers/catalog.py:87`) — log or narrow. (MED, S)
 
 Frontend:
 

@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from routers.utils import (
 )
 
 router = APIRouter(prefix="/api/catalog", tags=["catalog"])
+logger = logging.getLogger(__name__)
 
 _default = str(Path(__file__).parents[3] / "agents_catalog")
 CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
@@ -102,8 +104,15 @@ def _resolve_pipeline_step_details(
                 )
                 entry["provider"] = engine.get("provider")
                 entry["model"] = engine.get("model")
-            except Exception:
-                pass
+            except Exception as e:
+                # Keep listing resilient: one unreadable step config
+                # must not break the whole catalog response. Surface it
+                # in the warning log rather than swallowing silently.
+                logger.warning(
+                    "Could not read pipeline step config %s: %s",
+                    step_path,
+                    e,
+                )
         details.append(entry)
     return details
 
