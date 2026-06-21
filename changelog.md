@@ -2,6 +2,19 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.3 - 21st June 2026
+
+- Refactored `backend/routers/eval.py` to reuse the framework's
+  `agents7.eval` public API instead of local copies:
+  - Replaced `_load_golden_set` with `load_eval_rows`, the inline row
+    normalisation with `normalise_rows`, the output-field resolution with
+    `model_output_fields`, and the agent construction with `build_agent`.
+  - `AGENT_TYPE_MAP` now comes from `agents7.eval` rather than
+    `routers.utils`.
+  - Fixed a latent crash in the failure-logging path: a scalar input is
+    logged as `["<input>"]` instead of calling `.keys()` on a string.
+
+
 ### v0.20.2 - 21st June 2026
 
 - Repinned ports to comply with `default-ports.md` (never bind a

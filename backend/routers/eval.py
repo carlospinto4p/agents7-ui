@@ -1,24 +1,22 @@
-import csv
-import json
 import logging
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 
+from agents7.eval import (
+    AGENT_TYPE_MAP,
+    build_agent,
+    load_eval_rows,
+    model_output_fields,
+    normalise_rows,
+)
 from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
-from routers.utils import (
-    AGENT_TYPE_MAP,
-    _load_config,
-    _load_output_schema,
-    import_class,
-)
+from routers.utils import _load_config
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/eval", tags=["eval"])
-
-_METADATA_COLUMNS = {"timestamp", "note", "source", "id", "split"}
 
 
 def _find_golden_set(config_file: Path) -> Path | None:
@@ -28,19 +26,6 @@ def _find_golden_set(config_file: Path) -> Path | None:
         if path.exists():
             return path
     return None
-
-
-def _load_golden_set(path: Path) -> list[dict]:
-    if path.suffix == ".csv":
-        with open(path, encoding="utf-8", newline="") as f:
-            return [dict(row) for row in csv.DictReader(f)]
-    rows: list[dict] = []
-    with open(path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line:
-                rows.append(json.loads(line))
-    return rows
 
 
 @router.post("/{agent_name}")
@@ -61,8 +46,7 @@ def eval_agent(agent_name: str) -> dict:
     cfg, _ = _load_config(config_file)
 
     agent_type = (cfg.get("agent_type") or "").lower()
-    class_path = AGENT_TYPE_MAP.get(agent_type)
-    if not class_path:
+    if agent_type not in AGENT_TYPE_MAP:
         raise HTTPException(
             status_code=422,
             detail=(
@@ -71,39 +55,42 @@ def eval_agent(agent_name: str) -> dict:
             ),
         )
 
-    _, output_fields = _load_output_schema(cfg)
-
-    rows = _load_golden_set(golden_path)
+    rows = load_eval_rows(golden_path)
     if not rows:
         raise HTTPException(status_code=422, detail="Golden set is empty")
 
-    input_cols = set(rows[0].keys()) - output_fields - _METADATA_COLUMNS
-    AgentClass = import_class(class_path)
-    agent = AgentClass.from_yaml(str(config_file))
+    try:
+        eval_rows, expected_fields = normalise_rows(
+            rows, model_output_fields(cfg)
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
 
-    # Primary field for per-category breakdown
-    category_field = (
-        "category"
-        if "category" in output_fields
-        else (next(iter(output_fields)) if output_fields else None)
-    )
+    agent = build_agent(config_file, agent_type)
+
+    # Primary field for per-category breakdown (`category` sorts first).
+    category_field = expected_fields[0] if expected_fields else None
 
     results = []
-    for row in rows:
-        if len(input_cols) == 1:
-            input_data = row[next(iter(input_cols))]
-        else:
-            input_data = {c: row[c] for c in input_cols if row.get(c)}
-
-        expected = {k: v for k, v in row.items() if k in output_fields and v}
+    for eval_row in eval_rows:
+        input_data = eval_row["input"]
+        expected = {f: eval_row[f] for f in expected_fields if f in eval_row}
 
         try:
             response = agent.act(input_data)
             actual = response.model.model_dump() if response.model else None
         except Agents7Exception as exc:
+            # Log only the input *keys*, never the values (PII). A scalar
+            # input has no keys, so use a placeholder rather than leaking
+            # the value.
+            input_keys = (
+                list(input_data.keys())
+                if isinstance(input_data, dict)
+                else ["<input>"]
+            )
             logger.warning(
                 "agent.act() failed (input keys: %s): %s",
-                list(input_data.keys()),
+                input_keys,
                 exc,
                 exc_info=True,
             )
