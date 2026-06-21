@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.1 - 21st June 2026
+
+- `frontend/package.json`: bumped the pinned pnpm to `11.8.0` to match
+  this machine's corepack canonical version. The stale `11.5.3` pin
+  hard-fails `pnpm` builds under corepack (the corepack trap in
+  `pnpm-for-frontend.md`); part of the fleet-wide sweep.
+
+
 ### v0.20.0 - 14th June 2026
 
 - Added `frontend/src/lib/format.js`: shared `fmtCost`,
