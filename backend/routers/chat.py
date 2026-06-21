@@ -9,9 +9,10 @@ import uuid
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+from agents7.agents.utils import import_from_path
 from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
-from routers.utils import CHATTER_TYPE_MAP, _load_config, import_class
+from routers.utils import CHATTER_TYPE_MAP, _load_config
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
@@ -101,7 +102,7 @@ def start_chat(agent_name: str, request: Request) -> dict:
             ),
         )
 
-    ChatterClass = import_class(class_path)
+    ChatterClass = import_from_path(class_path)
     chatter = ChatterClass.from_yaml(str(config_file))
     session_id = _store.create(chatter)
     return {"session_id": session_id, "agent": cfg.get("name")}

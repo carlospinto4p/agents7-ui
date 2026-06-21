@@ -2,6 +2,25 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.4 - 21st June 2026
+
+- Refactored `backend/routers/` to drop the last local copies of
+  framework agent-resolution glue:
+  - `run.py`: structured-agent resolution now uses
+    `agents7.eval.AGENT_TYPE_MAP` + `build_agent` instead of the
+    local `AGENT_TYPE_MAP` / `import_class`; the `pipeline` branch
+    is preserved.
+  - `run.py` / `chat.py`: dotted-path class loading now uses the
+    framework's `import_from_path` (adds an injection guard on
+    user-supplied YAML `agent_type` paths) in place of the local
+    `import_class`.
+  - `utils.py`: removed the duplicated `AGENT_TYPE_MAP` and
+    `import_class`; only `CHATTER_TYPE_MAP` (no framework
+    equivalent) remains.
+  - `tests/test_utils.py`: dropped the `import_class` tests (the
+    behaviour is now covered by the framework suite).
+
+
 ### v0.20.3 - 21st June 2026
 
 - Refactored `backend/routers/eval.py` to reuse the framework's

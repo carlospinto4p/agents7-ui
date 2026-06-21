@@ -1,17 +1,13 @@
 from fastapi import APIRouter, HTTPException, Request
 from pathlib import Path
 
+from agents7.eval import AGENT_TYPE_MAP, build_agent
 from agents7.exceptions import (
     AgentConfigurationError,
     PipelineConfigurationError,
 )
 from routers.catalog import CATALOG_PATH, find_config_file
-from routers.utils import (
-    AGENT_TYPE_MAP,
-    _load_config,
-    _resolve_agent_path,
-    import_class,
-)
+from routers.utils import _load_config, _resolve_agent_path
 
 router = APIRouter(prefix="/api/run", tags=["run"])
 
@@ -32,7 +28,7 @@ def _build_pipeline(config_file: Path, cfg: dict):
 
         step_type_path = step_cfg.get("agent_type")
         if step_type_path:
-            step_cls = import_class(step_type_path)
+            step_cls = import_from_path(step_type_path)
         else:
             step_cls = Labeler
 
@@ -132,8 +128,7 @@ async def run_agent(agent_name: str, request: Request) -> dict:
             },
         }
 
-    class_path = AGENT_TYPE_MAP.get(agent_type)
-    if not class_path:
+    if agent_type not in AGENT_TYPE_MAP:
         raise HTTPException(
             status_code=422,
             detail=(
@@ -142,8 +137,7 @@ async def run_agent(agent_name: str, request: Request) -> dict:
             ),
         )
 
-    AgentClass = import_class(class_path)
-    agent = AgentClass.from_yaml(str(config_file))
+    agent = build_agent(config_file, agent_type)
     response = agent.act(input_data)
 
     output = None

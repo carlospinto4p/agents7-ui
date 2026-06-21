@@ -1,33 +1,11 @@
-"""Tests for routers.utils import/schema helpers."""
+"""Tests for routers.utils schema helpers.
 
-import pytest
+Dotted-path import resolution moved to the framework's
+`agents7.agents.utils.import_from_path` (covered by the framework
+suite); the local `import_class` duplicate was removed.
+"""
 
-from routers.utils import _load_output_schema, import_class
-
-# ── import_class ───────────────────────────────────────────────────────────
-
-
-def test_import_class_resolves_valid_dotted_path():
-    from pathlib import Path
-
-    assert import_class("pathlib.Path") is Path
-
-
-def test_import_class_missing_module_raises():
-    with pytest.raises(ModuleNotFoundError):
-        import_class("agents7_no_such_module.Thing")
-
-
-def test_import_class_missing_attribute_raises():
-    with pytest.raises(AttributeError):
-        import_class("pathlib.NoSuchClass")
-
-
-def test_import_class_malformed_path_raises():
-    # No dot to split on -> unpacking the rsplit result fails.
-    with pytest.raises(ValueError):
-        import_class("nodotpath")
-
+from routers.utils import _load_output_schema
 
 # ── _load_output_schema ────────────────────────────────────────────────────
 

@@ -3,13 +3,10 @@ from pathlib import Path
 import yaml
 
 
-AGENT_TYPE_MAP = {
-    "classifier": "agents7.agents.Classifier",
-    "labeler": "agents7.agents.Labeler",
-    "detector": "agents7.agents.Detector",
-    "regressor": "agents7.agents.Regressor",
-}
-
+# Structured-agent type→class resolution lives in the framework
+# (`agents7.eval.AGENT_TYPE_MAP` / `build_agent`); dotted-path
+# imports use `agents7.agents.utils.import_from_path`. This module
+# keeps only the chatter map, which has no framework equivalent.
 CHATTER_TYPE_MAP = {
     "chatter": "agents7.agents.Chatter",
     # PersonalityChatter/SceneChatter were removed in agents7
@@ -21,14 +18,6 @@ CHATTER_TYPE_MAP = {
     "guarded_chatter": "agents7.agents.GuardedChatter",
     "guarded_scene_chatter": "agents7.agents.GuardedSceneChatter",
 }
-
-
-def import_class(dotted_path: str) -> type:
-    import importlib
-
-    module_path, class_name = dotted_path.rsplit(".", 1)
-    module = importlib.import_module(module_path)
-    return getattr(module, class_name)
 
 
 def _resolve_agent_path(
