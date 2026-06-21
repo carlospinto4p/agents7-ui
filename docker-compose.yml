@@ -15,8 +15,9 @@ services:
       # OLLAMA_HOST=0.0.0.0:11434 in its systemd unit). See README.md.
       - OLLAMA_HOST=http://host.docker.internal:11434
       # Allowed browser origin. Same-origin via nginx in this stack, so the
-      # default covers it; set explicitly for a different host/port.
-      - CORS_ORIGINS=http://localhost:8080
+      # default covers it; set explicitly for a different host/port. Tracks
+      # the frontend's published host port (FRONTEND_PORT, default 5185).
+      - CORS_ORIGINS=http://localhost:${FRONTEND_PORT:-5185}
       # Root for file-based WARNING/ERROR logs (-> /app/logs, bind-mounted
       # below). See agents7_ui/backend/logging_setup.py.
       - LOGS_DIR=/app
@@ -30,9 +31,14 @@ services:
     build:
       context: agents7_ui
       dockerfile: Dockerfile.frontend
+    # Registry-claimed host port (never the shared 8080 default). Override
+    # with FRONTEND_PORT; the banner below reads the same value so they
+    # cannot drift.
     ports:
-      - "8080:80"
+      - "${FRONTEND_PORT:-5185}:80"
     depends_on:
       - backend
     post_start:
-      - command: ["sh", "-c", "echo 'Frontend: http://localhost:8080'"]
+      - command:
+          ["sh", "-c",
+           "echo 'Frontend: http://localhost:${FRONTEND_PORT:-5185}'"]

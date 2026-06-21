@@ -28,7 +28,7 @@ async def _lifespan(app: FastAPI):
 
 app = FastAPI(title="agents7 UI backend", lifespan=_lifespan)
 
-_default_origins = "http://localhost:5173,http://localhost:8080"
+_default_origins = "http://localhost:5186,http://localhost:5185"
 _ORIGIN_RE = re.compile(r"^https?://[a-zA-Z0-9._-]+(:\d{1,5})?$")
 
 

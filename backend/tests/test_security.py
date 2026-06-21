@@ -35,8 +35,8 @@ def _import_parse():
 
 def test_parse_cors_origins_valid_localhost():
     fn = _import_parse()
-    result = fn("http://localhost:5173,http://localhost:8080")
-    assert result == ["http://localhost:5173", "http://localhost:8080"]
+    result = fn("http://localhost:5186,http://localhost:5185")
+    assert result == ["http://localhost:5186", "http://localhost:5185"]
 
 
 def test_parse_cors_origins_valid_https():
@@ -52,8 +52,8 @@ def test_parse_cors_origins_empty_string():
 
 def test_parse_cors_origins_strips_whitespace():
     fn = _import_parse()
-    result = fn(" http://localhost:5173 , http://localhost:8080 ")
-    assert result == ["http://localhost:5173", "http://localhost:8080"]
+    result = fn(" http://localhost:5186 , http://localhost:5185 ")
+    assert result == ["http://localhost:5186", "http://localhost:5185"]
 
 
 def test_parse_cors_origins_rejects_wildcard():

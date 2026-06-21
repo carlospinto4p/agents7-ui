@@ -23,20 +23,25 @@ the backend at `localhost:11434` and the repo's `agents_catalog/`.
    uv run uvicorn main:app --port 8001 --reload
    ```
 
-3. **Frontend** — Vite dev server on :5173, proxies `/api` → :8001:
+3. **Frontend** — Vite dev server on :5186, proxies `/api` → :8001:
 
    ```bash
    corepack pnpm --dir agents7_ui/frontend install
    corepack pnpm --dir agents7_ui/frontend dev
    ```
 
-4. Open <http://localhost:5173>.
+4. Open <http://localhost:5186>.
 
 ## Run with Docker Compose
 
 ```bash
-docker compose up -d --build      # frontend on http://localhost:8080
+docker compose up -d --build      # frontend on http://localhost:5185
 ```
+
+The frontend's published host port defaults to `5185` (a registry-claimed
+port, never the shared `8080` default). Override it with `FRONTEND_PORT`
+in `.env` — the `CORS_ORIGINS` default and the startup banner both follow
+that value.
 
 The backend container reaches Ollama via `host.docker.internal`. A
 container cannot reach the host's `localhost`, so the host Ollama must bind

@@ -2,6 +2,22 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.2 - 21st June 2026
+
+- Repinned ports to comply with `default-ports.md` (never bind a
+  service's shared default):
+  - `docker-compose.yml`: frontend host port `8080` → registry-claimed
+    `${FRONTEND_PORT:-5185}`; the `ports` mapping, `CORS_ORIGINS` default,
+    and the `post_start` startup banner now read the one variable so they
+    cannot drift (`docker-compose-startup-ports.md` source-of-truth).
+  - `frontend/vite.config.js`: pinned dev server `port` to `5186` (never
+    the shared Vite `5173` default).
+  - `backend/main.py`: updated `_default_origins` to `5186,5185`.
+- Updated `README.md` and `.env.example`: document `FRONTEND_PORT` and the
+  new dev/compose ports.
+- Updated `tests/test_security.py`: sample CORS origins use the new ports.
+
+
 ### v0.20.1 - 21st June 2026
 
 - `frontend/package.json`: bumped the pinned pnpm to `11.8.0` to match
