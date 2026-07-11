@@ -4,7 +4,7 @@ requires-python = ">=3.11"
 
 [[package]]
 name = "agents7"
-version = "4.7.0"
+version = "4.7.4"
 source = { editable = "../../agents7_framework" }
 dependencies = [
     { name = "ollama" },

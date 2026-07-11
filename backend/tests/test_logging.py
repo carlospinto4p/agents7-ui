@@ -23,6 +23,21 @@ def test_logs_root_honors_env(monkeypatch, tmp_path):
     assert logging_setup._logs_root().name == "logs"
 
 
+def test_session_logs_redirected_out_of_source_tree():
+    """Test runs must not write logs into the committed backend tree.
+
+    ``conftest.py`` sets ``LOGS_DIR`` to a throwaway dir so importing
+    ``main`` (which calls ``configure_logging()``) never installs file
+    handlers rooted at ``<backend>/logs``. Without that guard, router
+    tests that trigger warnings would pollute ``backend/logs/warnings``
+    and trip the session-start container-log check.
+    """
+    root = logging_setup._logs_root()
+    backend_logs = Path(logging_setup.__file__).parent / "logs"
+    assert root != backend_logs
+    assert backend_logs not in root.parents
+
+
 def test_configure_logging_clean_level_split(monkeypatch, tmp_path):
     """WARNING -> warnings/, ERROR -> errors/, with no cross-leak."""
     monkeypatch.setenv("LOGS_DIR", str(tmp_path))

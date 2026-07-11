@@ -2,6 +2,24 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.5 - 11th July 2026
+
+- Fixed test-suite log pollution in `backend/`:
+  - `tests/conftest.py`: redirect `LOGS_DIR` to a throwaway dir at
+    conftest import time, so importing `main` (which calls
+    `configure_logging()`) no longer installs file handlers rooted at
+    the committed `backend/logs/` tree. Router tests that trigger
+    warnings previously persisted them there and tripped the
+    session-start container-log check.
+  - `tests/test_logging.py`: added
+    `test_session_logs_redirected_out_of_source_tree()` regression
+    guard.
+- Added `.claude/skills/fix-errors/`: per-project skill to triage the
+  backend's `logs/errors/` and `logs/warnings/` (read → diagnose →
+  fix → delete), adapting the canonical container-log fix loop to the
+  agents7 UI backend domain.
+
+
 ### v0.20.4 - 21st June 2026
 
 - Refactored `backend/routers/` to drop the last local copies of
