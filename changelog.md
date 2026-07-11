@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.6 - 11th July 2026
+
+- Updated `.env.example`: added the external OpenAI-compatible provider vars (`OPENAI_COMPAT_MODEL_NAME`, `OPENAI_COMPAT_BASE_URL`, `OPENAI_COMPAT_API_KEY`) to the LLM provider keys section, for pointing an `openai_compat` agent at a provider like DeepSeek.
+
+
 ### v0.20.5 - 11th July 2026
 
 - Fixed test-suite log pollution in `backend/`:
