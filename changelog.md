@@ -2,6 +2,23 @@
 ## Changelog - agents7 UI
 
 
+### v0.21.0 - 11th July 2026
+
+- Reworked the frontend navigation from a top header bar to a lateral
+  sidebar menu, mirroring the market_wrapper console style:
+  - Added `frontend/src/components/Sidebar.svelte`: lateral menu with a
+    brand mark, app name + version subtitle, icon-per-item nav (Home,
+    Catalog, Runner, Chatter, Engine, Eval) with an accent active state,
+    and the Ollama engine status pill + Start button pinned at the base.
+  - Updated `frontend/src/App.svelte`: full-height sidebar + scrollable
+    content shell; fetches `/api/info` and passes name/version to the
+    sidebar. Kept hash routing, page switching, and Ollama start logic.
+  - Updated `frontend/src/app.css`: `#app` is now a full-height row
+    layout; added slim custom scrollbars.
+  - Updated `frontend/src/pages/Home.svelte`: removed the intro version
+    badge now that the sidebar shows name + version in persistent chrome.
+
+
 ### v0.20.8 - 11th July 2026
 
 - Updated `docker-compose.yml`:

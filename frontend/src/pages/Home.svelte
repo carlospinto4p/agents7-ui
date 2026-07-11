@@ -4,21 +4,7 @@
   let html = $state('')
   let loading = $state(true)
   let error = $state(null)
-  let appName = $state('')
-  let appVersion = $state('')
   let readmeEl = $state(null)
-
-  $effect(() => {
-    fetch('/api/info')
-      .then(r => (r.ok ? r.json() : null))
-      .then(data => {
-        if (data) {
-          appName = data.name ?? ''
-          appVersion = data.version ?? ''
-        }
-      })
-      .catch(() => {})
-  })
 
   $effect(() => {
     fetch('/api/readme')
@@ -121,12 +107,6 @@
 <div class="page-intro">
   <div class="intro-head">
     <h1 class="page-title">Framework</h1>
-    {#if appVersion}
-      <div class="version-badge">
-        <span class="version-name">{appName}</span>
-        <span class="version-num">v{appVersion}</span>
-      </div>
-    {/if}
   </div>
   <p class="intro-desc">Python library for building LLM-based agents that return structured outputs via Pydantic models.</p>
 </div>
@@ -149,7 +129,6 @@
   .intro-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 1rem;
     margin: 0 0 0.4rem;
   }
@@ -158,28 +137,6 @@
     font-weight: 700;
     color: var(--text-strong);
     margin: 0;
-  }
-  .version-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.3rem 0.7rem 0.3rem 0.6rem;
-    border-radius: 999px;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    font-family: ui-monospace, 'Cascadia Code', monospace;
-    font-size: 1.0625rem;
-    line-height: 1;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  .version-name {
-    font-weight: 700;
-    color: var(--text-strong);
-  }
-  .version-num {
-    color: var(--accent);
-    font-weight: 600;
   }
   .intro-desc {
     color: var(--text-muted);
