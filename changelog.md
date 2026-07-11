@@ -2,6 +2,16 @@
 ## Changelog - agents7 UI
 
 
+### v0.21.1 - 11th July 2026
+
+- De-conflicted the dev backend host port from the shared `8001` to a
+  registry-claimed `8002`, so `pnpm dev` no longer proxies `/api` into a
+  leftover backend from another project (market_wrapper also binds
+  8001):
+  - Updated `frontend/vite.config.js`: proxy target `/api` → `:8002`.
+  - Updated `README.md`: backend run command and proxy notes use `8002`.
+
+
 ### v0.21.0 - 11th July 2026
 
 - Reworked the frontend navigation from a top header bar to a lateral

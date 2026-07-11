@@ -16,14 +16,14 @@ the backend at `localhost:11434` and the repo's `agents_catalog/`.
    ollama serve            # or: systemctl start ollama
    ```
 
-2. **Backend** — port 8001 (the dev frontend proxies `/api` to it):
+2. **Backend** — port 8002 (the dev frontend proxies `/api` to it):
 
    ```bash
    cd agents7_ui/backend
-   uv run uvicorn main:app --port 8001 --reload
+   uv run uvicorn main:app --port 8002 --reload
    ```
 
-3. **Frontend** — Vite dev server on :5186, proxies `/api` → :8001:
+3. **Frontend** — Vite dev server on :5186, proxies `/api` → :8002:
 
    ```bash
    corepack pnpm --dir agents7_ui/frontend install

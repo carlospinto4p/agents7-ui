@@ -7,7 +7,7 @@ export default defineConfig({
     // Registry-claimed dev port — never the shared Vite default (5173).
     port: 5186,
     proxy: {
-      '/api': 'http://localhost:8001',
+      '/api': 'http://localhost:8002',
     },
   },
 })
