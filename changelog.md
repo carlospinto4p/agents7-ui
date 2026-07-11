@@ -2,6 +2,18 @@
 ## Changelog - agents7 UI
 
 
+### v0.20.8 - 11th July 2026
+
+- Updated `docker-compose.yml`:
+  - Exposed the FastAPI backend on a registry-claimed host port
+    (`${API_PORT:-5191}` → container 8000), so the backend API and its
+    Swagger UI (`/docs`) are reachable directly, not only same-origin
+    via nginx.
+  - Expanded the `banner` service to advertise the Backend and Swagger
+    URLs alongside the App URL.
+- Updated `agents7_ui/.env.example`: documented `API_PORT`.
+
+
 ### v0.20.7 - 11th July 2026
 
 - Updated `docker-compose.yml`:

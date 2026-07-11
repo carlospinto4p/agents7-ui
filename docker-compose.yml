@@ -21,6 +21,11 @@ services:
       # Root for file-based WARNING/ERROR logs (-> /app/logs, bind-mounted
       # below). See agents7_ui/backend/logging_setup.py.
       - LOGS_DIR=/app
+    ports:
+      # Registry-claimed host port (never uvicorn's shared 8000 default)
+      # → container 8000. Exposes the FastAPI backend and its Swagger UI
+      # directly; the frontend still reaches it same-origin via nginx.
+      - "${API_PORT:-5191}:8000"
     volumes:
       # First-party WARNING/ERROR records, surfaced on the host.
       - ./agents7_ui/logs:/app/logs
@@ -39,17 +44,17 @@ services:
     depends_on:
       - backend
 
-  # Prints the clickable host URL once the stack is up so the user
-  # doesn't have to read this file to find where the app is served.
-  # Reads the SAME env var the ports: mapping binds, so the banner can
-  # never drift from the actual binding. Only the frontend publishes a
-  # host port here — the backend is container-internal (reached via
-  # nginx same-origin), so there is nothing else to advertise.
+  # Prints the clickable host URLs once the stack is up so the user
+  # doesn't have to read this file to find where things are served.
+  # Reads the SAME env vars the ports: mappings bind, so the banner can
+  # never drift from the actual bindings.
   banner:
     image: busybox
     depends_on:
       - frontend
     command: >
       sh -c 'echo "" &&
-        echo "  ➜  App: http://localhost:${FRONTEND_PORT:-5185}" &&
+        echo "  ➜  App:     http://localhost:${FRONTEND_PORT:-5185}" &&
+        echo "  ➜  Backend: http://localhost:${API_PORT:-5191}" &&
+        echo "  ➜  Swagger: http://localhost:${API_PORT:-5191}/docs" &&
         echo ""'
