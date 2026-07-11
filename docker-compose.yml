@@ -38,7 +38,18 @@ services:
       - "${FRONTEND_PORT:-5185}:80"
     depends_on:
       - backend
-    post_start:
-      - command:
-          ["sh", "-c",
-           "echo 'Frontend: http://localhost:${FRONTEND_PORT:-5185}'"]
+
+  # Prints the clickable host URL once the stack is up so the user
+  # doesn't have to read this file to find where the app is served.
+  # Reads the SAME env var the ports: mapping binds, so the banner can
+  # never drift from the actual binding. Only the frontend publishes a
+  # host port here — the backend is container-internal (reached via
+  # nginx same-origin), so there is nothing else to advertise.
+  banner:
+    image: busybox
+    depends_on:
+      - frontend
+    command: >
+      sh -c 'echo "" &&
+        echo "  ➜  App: http://localhost:${FRONTEND_PORT:-5185}" &&
+        echo ""'
