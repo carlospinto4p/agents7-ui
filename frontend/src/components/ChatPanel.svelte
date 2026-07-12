@@ -9,6 +9,11 @@
 
   let {
     agentName,
+    // Optional engine override. When `provider` is empty the session
+    // uses the agent's configured engine; otherwise it starts with the
+    // given provider/model. Changing either restarts the session.
+    provider = '',
+    model = '',
     sampleMessage = 'Hi! Tell me a bit about yourself.',
     placeholder = 'Type a message… (Enter to send, Shift+Enter for newline)',
   } = $props()
@@ -28,6 +33,10 @@
   // cleanup, avoiding a self-triggering effect loop.
   $effect(() => {
     const name = agentName
+    // Read the override synchronously so a provider/model change
+    // restarts the session with the new engine.
+    provider
+    model
     if (!name) return
     startSession(name)
     return () => {
@@ -51,7 +60,11 @@
     try {
       const r = await fetch(
         `/api/chat/start/${encodeURIComponent(name)}`,
-        { method: 'POST' },
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(provider ? { provider, model } : {}),
+        },
       )
       if (!r.ok) {
         const d = await r.json().catch(() => ({}))

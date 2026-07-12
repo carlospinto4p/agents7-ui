@@ -13,6 +13,43 @@
     allAgents.find(a => a.name === agentName) ?? null
   )
 
+  // Engine override — chat with a different model/provider than the
+  // one baked into the agent config. Empty provider = agent default.
+  let providers      = $state([])   // [{ name, ready, detail, model? }]
+  let ollamaModels   = $state([])   // installed Ollama model names
+  let ovProvider     = $state('')
+  let ovModel        = $state('')
+
+  let providerInfo = $derived(
+    providers.find(p => p.name === ovProvider) ?? null
+  )
+  // ollama picks from the installed list; API providers take a free
+  // model name (openai_compat may read it from the environment).
+  let modelIsList = $derived(ovProvider === 'ollama')
+
+  // Reset to the agent's default engine whenever the agent changes,
+  // so an override never silently carries across a different persona.
+  $effect(() => {
+    agentName
+    ovProvider = ''
+    ovModel = ''
+  })
+
+  // Seed a sensible model when a provider is chosen: the agent's own
+  // model if Ollama has it, else the first installed model; API
+  // providers start blank for the user to type.
+  function onProviderChange() {
+    if (ovProvider === 'ollama') {
+      const names = ollamaModels.map(m => m.name)
+      const agentModel = selectedAgent?.model
+      ovModel = names.includes(agentModel) ? agentModel : names[0] || ''
+    } else if (providerInfo?.model) {
+      ovModel = providerInfo.model
+    } else {
+      ovModel = ''
+    }
+  }
+
   // Per-agent detail (persona / scene / system prompt) for the blurb.
   let detail  = $state(null)
   let persona = $derived(detail?.persona ?? null)
@@ -61,6 +98,17 @@
         if (first) agentName = first.name
       })
       .catch(e => { loadError = e.message })
+
+    // Engine-override options — failures are non-fatal; the override
+    // controls simply stay empty and the agent default is used.
+    fetch('/api/chat/providers')
+      .then(r => (r.ok ? r.json() : { providers: [] }))
+      .then(d => { providers = d.providers ?? [] })
+      .catch(() => {})
+    fetch('/api/engine/models')
+      .then(r => (r.ok ? r.json() : { models: [] }))
+      .then(d => { ollamaModels = d.models ?? [] })
+      .catch(() => {})
   })
 </script>
 
@@ -81,11 +129,52 @@
       {:else}
         <select bind:value={agentName}>
           {#each agents as a}
-            <option value={a.name}>{a.name}</option>
+            <option value={a.name}>{a.name} — {a.agent_type}</option>
           {/each}
         </select>
       {/if}
     </label>
+
+    <label class="field">
+      <span class="label">Provider</span>
+      <select
+        bind:value={ovProvider}
+        onchange={onProviderChange}
+        disabled={!agentName}
+      >
+        <option value="">Agent default</option>
+        {#each providers as p}
+          <option value={p.name} disabled={!p.ready}>
+            {p.name}{p.ready ? '' : ` (${p.detail})`}
+          </option>
+        {/each}
+      </select>
+    </label>
+
+    {#if ovProvider}
+      <label class="field">
+        <span class="label">Model</span>
+        {#if modelIsList}
+          <select bind:value={ovModel} disabled={!agentName}>
+            {#if ollamaModels.length === 0}
+              <option value="">No models installed</option>
+            {/if}
+            {#each ollamaModels as m}
+              <option value={m.name}>{m.name}</option>
+            {/each}
+          </select>
+        {:else}
+          <input
+            type="text"
+            class="model-input"
+            bind:value={ovModel}
+            placeholder="model name"
+            spellcheck="false"
+            disabled={!agentName}
+          />
+        {/if}
+      </label>
+    {/if}
 
     <button
       class="reset-btn"
@@ -95,6 +184,13 @@
       Reset
     </button>
   </div>
+
+  {#if ovProvider && providerInfo && !providerInfo.ready}
+    <p class="override-warn">
+      {ovProvider} is not ready: {providerInfo.detail}. Starting a chat
+      with it will fail until configured.
+    </p>
+  {/if}
 
   {#if selectedAgent}
     <div class="agent-meta">
@@ -151,7 +247,12 @@
 
   {#if agentName}
     <div class="panel-wrap">
-      <ChatPanel bind:this={chatPanel} {agentName} />
+      <ChatPanel
+        bind:this={chatPanel}
+        {agentName}
+        provider={ovProvider}
+        model={ovModel}
+      />
     </div>
   {:else}
     <div class="transcript-placeholder">
@@ -190,6 +291,7 @@
     align-items: flex-end;
     gap: 1rem;
     flex-shrink: 0;
+    flex-wrap: wrap;
   }
 
   .field { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -211,6 +313,27 @@
     min-width: 220px;
   }
   select:disabled { opacity: 0.4; }
+
+  .model-input {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1.0625rem;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    background: var(--bg-surface);
+    color: var(--text);
+    min-width: 200px;
+  }
+  .model-input:disabled { opacity: 0.4; }
+  .model-input:focus { outline: none; border-color: var(--accent); }
+
+  .override-warn {
+    flex-shrink: 0;
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: var(--warn);
+  }
 
   .reset-btn {
     padding: 0.4rem 0.9rem;

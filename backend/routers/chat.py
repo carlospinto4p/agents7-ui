@@ -3,12 +3,15 @@
 import asyncio
 import json
 import logging
+import os
 import time
 import uuid
+from importlib.util import find_spec
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
+from agents7.agents.config_loader import build_engine
 from agents7.agents.utils import import_from_path
 from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
@@ -16,6 +19,107 @@ from routers.utils import CHATTER_TYPE_MAP, _load_config
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 logger = logging.getLogger(__name__)
+
+# Providers a chat session can be started with. Ollama is always
+# offered (its models are managed on the Engine page); the API-backed
+# providers depend on their SDK package plus credentials in the
+# environment — see `_provider_status`.
+_PROVIDERS = ("ollama", "anthropic", "openai_compat")
+
+# Engine-section keys that describe the connection to a specific
+# provider (as opposed to provider-agnostic behaviour like retry /
+# cache). These are only carried over into an override when the
+# provider is unchanged.
+_CONNECTION_KEYS = ("base_url", "api_key", "fallback_model")
+
+
+def _provider_status(provider: str) -> dict:
+    """Report whether *provider* can be used for a chat override.
+
+    :param provider: One of ``_PROVIDERS``.
+    :return: A dict with the provider ``name``, a ``ready`` flag, a
+        ``detail`` string explaining why it is not ready (empty when
+        ready), and — for ``openai_compat`` — the ``model`` read from
+        the environment (``None`` if unset), so the UI can make the
+        model field optional.
+    """
+    if provider == "anthropic":
+        has_pkg = find_spec("anthropic") is not None
+        has_key = bool(os.getenv("ANTHROPIC_API_KEY"))
+        detail = ""
+        if not has_pkg:
+            detail = "anthropic package not installed"
+        elif not has_key:
+            detail = "ANTHROPIC_API_KEY not set"
+        return {
+            "name": provider,
+            "ready": has_pkg and has_key,
+            "detail": detail,
+        }
+    if provider == "openai_compat":
+        has_pkg = find_spec("openai") is not None
+        has_key = bool(
+            os.getenv("OPENAI_COMPAT_API_KEY") or os.getenv("OPENAI_API_KEY")
+        )
+        detail = ""
+        if not has_pkg:
+            detail = "openai package not installed"
+        elif not has_key:
+            detail = "OPENAI_COMPAT_API_KEY / OPENAI_API_KEY not set"
+        return {
+            "name": provider,
+            "ready": has_pkg and has_key,
+            "detail": detail,
+            "model": os.getenv("OPENAI_COMPAT_MODEL_NAME") or None,
+        }
+    # ollama: assumed reachable; the Engine page surfaces its status.
+    return {"name": provider, "ready": True, "detail": ""}
+
+
+async def _optional_json(request: Request) -> dict:
+    """Return the request's JSON body, or ``{}`` if there is none.
+
+    The chat-start request carries an optional engine override; an
+    empty body (the common case) must not raise.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return {}
+    return body if isinstance(body, dict) else {}
+
+
+def _apply_engine_override(
+    chatter: object, orig_engine: dict, provider: str, model: str
+) -> None:
+    """Swap the chatter's response engine for one built from overrides.
+
+    Provider-agnostic settings (``retry``, ``cache``) are carried over
+    from the agent's configured engine. Connection settings
+    (``base_url`` / ``api_key`` / ``fallback_model``) are only kept
+    when the provider is unchanged, since they are meaningless across
+    a provider switch — the new provider reads its credentials from the
+    environment instead. For ``GuardedChatter``-family agents this
+    changes only the reply model; the guard keeps its own configured
+    engine.
+
+    :param chatter: The loaded chatter instance to mutate.
+    :param orig_engine: The ``engine`` section from the agent's config.
+    :param provider: The override provider (e.g. ``"ollama"``).
+    :param model: The override model name (may be empty for
+        ``openai_compat``, which then reads the environment).
+    :raises ValueError: If the provider/model combination is invalid.
+    """
+    override: dict = {"provider": provider, "model": model or None}
+    for key in ("retry", "cache"):
+        if key in orig_engine:
+            override[key] = orig_engine[key]
+    if provider.lower() == str(orig_engine.get("provider", "")).lower():
+        for key in _CONNECTION_KEYS:
+            if key in orig_engine:
+                override[key] = orig_engine[key]
+    engine = build_engine(override)
+    chatter._set_attr("engine", engine)
 
 
 class _SessionStore:
@@ -79,8 +183,20 @@ class _SessionStore:
 _store = _SessionStore()
 
 
+@router.get("/providers")
+def list_providers() -> dict:
+    """List the providers a chat session may be started with.
+
+    Each entry reports whether the provider is ready to use (its SDK
+    package is installed and any required credentials are present in
+    the environment), so the UI can guide the user toward a working
+    override instead of failing on the first message.
+    """
+    return {"providers": [_provider_status(p) for p in _PROVIDERS]}
+
+
 @router.post("/start/{agent_name}")
-def start_chat(agent_name: str, request: Request) -> dict:
+async def start_chat(agent_name: str, request: Request) -> dict:
     client_ip = request.client.host if request.client else "unknown"
     _store.check_start_rate(client_ip)
     _store.evict_expired()
@@ -102,10 +218,37 @@ def start_chat(agent_name: str, request: Request) -> dict:
             ),
         )
 
+    body = await _optional_json(request)
+    provider = str(body.get("provider") or "").strip()
+    model = str(body.get("model") or "").strip()
+
     ChatterClass = import_from_path(class_path)
-    chatter = ChatterClass.from_yaml(str(config_file))
+    try:
+        chatter = ChatterClass.from_yaml(str(config_file))
+        if provider:
+            _apply_engine_override(
+                chatter, cfg.get("engine") or {}, provider, model
+            )
+    except (Agents7Exception, ImportError, ValueError) as exc:
+        logger.warning(
+            "Could not start chat for %s with provider=%r model=%r: %s",
+            agent_name,
+            provider,
+            model,
+            exc,
+        )
+        raise HTTPException(
+            status_code=400, detail=f"Could not start chat: {exc}"
+        ) from exc
+
     session_id = _store.create(chatter)
-    return {"session_id": session_id, "agent": cfg.get("name")}
+    engine = chatter.engine
+    return {
+        "session_id": session_id,
+        "agent": cfg.get("name"),
+        "provider": engine.provider,
+        "model": engine.model_name,
+    }
 
 
 @router.post("/{session_id}/message")

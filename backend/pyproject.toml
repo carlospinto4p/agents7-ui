@@ -1,11 +1,11 @@
 [project]
 name = "agents7-ui-backend"
-version = "0.25.0"
+version = "0.26.0"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
-    "agents7>=4.0.0",
+    "agents7[anthropic,openai]>=4.0.0",
     "pyyaml>=6.0",
     "httpx>=0.28.0",
 ]

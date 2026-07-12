@@ -2,6 +2,30 @@
 ## Changelog - agents7 UI
 
 
+### v0.26.0 - 12th July 2026
+
+- Added an engine override to the **Chatter** page — chat with any
+  provider/model instead of the one baked into the agent config:
+  - `backend/routers/chat.py`: `POST /api/chat/start/{agent}` now
+    accepts an optional `{provider, model}` body and swaps the reply
+    engine via `_apply_engine_override()` (retry/cache carry over;
+    connection settings only within the same provider; the guard keeps
+    its own engine). Returns the effective `provider`/`model`.
+  - `backend/routers/chat.py`: new `GET /api/chat/providers` reporting
+    each provider's readiness (SDK installed + credentials in the env).
+  - `backend/pyproject.toml`: depend on `agents7[anthropic,openai]` so
+    the API providers are usable.
+  - `frontend/src/components/ChatPanel.svelte`: `provider`/`model`
+    props sent on session start; changing either restarts the session.
+  - `frontend/src/pages/Chatter.svelte`: Provider + Model selectors
+    (Ollama picks from installed models, API providers take a free
+    model name), with a readiness warning for unconfigured providers.
+- Updated the **Chatter** agent dropdown to show each agent's class
+  type alongside its name.
+- Added `backend/tests/test_chat.py` tests for the override helper,
+  provider-status reporting, and the optional-body parser.
+
+
 ### v0.25.0 - 12th July 2026
 
 - Enhanced the **Agent Classes** page to show field inheritance:
