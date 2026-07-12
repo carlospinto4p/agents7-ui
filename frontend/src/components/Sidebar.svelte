@@ -126,7 +126,7 @@
     </div>
     <div class="brand-text">
       <div class="brand-name">{name || 'agents7'}</div>
-      <div class="brand-sub">{version ? `v${version} · console` : 'console'}</div>
+      <div class="brand-sub">{version ? `v${version}` : ''}</div>
     </div>
   </div>
 

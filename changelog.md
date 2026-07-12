@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.22.2 - 12th July 2026
+
+- Updated `frontend/src/components/Sidebar.svelte`: dropped the
+  `· console` tagline from the brand subtitle — it now shows only the
+  version (`v{version}`).
+
+
 ### v0.22.1 - 12th July 2026
 
 - Updated `frontend/src/components/Sidebar.svelte`: raised the default
