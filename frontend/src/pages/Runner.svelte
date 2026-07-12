@@ -1,5 +1,6 @@
 <script>
   import { history } from '../stores/history.js'
+  import { isChatter } from '../constants.js'
   import { fmtCost, copyText, downloadJson } from '../lib/format.js'
 
   // ── Shared state ─────────────────────────────────────────
@@ -8,6 +9,12 @@
   let loadError  = $state(null)
   let tab        = $state('single')
   let historyOpen = $state(false)
+
+  // Chatter-family agents are stateful and run through /api/chat
+  // (the Chatter page), not the one-shot /api/run this page uses.
+  // Excluding them keeps the Runner from landing on a conversational
+  // agent that has no input schema and a permanently-disabled Run.
+  let runnableAgents = $derived(agents.filter(a => !isChatter(a.agent_type)))
 
   // Summary (incl. description) of the currently selected agent,
   // looked up from the already-loaded catalog list.
@@ -20,7 +27,8 @@
       .then(r => r.json())
       .then(data => {
         agents = data
-        if (data.length > 0) agentName = data[0].name
+        const runnable = data.filter(a => !isChatter(a.agent_type))
+        if (runnable.length > 0) agentName = runnable[0].name
       })
       .catch(e => { loadError = e.message })
   })
@@ -395,11 +403,17 @@
           <label class="field">
             <span class="label">Agent</span>
             <select bind:value={agentName} disabled={singleRunning}>
-              {#each agents as a}
-                <option value={a.name}>{a.name}</option>
+              {#each runnableAgents as a}
+                <option value={a.name}>{a.display_name || a.name}</option>
               {/each}
             </select>
           </label>
+
+          {#if selectedSummary?.agent_type}
+            <div class="agent-type-row">
+              <span class="badge type">{selectedSummary.agent_type}</span>
+            </div>
+          {/if}
 
           {#if selectedSummary?.description}
             <p class="agent-desc">{selectedSummary.description}</p>
@@ -564,11 +578,17 @@
           <label class="field">
             <span class="label">Agent</span>
             <select bind:value={agentName} disabled={running}>
-              {#each agents as a}
-                <option value={a.name}>{a.name}</option>
+              {#each runnableAgents as a}
+                <option value={a.name}>{a.display_name || a.name}</option>
               {/each}
             </select>
           </label>
+
+          {#if selectedSummary?.agent_type}
+            <div class="agent-type-row">
+              <span class="badge type">{selectedSummary.agent_type}</span>
+            </div>
+          {/if}
 
           {#if selectedSummary?.description}
             <p class="agent-desc">{selectedSummary.description}</p>
@@ -794,6 +814,8 @@
     letter-spacing: 0.05em;
     color: var(--text-muted);
   }
+
+  .agent-type-row { margin-top: -0.4rem; }
 
   .agent-desc {
     margin: -0.4rem 0 0;
@@ -1133,6 +1155,7 @@
   }
   .badge.model    { background: var(--pass-bg);  color: var(--pass); }
   .badge.provider { background: var(--warn-bg);  color: var(--warn); }
+  .badge.type     { background: var(--info-bg);  color: var(--accent); }
 
   /* Pipeline steps breakdown */
   .steps-section {

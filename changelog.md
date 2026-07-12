@@ -2,6 +2,19 @@
 ## Changelog - agents7 UI
 
 
+### v0.23.1 - 12th July 2026
+
+- Fixed the Runner listing conversational (chatter-family) agents,
+  which have no input schema and left the Run button permanently
+  disabled when one was auto-selected:
+  - Updated `frontend/src/pages/Runner.svelte`: exclude
+    chatter-family agents (via `isChatter`) from both dropdowns and
+    the default selection, so the Runner only offers one-shot
+    `/api/run` agents. Chatters belong in the Chatter tab.
+  - The agent picker now shows the `display_name` and an
+    `agent_type` badge, matching the Catalog and Chatter pages.
+
+
 ### v0.23.0 - 12th July 2026
 
 - Added agent descriptions to the selection UIs:
