@@ -21,13 +21,33 @@
   const COL_W = NODE_W + COL_GAP
   const ROW_H = NODE_H + ROW_GAP
 
+  // The selected class is deep-linkable as #/classes/<ClassName>, so a
+  // specific class can be shared or bookmarked.
+  function classFromHash() {
+    const parts = window.location.hash.replace('#/', '').split('/')
+    return parts[0] === 'classes' && parts[1]
+      ? decodeURIComponent(parts[1])
+      : null
+  }
+
+  function select(name) {
+    selectedName = name
+    // replaceState keeps the URL shareable without firing hashchange
+    // (which would re-run the page router needlessly).
+    history.replaceState(null, '', `#/classes/${encodeURIComponent(name)}`)
+  }
+
   onMount(() => {
     fetch('/api/classes')
       .then((r) => r.json())
       .then((d) => {
         classes = d.classes ?? []
         loading = false
-        if (classes.length) selectedName = classes[0].name
+        const want = classFromHash()
+        selectedName =
+          (want && classes.some((c) => c.name === want)
+            ? want
+            : classes[0]?.name) ?? null
       })
       .catch((e) => {
         error = e.message
@@ -132,6 +152,37 @@
   let descParas = $derived(
     (selected?.description ?? '').split('\n\n').filter(Boolean)
   )
+
+  // Split docstring text into plain/inline-code runs so reST markup
+  // (`name` or ``name``) renders as <code> instead of literal backticks.
+  function tokens(text) {
+    const parts = []
+    const re = /``([^`]+)``|`([^`]+)`/g
+    let last = 0
+    let m
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) {
+        parts.push({ code: false, t: text.slice(last, m.index) })
+      }
+      parts.push({ code: true, t: m[1] ?? m[2] })
+      last = re.lastIndex
+    }
+    if (last < text.length) parts.push({ code: false, t: text.slice(last) })
+    return parts
+  }
+
+  // Group the class's fields by the ancestor that introduced them, in
+  // inheritance order (base-most first) — the fields list already
+  // arrives base→derived, so contiguous same-owner runs form groups.
+  let fieldGroups = $derived.by(() => {
+    const groups = []
+    for (const f of selected?.fields ?? []) {
+      const last = groups[groups.length - 1]
+      if (last && last.owner === f.owner) last.items.push(f)
+      else groups.push({ owner: f.owner, inherited: f.inherited, items: [f] })
+    }
+    return groups
+  })
 </script>
 
 <div class="classes">
@@ -184,7 +235,7 @@
             style="left:{n.x}px; top:{n.y}px;
                    width:{NODE_W}px; height:{NODE_H}px"
             title={n.name}
-            onclick={() => (selectedName = n.name)}
+            onclick={() => select(n.name)}
           >
             <span class="node-name">{n.name}</span>
             <span class="node-sub">{n.abstract ? 'abstract' : n.module}</span>
@@ -192,6 +243,10 @@
         {/each}
       </div>
     </div>
+
+    {#snippet rich(text)}
+      {#each tokens(text) as tok}{#if tok.code}<code class="inline-code">{tok.t}</code>{:else}{tok.t}{/if}{/each}
+    {/snippet}
 
     {#if selected}
       <div class="detail">
@@ -209,7 +264,7 @@
             <button
               class="crumb"
               class:current={name === selectedName}
-              onclick={() => (selectedName = name)}
+              onclick={() => select(name)}
             >{name}</button>
           {/each}
         </div>
@@ -218,29 +273,52 @@
           <p class="lead">{selected.summary}</p>
         {/if}
         {#each descParas as p}
-          <p class="doc">{p}</p>
+          <p class="doc">{@render rich(p)}</p>
         {/each}
+
+        {#if fieldGroups.length}
+          <div class="doc-section">
+            <h3 class="doc-section-title">Attributes &amp; Parameters</h3>
+            <p class="section-hint">
+              Grouped by the class that introduced each field. Every
+              agent's constructor parameters are its dataclass fields.
+            </p>
+            {#each fieldGroups as g}
+              <details open class="field-group">
+                <summary class="group-title">
+                  {#if g.inherited}
+                    <span class="group-tag inherited">inherited</span>
+                    <span class="group-owner">{g.owner}</span>
+                  {:else}
+                    <span class="group-tag own">defined here</span>
+                    <span class="group-owner">{selected.name}</span>
+                  {/if}
+                  <span class="group-count">
+                    {g.items.length} field{g.items.length === 1 ? '' : 's'}
+                  </span>
+                </summary>
+                <dl class="fields">
+                  {#each g.items as item}
+                    <div class="field">
+                      <dt>
+                        <code class="field-name">{item.name}</code>
+                        {#if item.type}<span class="field-type">{item.type}</span>{/if}
+                      </dt>
+                      <dd>{#if item.text}{@render rich(item.text)}{:else}—{/if}</dd>
+                    </div>
+                  {/each}
+                </dl>
+              </details>
+            {/each}
+          </div>
+        {/if}
 
         {#each selected.sections ?? [] as section}
           <div class="doc-section">
             <h3 class="doc-section-title">{section.title}</h3>
-            {#if section.kind === 'params'}
-              <dl class="fields">
-                {#each section.items as item}
-                  <div class="field">
-                    <dt>
-                      {#if item.name}<code class="field-name">{item.name}</code>{/if}
-                      {#if item.type}<span class="field-type">{item.type}</span>{/if}
-                    </dt>
-                    <dd>{item.text}</dd>
-                  </div>
-                {/each}
-              </dl>
-            {:else}
-              {#each section.text.split('\n\n').filter(Boolean) as p}
-                <p class="doc">{p}</p>
-              {/each}
-            {/if}
+            {#each section.text.split('\n\n').filter(Boolean) as p}
+              <p class="doc">{@render rich(p)}</p>
+            {/each}
           </div>
         {/each}
       </div>
@@ -459,6 +537,16 @@
   }
   .doc:last-child { margin-bottom: 0; }
 
+  .inline-code {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 0.95em;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.02rem 0.3rem;
+    color: var(--text-strong);
+  }
+
   /* ── Parsed docstring sections ──────────────────────────── */
   .doc-section {
     margin-top: 1.1rem;
@@ -513,6 +601,74 @@
     border-radius: 4px;
     padding: 0.02rem 0.35rem;
     overflow-wrap: anywhere;
+  }
+
+  /* ── Field groups (by origin class) ─────────────────────── */
+  .section-hint {
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    margin: -0.35rem 0 0.9rem;
+  }
+  .field-group {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-raised);
+    padding: 0.6rem 0.85rem;
+    margin-bottom: 0.7rem;
+  }
+  .field-group:last-child {
+    margin-bottom: 0;
+  }
+  .field-group[open] > .group-title {
+    margin-bottom: 0.7rem;
+  }
+  .group-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    font-size: 1.0625rem;
+  }
+  .group-title::-webkit-details-marker {
+    display: none;
+  }
+  /* Disclosure triangle drawn from the summary so it rotates on open. */
+  .group-title::before {
+    content: '▸';
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: transform 0.15s;
+  }
+  .field-group[open] > .group-title::before {
+    transform: rotate(90deg);
+  }
+  .group-tag {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+  }
+  .group-tag.inherited {
+    background: var(--neutral-bg);
+    color: var(--neutral);
+  }
+  .group-tag.own {
+    background: var(--pass-bg);
+    color: var(--pass);
+  }
+  .group-owner {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-weight: 700;
+    color: var(--text-strong);
+  }
+  .group-count {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--text-muted);
   }
 
   /* Stack the field label above its description on narrow widths. */

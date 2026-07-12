@@ -2,6 +2,29 @@
 ## Changelog - agents7 UI
 
 
+### v0.25.0 - 12th July 2026
+
+- Enhanced the **Agent Classes** page to show field inheritance:
+  - `backend/routers/agent_fields.py`: new `build_fields()` attributes
+    each agent's dataclass fields to the ancestor class that introduced
+    them, pairing each with the most specific description across the
+    inheritance chain's docstrings.
+  - `GET /api/classes` now returns `fields` (name, type, description,
+    `owner`, `inherited`) per class; docstring attribute/parameter
+    blocks are superseded by it, with only note prose kept in
+    `sections`.
+  - `Classes.svelte`: renders fields grouped by origin — "inherited
+    from `BaseAgent`", "inherited from `Labeler`", "defined here" — as
+    collapsible groups with per-group field counts.
+  - Renders reST inline code (`` `name` `` / ` ``name`` `) in
+    descriptions and field text as `<code>` instead of literal
+    backticks.
+  - The selected class is now deep-linkable as `#/classes/<ClassName>`.
+- Added tests:
+  - `tests/test_agent_fields.py`: 6 tests for field attribution.
+  - `tests/test_classes.py`: updated for the `fields` shape.
+
+
 ### v0.24.1 - 12th July 2026
 
 - Improved the **Agent Classes** page:

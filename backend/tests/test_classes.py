@@ -61,16 +61,29 @@ def test_every_parent_is_itself_a_node():
             assert node["parent"] in nodes
 
 
-def test_docstrings_are_parsed_into_sections():
+def test_description_and_fields_are_populated():
     nodes = _by_name()
-    # BaseAgent documents its fields under a Google "Attributes" block.
     base = nodes["BaseAgent"]
     assert base["description"]
-    attrs = next(s for s in base["sections"] if s["title"] == "Attributes")
-    assert attrs["kind"] == "params"
-    assert any(i["name"] == "engine" for i in attrs["items"])
+    # Attribute/parameter lists are exposed as owner-attributed fields.
+    assert any(
+        f["name"] == "engine" and f["owner"] == "BaseAgent"
+        for f in base["fields"]
+    )
 
-    # ToolAgent documents its constructor with Sphinx :param: fields.
-    tool = nodes["ToolAgent"]
-    params = next(s for s in tool["sections"] if s["title"] == "Parameters")
-    assert {i["name"] for i in params["items"]} >= {"tools", "max_iterations"}
+
+def test_fields_carry_inheritance_attribution():
+    nodes = _by_name()
+    detector = {f["name"]: f for f in nodes["Detector"]["fields"]}
+    assert detector["name"]["owner"] == "BaseAgent"
+    assert detector["output_model"]["owner"] == "Labeler"
+    assert detector["output_model"]["inherited"] is True
+
+
+def test_note_sections_are_retained_but_params_are_not():
+    nodes = _by_name()
+    # Detector's docstring "Note" survives as a text section...
+    titles = {s["title"] for s in nodes["Detector"]["sections"]}
+    assert "Note" in titles
+    # ...while attribute/parameter blocks are no longer sections.
+    assert all(s["kind"] == "text" for s in nodes["Detector"]["sections"])
