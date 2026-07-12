@@ -2,6 +2,20 @@
 ## Changelog - agents7 UI
 
 
+### v0.22.0 - 12th July 2026
+
+- Updated `frontend/src/components/Sidebar.svelte`:
+  - Made the sidebar width adjustable by dragging its right edge; the
+    chosen width is clamped (180–420px) and persisted in
+    `localStorage` across sessions.
+  - Added keyboard resizing on the focusable handle (arrow keys to
+    nudge, Shift for larger steps, Home/End for min/max) and
+    double-click to reset to the default width.
+  - Raised `.brand-sub` from `0.8125rem` to `1.0625rem` to meet the
+    17px raw-text floor, and nudged `.brand-name` to `1.3rem` to keep
+    the name/subtitle hierarchy.
+
+
 ### v0.21.1 - 11th July 2026
 
 - De-conflicted the dev backend host port from the shared `8001` to a

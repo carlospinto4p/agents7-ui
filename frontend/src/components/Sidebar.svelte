@@ -13,6 +13,67 @@
     onstart = () => {},
   } = $props()
 
+  // ── Drag-to-resize ──────────────────────────────────────
+  // Width is user-adjustable via the right-edge handle and
+  // persisted across sessions in localStorage. Clamped so the
+  // sidebar can never collapse below its icons+labels or grow
+  // past a sensible share of the viewport.
+  const MIN_WIDTH = 180
+  const MAX_WIDTH = 420
+  const DEFAULT_WIDTH = 240
+  const STORAGE_KEY = 'agents7.sidebarWidth'
+
+  function loadWidth() {
+    const raw = Number(localStorage.getItem(STORAGE_KEY))
+    return raw >= MIN_WIDTH && raw <= MAX_WIDTH ? raw : DEFAULT_WIDTH
+  }
+
+  let width = $state(loadWidth())
+  let dragging = $state(false)
+
+  function startResize(e) {
+    e.preventDefault()
+    dragging = true
+    const startX = e.clientX
+    const startW = width
+    document.body.style.userSelect = 'none'
+    document.body.style.cursor = 'col-resize'
+
+    const onMove = (ev) => {
+      const next = startW + (ev.clientX - startX)
+      width = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, next))
+    }
+    const onUp = () => {
+      dragging = false
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+      localStorage.setItem(STORAGE_KEY, String(width))
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  function resetWidth() {
+    width = DEFAULT_WIDTH
+    localStorage.setItem(STORAGE_KEY, String(width))
+  }
+
+  // Keyboard resizing: focus the handle and nudge with arrows.
+  function onHandleKey(e) {
+    const step = e.shiftKey ? 24 : 8
+    let next = width
+    if (e.key === 'ArrowLeft') next = width - step
+    else if (e.key === 'ArrowRight') next = width + step
+    else if (e.key === 'Home') next = MIN_WIDTH
+    else if (e.key === 'End') next = MAX_WIDTH
+    else return
+    e.preventDefault()
+    width = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, next))
+    localStorage.setItem(STORAGE_KEY, String(width))
+  }
+
   // Each nav item carries the SVG inner markup for its icon (24x24,
   // stroke-based to match a clean line-icon look).
   const nav = [
@@ -49,7 +110,7 @@
   ]
 </script>
 
-<aside class="sidebar">
+<aside class="sidebar" class:dragging style="width: {width}px">
   <div class="brand">
     <div class="brand-mark" aria-hidden="true">
       <svg viewBox="0 0 32 32" fill="none">
@@ -113,17 +174,53 @@
       </button>
     {/if}
   </div>
+
+  <!-- Right-edge grab strip: drag to resize, arrows to nudge,
+       double-click to reset. A native button is interactive and
+       focusable, so it needs no role/tabindex a11y overrides. -->
+  <button
+    type="button"
+    class="resize-handle"
+    aria-label="Resize sidebar"
+    onmousedown={startResize}
+    ondblclick={resetWidth}
+    onkeydown={onHandleKey}
+  ></button>
 </aside>
 
 <style>
   .sidebar {
+    position: relative;
     display: flex;
     flex-direction: column;
-    width: 15rem;
     flex-shrink: 0;
     height: 100%;
     border-right: 1px solid var(--border);
     background: var(--bg-surface);
+  }
+
+  /* ── Resize handle ──────────────────────────────────── */
+  .resize-handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    appearance: none;
+    cursor: col-resize;
+    z-index: 5;
+    transition: background 0.12s ease;
+  }
+  .resize-handle:hover,
+  .sidebar.dragging .resize-handle {
+    background: var(--accent-dim);
+  }
+  .resize-handle:focus-visible {
+    outline: none;
+    background: var(--accent);
   }
 
   /* ── Brand ──────────────────────────────────────────── */
@@ -155,13 +252,13 @@
   }
   .brand-name {
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     letter-spacing: -0.4px;
     color: var(--text-strong);
   }
   .brand-sub {
     font-family: ui-monospace, 'Cascadia Code', monospace;
-    font-size: 0.8125rem;
+    font-size: 1.0625rem;
     color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
