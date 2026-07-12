@@ -29,9 +29,29 @@
   let singleDuration  = $state(null)
   let singleStepsOpen = $state([])
 
+  // Key under which the single free-text input is stored in
+  // `fieldValues` when the agent takes a bare string rather than a
+  // dict of named fields.
+  const TEXT_KEY = '__text__'
+
+  let inputExample = $derived(agentDetail?.system_examples?.[0]?.input ?? null)
+
+  // Agents accept either a single free-text string (labelers,
+  // classifiers, extractors) or a set of named fields (dict input).
+  // Detecting which prevents spreading a string into one box per
+  // character via `Object.entries`.
+  let inputMode = $derived(
+    typeof inputExample === 'string'
+      ? 'text'
+      : inputExample && typeof inputExample === 'object' &&
+          !Array.isArray(inputExample)
+        ? 'fields'
+        : 'none'
+  )
+
   let inputFields = $derived(
-    agentDetail?.system_examples?.[0]?.input
-      ? Object.entries(agentDetail.system_examples[0].input).map(([k, v]) => ({
+    inputMode === 'fields'
+      ? Object.entries(inputExample).map(([k, v]) => ({
           name: k,
           placeholder: typeof v === 'object' ? JSON.stringify(v) : String(v),
         }))
@@ -49,13 +69,15 @@
       .then(data => {
         agentDetail = data
         const ex = data?.system_examples?.[0]?.input
-        if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
-          const defaults = {}
+        const defaults = {}
+        if (typeof ex === 'string') {
+          defaults[TEXT_KEY] = ex
+        } else if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
           for (const [k, v] of Object.entries(ex)) {
             defaults[k] = typeof v === 'object' ? JSON.stringify(v) : String(v)
           }
-          fieldValues = defaults
         }
+        fieldValues = defaults
       })
       .catch(() => { agentDetail = null })
   })
@@ -66,10 +88,17 @@
     singleResult  = null
     singleError   = null
 
-    const body = {}
-    for (const f of inputFields) {
-      const raw = fieldValues[f.name] ?? ''
-      try { body[f.name] = JSON.parse(raw) } catch { body[f.name] = raw }
+    let body
+    if (inputMode === 'text') {
+      // Free-text agents expect the raw string as `input_data`; do
+      // not JSON-parse it (a numeric-looking string stays a string).
+      body = { input_data: fieldValues[TEXT_KEY] ?? '' }
+    } else {
+      body = {}
+      for (const f of inputFields) {
+        const raw = fieldValues[f.name] ?? ''
+        try { body[f.name] = JSON.parse(raw) } catch { body[f.name] = raw }
+      }
     }
 
     try {
@@ -110,9 +139,24 @@
   }
 
   let singleSubmittable = $derived(
-    !singleRunning && !!agentName && inputFields.length > 0 &&
-    inputFields.every(f => (fieldValues[f.name] ?? '').trim() !== '')
+    !singleRunning && !!agentName && (
+      inputMode === 'text'
+        ? (fieldValues[TEXT_KEY] ?? '').trim() !== ''
+        : inputFields.length > 0 &&
+          inputFields.every(f => (fieldValues[f.name] ?? '').trim() !== '')
+    )
   )
+
+  // Input object for display/download, mirroring the run payload
+  // shape for either input mode.
+  function currentSingleInput() {
+    if (inputMode === 'text') {
+      return { input_data: fieldValues[TEXT_KEY] ?? '' }
+    }
+    return Object.fromEntries(
+      inputFields.map(f => [f.name, fieldValues[f.name] ?? '']),
+    )
+  }
 
   $effect(() => {
     if (!singleRunning) return
@@ -150,9 +194,7 @@
   function downloadSingleOutput() {
     downloadJson(`${agentName || 'output'}.json`, {
       agent: agentName,
-      input: Object.fromEntries(
-        inputFields.map(f => [f.name, fieldValues[f.name] ?? '']),
-      ),
+      input: currentSingleInput(),
       output: singleResult.output,
       metrics: singleResult.metrics,
     })
@@ -353,7 +395,20 @@
             </select>
           </label>
 
-          {#if inputFields.length > 0}
+          {#if inputMode === 'text'}
+            <div class="single-form">
+              <label class="field">
+                <span class="label">Input text</span>
+                <textarea
+                  rows="3"
+                  placeholder={inputExample ?? ''}
+                  bind:value={fieldValues[TEXT_KEY]}
+                  disabled={singleRunning}
+                  spellcheck="false"
+                ></textarea>
+              </label>
+            </div>
+          {:else if inputFields.length > 0}
             <div class="single-form">
               {#each inputFields as f}
                 <label class="field">

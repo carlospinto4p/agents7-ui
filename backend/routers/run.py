@@ -64,7 +64,9 @@ async def run_agent(agent_name: str, request: Request) -> dict:
     cfg, _ = _load_config(config_file)
     agent_type = (cfg.get("agent_type") or "").lower()
     body = await request.json()
-    input_data = body.get("input_data", body)
+    input_data = (
+        body.get("input_data", body) if isinstance(body, dict) else body
+    )
 
     if agent_type == "pipeline":
         try:
@@ -138,7 +140,29 @@ async def run_agent(agent_name: str, request: Request) -> dict:
         )
 
     agent = build_agent(config_file, agent_type)
-    response = agent.act(input_data)
+
+    if isinstance(input_data, dict):
+        response = agent.act(input_data)
+    else:
+        # Scalar input (a single free-text string): the framework's
+        # single act() only accepts dicts, so mirror how eval runs
+        # scalar rows — through the batch path, which formats the raw
+        # value into the prompt without inventing a synthetic key.
+        batch = agent.act_in_batch([input_data], iter_func=None)
+        if not batch:
+            return {
+                "agent": cfg.get("name"),
+                "output": None,
+                "raw_response": None,
+                "parse_error": True,
+                "metrics": {
+                    "tokens": 0,
+                    "prompt_tokens": 0,
+                    "total_duration": 0.0,
+                    "cost_cents": None,
+                },
+            }
+        response = batch[0]
 
     output = None
     if response.model is not None:

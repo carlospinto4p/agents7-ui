@@ -2,6 +2,22 @@
 ## Changelog - agents7 UI
 
 
+### v0.22.4 - 12th July 2026
+
+- Fixed the Runner's Single tab for agents whose input is a single
+  free-text string (e.g. `CompanyPersonExtractor`, classifiers):
+  - Updated `frontend/src/pages/Runner.svelte`: detect string vs
+    dict example input and render one text area for string agents,
+    instead of spreading the example string into one box per
+    character via `Object.entries`.
+  - Updated `backend/routers/run.py`: route scalar `input_data`
+    through `act_in_batch` (as eval does) since the framework's
+    single `act()` only accepts a dict; a bare string previously
+    raised `AgentConfigurationError`.
+  - Added `backend/tests/test_run.py`: cover dict→`act`,
+    scalar→`act_in_batch`, and empty-batch parse-error routing.
+
+
 ### v0.22.3 - 12th July 2026
 
 - Updated `frontend/src/components/Sidebar.svelte`: shortened the
