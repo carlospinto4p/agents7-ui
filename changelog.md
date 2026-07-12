@@ -2,6 +2,23 @@
 ## Changelog - agents7 UI
 
 
+### v0.24.0 - 12th July 2026
+
+- Added an **Agent Classes** page — a diagram of the framework's agent
+  class hierarchy:
+  - `backend/routers/classes.py`: `GET /api/classes` introspects
+    `BaseAgent.__subclasses__()` at runtime (name, parent, module,
+    abstract flag, summary, docstring) so the tree needs no hardcoded
+    list and always matches the installed framework.
+  - `frontend/src/pages/Classes.svelte`: tidy top-down SVG tree with
+    family colouring, dashed abstract nodes, and a click-to-inspect
+    detail panel showing the inheritance chain and docstring.
+  - Registered the route in `App.svelte` and a nav entry in
+    `Sidebar.svelte`.
+- Added `tests/test_classes.py`: 6 tests covering the hierarchy
+  endpoint.
+
+
 ### v0.23.1 - 12th July 2026
 
 - Fixed the Runner listing conversational (chatter-family) agents,

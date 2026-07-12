@@ -3,6 +3,7 @@
   import Sidebar from './components/Sidebar.svelte'
   import Home from './pages/Home.svelte'
   import Catalog from './pages/Catalog.svelte'
+  import Classes from './pages/Classes.svelte'
   import Runner from './pages/Runner.svelte'
   import Chatter from './pages/Chatter.svelte'
   import Engine from './pages/Engine.svelte'
@@ -86,6 +87,8 @@
         <Home />
       {:else if page === 'catalog'}
         <Catalog />
+      {:else if page === 'classes'}
+        <Classes />
       {:else if page === 'runner'}
         <Runner />
       {:else if page === 'chatter'}

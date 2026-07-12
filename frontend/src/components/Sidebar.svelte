@@ -88,6 +88,11 @@
       icon: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
     },
     {
+      key: 'classes',
+      label: 'Classes',
+      icon: '<rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v4M5 17v-2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2"/>',
+    },
+    {
       key: 'runner',
       label: 'Runner',
       icon: '<polygon points="6 3 20 12 6 21 6 3"/>',

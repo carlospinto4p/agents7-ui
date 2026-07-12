@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 from logging_setup import configure_logging
-from routers import catalog, chat, engine, eval, run
+from routers import catalog, chat, classes, engine, eval, run
 
 configure_logging()
 
@@ -75,6 +75,7 @@ async def require_api_key(request: Request, call_next):
 
 
 app.include_router(catalog.router)
+app.include_router(classes.router)
 app.include_router(run.router)
 app.include_router(engine.router)
 app.include_router(eval.router)
