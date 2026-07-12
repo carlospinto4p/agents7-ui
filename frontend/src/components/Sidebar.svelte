@@ -20,7 +20,7 @@
   // past a sensible share of the viewport.
   const MIN_WIDTH = 180
   const MAX_WIDTH = 420
-  const DEFAULT_WIDTH = 336
+  const DEFAULT_WIDTH = 300
   const STORAGE_KEY = 'agents7.sidebarWidth'
 
   function loadWidth() {

@@ -2,6 +2,12 @@
 ## Changelog - agents7 UI
 
 
+### v0.22.3 - 12th July 2026
+
+- Updated `frontend/src/components/Sidebar.svelte`: shortened the
+  default sidebar width from 336px to 300px.
+
+
 ### v0.22.2 - 12th July 2026
 
 - Updated `frontend/src/components/Sidebar.svelte`: dropped the
