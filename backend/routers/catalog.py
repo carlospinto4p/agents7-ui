@@ -71,6 +71,46 @@ def _display_name(cfg: dict) -> str | None:
     return persona.get("full_name") or cfg.get("name")
 
 
+def _first_sentences(text: str, limit: int = 220) -> str:
+    """Condense *text* into a short single-line blurb.
+
+    Collapses whitespace and truncates on a word boundary so a
+    derived description stays compact in the UI.
+
+    :param text: Source text (e.g. a system prompt or backstory).
+    :param limit: Maximum length before truncation.
+    :return: A compact one-line summary.
+    """
+    collapsed = " ".join(text.split())
+    if len(collapsed) <= limit:
+        return collapsed
+    return collapsed[:limit].rsplit(" ", 1)[0].rstrip() + "…"
+
+
+def _description(cfg: dict) -> str | None:
+    """Return a human description of what the agent does.
+
+    Prefers an explicit ``description`` field in the config. When
+    absent, falls back to a short summary derived from the persona
+    backstory or system prompt, so agents without a curated
+    description still surface something meaningful.
+
+    :param cfg: Parsed agent config dictionary.
+    :return: A description string, or ``None`` if nothing is
+        available to derive one from.
+    """
+    explicit = cfg.get("description")
+    if explicit:
+        return str(explicit).strip()
+    persona = cfg.get("persona") or {}
+    if backstory := persona.get("backstory"):
+        return _first_sentences(str(backstory))
+    prompt = cfg.get("system_prompt")
+    if prompt and str(prompt).strip() not in ("", "(auto-generated)"):
+        return _first_sentences(str(prompt))
+    return None
+
+
 def _resolve_pipeline_step_details(
     config_file: Path, steps: list[dict]
 ) -> list[dict]:
@@ -137,6 +177,7 @@ def _parse_summary(config_file: Path) -> dict:
     return {
         "name": cfg.get("name"),
         "display_name": _display_name(cfg),
+        "description": _description(cfg),
         "version": cfg.get("version"),
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),
@@ -156,6 +197,7 @@ def _parse_detail(config_file: Path) -> dict:
     return {
         "name": cfg.get("name"),
         "display_name": _display_name(cfg),
+        "description": _description(cfg),
         "version": cfg.get("version"),
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),

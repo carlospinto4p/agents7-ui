@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from routers.catalog import _is_catalog_config
+from routers.catalog import (
+    _description,
+    _first_sentences,
+    _is_catalog_config,
+)
 
 # ── _is_catalog_config Tests ───────────────────────────────────────
 
@@ -34,3 +38,48 @@ def test_venv_site_packages_config_is_skipped():
 def test_egg_info_config_is_skipped():
     p = Path("/app/agents_catalog/tagger_agent/src/foo.egg-info/config.yml")
     assert _is_catalog_config(p) is False
+
+
+# ── _description Tests ─────────────────────────────────────────────
+
+
+def test_explicit_description_is_preferred():
+    cfg = {
+        "description": "  Does a thing.  ",
+        "system_prompt": "You are an assistant.",
+    }
+    assert _description(cfg) == "Does a thing."
+
+
+def test_description_falls_back_to_persona_backstory():
+    cfg = {"persona": {"backstory": "Born in Madrid.\n  A journalist."}}
+    assert _description(cfg) == "Born in Madrid. A journalist."
+
+
+def test_description_falls_back_to_system_prompt():
+    cfg = {"system_prompt": "Classify the\n   sentiment of text."}
+    assert _description(cfg) == "Classify the sentiment of text."
+
+
+def test_description_skips_auto_generated_prompt():
+    cfg = {"system_prompt": "(auto-generated)"}
+    assert _description(cfg) is None
+
+
+def test_description_none_when_nothing_available():
+    assert _description({"name": "Foo"}) is None
+
+
+# ── _first_sentences Tests ─────────────────────────────────────────
+
+
+def test_first_sentences_collapses_whitespace():
+    assert _first_sentences("a\n\t b   c") == "a b c"
+
+
+def test_first_sentences_truncates_on_word_boundary():
+    text = "word " * 60  # 300 chars, exceeds the 220 limit
+    out = _first_sentences(text)
+    assert out.endswith("…")
+    assert len(out) <= 221
+    assert "wor…" not in out  # truncated on a space, not mid-word

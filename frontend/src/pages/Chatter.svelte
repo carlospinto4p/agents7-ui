@@ -116,6 +116,10 @@
         {/if}
       </div>
 
+      {#if selectedAgent.description}
+        <p class="agent-description">{selectedAgent.description}</p>
+      {/if}
+
       {#if persona?.backstory || detail?.system_prompt || scene}
         <div class="persona-blurb">
           {#if personaFacts}
@@ -239,6 +243,13 @@
     color: var(--text-strong);
   }
   .meta-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
+  .agent-description {
+    margin: 0;
+    max-width: 640px;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
   .badge {
     display: inline-flex;
     align-items: center;

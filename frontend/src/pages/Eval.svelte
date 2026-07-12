@@ -7,6 +7,10 @@
   let loading = $state(false)
   let error = $state(null)
 
+  let selectedSummary = $derived(
+    agents.find(a => a.name === selectedAgent) ?? null
+  )
+
   $effect(() => {
     fetch('/api/catalog')
       .then(r => r.json())
@@ -77,6 +81,10 @@
       >⬇ JSON</button>
     {/if}
   </div>
+
+  {#if selectedSummary?.description}
+    <p class="agent-desc">{selectedSummary.description}</p>
+  {/if}
 
   {#if error}
     <p class="msg error">Error: {error}</p>
@@ -188,6 +196,14 @@
     gap: 0.75rem;
     align-items: center;
     margin-bottom: 1.5rem;
+  }
+
+  .agent-desc {
+    margin: -1rem 0 1.5rem;
+    max-width: 640px;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: var(--text-muted);
   }
 
   select {

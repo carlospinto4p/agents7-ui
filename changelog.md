@@ -2,6 +2,18 @@
 ## Changelog - agents7 UI
 
 
+### v0.23.0 - 12th July 2026
+
+- Added agent descriptions to the selection UIs:
+  - `backend/routers/catalog.py`: catalog summary and detail now
+    include a `description` field, from the config's `description`
+    or derived from the persona backstory / system prompt.
+  - Runner, Eval, and Chatter show the selected agent's description
+    beneath the picker so users see what each agent does.
+  - `backend/tests/test_catalog.py`: tests for `_description` and
+    `_first_sentences`.
+
+
 ### v0.22.4 - 12th July 2026
 
 - Fixed the Runner's Single tab for agents whose input is a single

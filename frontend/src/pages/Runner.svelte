@@ -9,6 +9,12 @@
   let tab        = $state('single')
   let historyOpen = $state(false)
 
+  // Summary (incl. description) of the currently selected agent,
+  // looked up from the already-loaded catalog list.
+  let selectedSummary = $derived(
+    agents.find(a => a.name === agentName) ?? null
+  )
+
   $effect(() => {
     fetch('/api/catalog')
       .then(r => r.json())
@@ -395,6 +401,10 @@
             </select>
           </label>
 
+          {#if selectedSummary?.description}
+            <p class="agent-desc">{selectedSummary.description}</p>
+          {/if}
+
           {#if inputMode === 'text'}
             <div class="single-form">
               <label class="field">
@@ -559,6 +569,10 @@
               {/each}
             </select>
           </label>
+
+          {#if selectedSummary?.description}
+            <p class="agent-desc">{selectedSummary.description}</p>
+          {/if}
 
           <div class="field">
             <span class="label">Input (JSONL — one object per line)</span>
@@ -778,6 +792,14 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+
+  .agent-desc {
+    margin: -0.4rem 0 0;
+    max-width: 640px;
+    font-size: 1.0625rem;
+    line-height: 1.5;
     color: var(--text-muted);
   }
 
