@@ -10,12 +10,16 @@
   let error = $state(null)
   let selectedName = $state(null)
 
-  // ── Layout constants (top-down tidy tree) ──────────────────
-  const NODE_W = 224
-  const NODE_H = 56
-  const H_GAP = 26
-  const ROW_H = 120
+  // ── Layout constants (left→right tidy tree) ────────────────
+  // Depth grows rightward (each level is a column); sibling leaves
+  // stack downward (each leaf is a row).
+  const NODE_W = 220
+  const NODE_H = 58
+  const COL_GAP = 40
+  const ROW_GAP = 24
   const PAD = 24
+  const COL_W = NODE_W + COL_GAP
+  const ROW_H = NODE_H + ROW_GAP
 
   onMount(() => {
     fetch('/api/classes')
@@ -31,10 +35,9 @@
       })
   })
 
-  // Build a tidy top-down tree layout from the flat parent-pointer
-  // list: leaves are placed left→right in DFS order, internal nodes are
-  // centered over their children, and depth sets the row. Families (the
-  // three branches under the abstract root) get an index for colouring.
+  // Build a tidy left→right tree from the flat parent-pointer list:
+  // leaves are placed top→bottom in DFS order, internal nodes are
+  // centered over their children's rows, and depth sets the column.
   let layout = $derived.by(() => {
     if (!classes.length) {
       return { nodes: [], edges: [], width: 0, height: 0 }
@@ -50,19 +53,21 @@
     }
     if (!root) return { nodes: [], edges: [], width: 0, height: 0 }
 
-    let col = 0
+    let row = 0
     let maxDepth = 0
+    let maxRow = 0
     const place = (node, depth) => {
       node.depth = depth
       maxDepth = Math.max(maxDepth, depth)
       if (node.children.length === 0) {
-        node.col = col++
+        node.row = row++
       } else {
         for (const ch of node.children) place(ch, depth + 1)
-        const first = node.children[0].col
-        const last = node.children[node.children.length - 1].col
-        node.col = (first + last) / 2
+        const first = node.children[0].row
+        const last = node.children[node.children.length - 1].row
+        node.row = (first + last) / 2
       }
+      maxRow = Math.max(maxRow, node.row)
     }
     place(root, 0)
 
@@ -75,11 +80,10 @@
     root.famIndex = -1
     root.children.forEach((ch, i) => paint(ch, i))
 
-    const stepX = NODE_W + H_GAP
     const nodes = [...byName.values()]
     for (const n of nodes) {
-      n.cx = PAD + n.col * stepX + NODE_W / 2
-      n.cy = PAD + n.depth * ROW_H
+      n.x = PAD + n.depth * COL_W
+      n.y = PAD + n.row * ROW_H
     }
     const edges = []
     for (const n of nodes) {
@@ -88,19 +92,19 @@
     return {
       nodes,
       edges,
-      width: PAD * 2 + Math.max(1, col) * stepX,
-      height: PAD * 2 + maxDepth * ROW_H + NODE_H,
+      width: PAD * 2 + maxDepth * COL_W + NODE_W,
+      height: PAD * 2 + maxRow * ROW_H + NODE_H,
     }
   })
 
-  // Bézier connector from a parent's bottom edge to a child's top edge.
+  // Bézier connector from a parent's right edge to a child's left edge.
   function edgePath(e) {
-    const x1 = e.from.cx
-    const y1 = e.from.cy + NODE_H
-    const x2 = e.to.cx
-    const y2 = e.to.cy
-    const my = (y1 + y2) / 2
-    return `M ${x1} ${y1} C ${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`
+    const x1 = e.from.x + NODE_W
+    const y1 = e.from.y + NODE_H / 2
+    const x2 = e.to.x
+    const y2 = e.to.y + NODE_H / 2
+    const mx = (x1 + x2) / 2
+    return `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`
   }
 
   function famClass(node) {
@@ -123,6 +127,11 @@
     }
     return chain
   })
+
+  // Description prose split into paragraphs for rendering.
+  let descParas = $derived(
+    (selected?.description ?? '').split('\n\n').filter(Boolean)
+  )
 </script>
 
 <div class="classes">
@@ -172,8 +181,9 @@
             class="node {famClass(n)}"
             class:abstract={n.abstract}
             class:selected={n.name === selectedName}
-            style="left:{n.cx - NODE_W / 2}px; top:{n.cy}px;
+            style="left:{n.x}px; top:{n.y}px;
                    width:{NODE_W}px; height:{NODE_H}px"
+            title={n.name}
             onclick={() => (selectedName = n.name)}
           >
             <span class="node-name">{n.name}</span>
@@ -204,11 +214,35 @@
           {/each}
         </div>
 
-        {#if selected.doc}
-          <p class="doc">{selected.doc}</p>
-        {:else}
-          <p class="doc muted">No docstring.</p>
+        {#if selected.summary}
+          <p class="lead">{selected.summary}</p>
         {/if}
+        {#each descParas as p}
+          <p class="doc">{p}</p>
+        {/each}
+
+        {#each selected.sections ?? [] as section}
+          <div class="doc-section">
+            <h3 class="doc-section-title">{section.title}</h3>
+            {#if section.kind === 'params'}
+              <dl class="fields">
+                {#each section.items as item}
+                  <div class="field">
+                    <dt>
+                      {#if item.name}<code class="field-name">{item.name}</code>{/if}
+                      {#if item.type}<span class="field-type">{item.type}</span>{/if}
+                    </dt>
+                    <dd>{item.text}</dd>
+                  </div>
+                {/each}
+              </dl>
+            {:else}
+              {#each section.text.split('\n\n').filter(Boolean) as p}
+                <p class="doc">{p}</p>
+              {/each}
+            {/if}
+          </div>
+        {/each}
       </div>
     {/if}
   {/if}
@@ -396,6 +430,7 @@
     gap: 0.3rem;
     margin-bottom: 0.85rem;
   }
+  .ancestry.hidden { display: none; }
   .crumb {
     background: none;
     border: none;
@@ -408,14 +443,83 @@
   .crumb:hover { color: var(--accent); text-decoration: underline; }
   .crumb.current { color: var(--text-strong); font-weight: 700; cursor: default; }
   .arrow { color: var(--text-muted); opacity: 0.5; }
-  .ancestry.hidden { display: none; }
 
+  .lead {
+    color: var(--text-strong);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.55;
+    margin: 0 0 0.6rem;
+  }
   .doc {
     color: var(--text);
     font-size: 1.0625rem;
     line-height: 1.6;
-    white-space: pre-wrap;
-    margin: 0;
+    margin: 0 0 0.6rem;
   }
-  .doc.muted { color: var(--text-muted); }
+  .doc:last-child { margin-bottom: 0; }
+
+  /* ── Parsed docstring sections ──────────────────────────── */
+  .doc-section {
+    margin-top: 1.1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+  .doc-section-title {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    margin: 0 0 0.65rem;
+  }
+  .fields {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .field {
+    display: grid;
+    grid-template-columns: minmax(140px, 200px) 1fr;
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+  .field dt {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+  .field dd {
+    margin: 0;
+    color: var(--text);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+  .field-name {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    overflow-wrap: anywhere;
+  }
+  .field-type {
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    background: var(--info-bg);
+    border-radius: 4px;
+    padding: 0.02rem 0.35rem;
+    overflow-wrap: anywhere;
+  }
+
+  /* Stack the field label above its description on narrow widths. */
+  @media (max-width: 640px) {
+    .field {
+      grid-template-columns: 1fr;
+      gap: 0.2rem;
+    }
+  }
 </style>

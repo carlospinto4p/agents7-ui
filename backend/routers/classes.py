@@ -4,6 +4,8 @@ import agents7.agents  # noqa: F401  (import registers all agent subclasses)
 from agents7.agents.base import BaseAgent
 from fastapi import APIRouter
 
+from routers.docstrings import parse_docstring
+
 router = APIRouter(prefix="/api/classes", tags=["classes"])
 
 
@@ -14,16 +16,20 @@ def _describe(cls: type, parent: str | None) -> dict:
     :param parent: Name of the immediate base agent class, or ``None``
         for the root.
     :return: A dict with the class name, parent, defining module, an
-        abstract flag, a one-line summary, and the full docstring.
+        abstract flag, and its docstring parsed into a one-line
+        summary, description prose, and structured sections (plus the
+        raw ``doc`` as a fallback).
     """
     doc = inspect.getdoc(cls) or ""
-    summary = doc.splitlines()[0].strip() if doc else ""
+    parsed = parse_docstring(doc)
     return {
         "name": cls.__name__,
         "parent": parent,
         "module": cls.__module__.rsplit(".", 1)[-1],
         "abstract": inspect.isabstract(cls),
-        "summary": summary,
+        "summary": parsed["summary"],
+        "description": parsed["description"],
+        "sections": parsed["sections"],
         "doc": doc,
     }
 

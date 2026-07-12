@@ -59,3 +59,18 @@ def test_every_parent_is_itself_a_node():
     for node in nodes.values():
         if node["parent"] is not None:
             assert node["parent"] in nodes
+
+
+def test_docstrings_are_parsed_into_sections():
+    nodes = _by_name()
+    # BaseAgent documents its fields under a Google "Attributes" block.
+    base = nodes["BaseAgent"]
+    assert base["description"]
+    attrs = next(s for s in base["sections"] if s["title"] == "Attributes")
+    assert attrs["kind"] == "params"
+    assert any(i["name"] == "engine" for i in attrs["items"])
+
+    # ToolAgent documents its constructor with Sphinx :param: fields.
+    tool = nodes["ToolAgent"]
+    params = next(s for s in tool["sections"] if s["title"] == "Parameters")
+    assert {i["name"] for i in params["items"]} >= {"tools", "max_iterations"}

@@ -2,6 +2,23 @@
 ## Changelog - agents7 UI
 
 
+### v0.24.1 - 12th July 2026
+
+- Improved the **Agent Classes** page:
+  - Switched the hierarchy diagram to a horizontal (left→right) tree —
+    the abstract root anchors the left, depth grows rightward.
+  - `backend/routers/docstrings.py`: new `parse_docstring()` that
+    normalises Google-style (`Attributes:` / `Note:`) and Sphinx
+    (`:param:`) docstrings into structured sections.
+  - `GET /api/classes` now returns each class's `description` and
+    parsed `sections` alongside the raw `doc`.
+  - `Classes.svelte`: renders attributes/parameters as a field list
+    with type badges and notes as prose, instead of raw docstring text.
+- Added tests:
+  - `tests/test_docstrings.py`: 9 tests for the docstring parser.
+  - `tests/test_classes.py`: assert `description`/`sections` are parsed.
+
+
 ### v0.24.0 - 12th July 2026
 
 - Added an **Agent Classes** page — a diagram of the framework's agent
