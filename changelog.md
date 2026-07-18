@@ -2,6 +2,25 @@
 ## Changelog - agents7 UI
 
 
+### v0.27.0 - 18th July 2026
+
+- Added a Playwright end-to-end test harness in `frontend/`:
+  - `playwright.config.js`: pins the dev server to the claimed port
+    5186 and starts it via `webServer`, reusing a running one locally.
+  - `e2e/_helpers.js`: stubs every `/api` boundary, so specs need no
+    backend. Catch-all registered first, specific endpoints last.
+  - `e2e/sidebar.spec.js`: 7 tests covering drag-to-resize, the
+    min/max clamps, double-click reset, keyboard nudging, and width
+    persistence across a reload (v0.22.0).
+  - `e2e/chatter-override.spec.js`: 7 tests covering the engine
+    override, including the regression test owed for the v0.26.3 fix
+    — both branches, Ollama with no installed models (blocked) and
+    `openai_compat` whose model comes from the environment (allowed).
+  - `test:e2e` script and the `@playwright/test` dev dependency.
+- Updated `.gitignore`: ignore `frontend/test-results/` and
+  `frontend/playwright-report/`.
+
+
 ### v0.26.3 - 18th July 2026
 
 - Fixed the **Chatter** page starting a session with an engine override

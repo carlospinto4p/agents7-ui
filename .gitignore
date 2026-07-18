@@ -1,5 +1,9 @@
 node_modules/
 dist/
+
+# Playwright e2e artifacts (local/ephemeral)
+frontend/test-results/
+frontend/playwright-report/
 .venv/
 __pycache__/
 *.pyc

@@ -8,25 +8,23 @@ which items to pick and which to refuse. Consult it **before selecting work**.
 clears, or when a phase completes. Keep it short — ordering and gates only;
 rationale lives in the docs or ADRs it cites.
 
-## Current phase: cover the frontend, then follow the framework's measurement phase
+## Current phase: follow the framework's measurement phase
 
-1. **Frontend test harness (Playwright e2e).** The backend has ten test
-   modules; the frontend has none, so every interactive and render
-   feature since v0.10 shipped on build plus a manual check alone. First
-   candidate to cover: sidebar drag-to-resize and width persistence
-   (v0.22.0).
-   **Gate: no new interactive frontend feature before the harness exists.**
-2. **Make the Eval page a first-class consumer of `agents7.eval`.**
+1. **Make the Eval page a first-class consumer of `agents7.eval`.**
    `backend/routers/eval.py` runs a golden set and returns metrics, but
    the framework roadmap's phase 1 is composing eval data → run →
    metrics → report into one documented route, and this UI is the
    natural surface for it.
    **Gate: no eval feature here that duplicates framework logic —
    extend `agents7.eval` and call it.**
-3. **Then resume page and feature work.**
+2. **Then resume page and feature work.**
 
 ## Standing invariants (apply to every session)
 
+- **Interactive and render-level frontend behaviour ships with an e2e
+  test.** The Playwright harness exists as of v0.27.0 — `e2e/` specs
+  stub every `/api` boundary, so there is no longer an excuse to
+  verify a feature by build plus manual check alone.
 - **The UI is a thin view over the framework.** No agent logic in
   `backend/routers/`. Pages introspect the installed framework
   (`BaseAgent.__subclasses__()`, dataclass fields, docstrings) rather

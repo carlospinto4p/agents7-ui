@@ -64,6 +64,25 @@ sudo systemctl restart ollama
 fine; otherwise block port 11434 on external interfaces with a firewall
 rule (no Ollama or Docker change needed).
 
+## Tests
+
+Backend (pytest, from `backend/`):
+
+```bash
+uv run pytest tests/ -v
+```
+
+Frontend end-to-end (Playwright, from `frontend/`):
+
+```bash
+corepack pnpm exec playwright install chromium   # first run on a machine
+corepack pnpm run test:e2e
+```
+
+The e2e specs need **no backend**: every `/api` call is stubbed in
+`e2e/_helpers.js`, and Playwright starts the Vite dev server itself
+(reusing one already running on port 5186).
+
 ## Configuration
 
 See [`.env.example`](.env.example) for all environment variables
