@@ -2,6 +2,25 @@
 ## Changelog - agents7 UI
 
 
+### v0.28.0 - 18th July 2026
+
+- Added tool-agent support to the run endpoint:
+  - `backend/routers/run.py`: runs a `tool` agent through
+    `act_stream`, returning its free-text `answer` plus the
+    `tool_steps` trajectory. An exhausted loop reports its `error`
+    and the calls it made instead of failing the request.
+  - Removed the `reject_tool_agent` guard from the run path.
+- Added the tool-agent view to the Runner page:
+  - `frontend/src/pages/Runner.svelte`: renders the answer and pairs
+    each tool call with the result that answered it. A tool agent now
+    falls back to a free-text input when it declares no
+    `system_examples`.
+  - `frontend/src/constants.js`: added `isToolAgent()`.
+- Added tests:
+  - `backend/tests/test_run.py`: 4 tool-agent tests.
+  - `frontend/e2e/tool-agent-run.spec.js`: 3 e2e tests.
+
+
 ### v0.27.1 - 18th July 2026
 
 - Updated `backend/routers/`:

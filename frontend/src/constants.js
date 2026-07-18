@@ -13,3 +13,10 @@ export const CHATTER_TYPES = new Set([
 export function isChatter(agentType) {
   return CHATTER_TYPES.has((agentType || '').toLowerCase())
 }
+
+// A tool agent answers a user message in free text and is scored on
+// the tools it calls, so it has neither an output model nor a field
+// input schema — the pages that assume both branch on this.
+export function isToolAgent(agentType) {
+  return (agentType || '').toLowerCase() === 'tool'
+}

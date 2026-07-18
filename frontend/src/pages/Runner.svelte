@@ -1,6 +1,6 @@
 <script>
   import { history } from '../stores/history.js'
-  import { isChatter } from '../constants.js'
+  import { isChatter, isToolAgent } from '../constants.js'
   import { fmtCost, copyText, downloadJson } from '../lib/format.js'
 
   // ── Shared state ─────────────────────────────────────────
@@ -50,17 +50,25 @@
 
   let inputExample = $derived(agentDetail?.system_examples?.[0]?.input ?? null)
 
+  let isTool = $derived(isToolAgent(selectedSummary?.agent_type))
+
   // Agents accept either a single free-text string (labelers,
   // classifiers, extractors) or a set of named fields (dict input).
   // Detecting which prevents spreading a string into one box per
   // character via `Object.entries`.
+  //
+  // A tool agent answers a user message, so it takes free text even
+  // without a `system_examples` entry to infer the shape from —
+  // otherwise it would fall through to 'none' and never be runnable.
   let inputMode = $derived(
     typeof inputExample === 'string'
       ? 'text'
       : inputExample && typeof inputExample === 'object' &&
           !Array.isArray(inputExample)
         ? 'fields'
-        : 'none'
+        : isTool
+          ? 'text'
+          : 'none'
   )
 
   let inputFields = $derived(
@@ -194,6 +202,36 @@
     if (!obj || typeof obj !== 'object') return []
     return Object.entries(obj)
   }
+
+  // Pair each tool call with the result that answered it. The backend
+  // reports the loop as a flat event list; within one iteration the
+  // results follow that iteration's calls in the same order, so the
+  // first still-unresolved call of an iteration owns the next result.
+  let toolCallSteps = $derived.by(() => {
+    const steps = singleResult?.tool_steps
+    if (!steps) return []
+    const calls = []
+    const byIteration = new Map()
+    for (const s of steps) {
+      if (s.kind === 'tool_call') {
+        const call = {
+          name: s.name,
+          iteration: s.iteration,
+          arguments: s.arguments ?? {},
+          result: null,
+        }
+        calls.push(call)
+        if (!byIteration.has(s.iteration)) byIteration.set(s.iteration, [])
+        byIteration.get(s.iteration).push(call)
+      } else if (s.kind === 'tool_result') {
+        const match = (byIteration.get(s.iteration) ?? []).find(
+          c => c.result === null,
+        )
+        if (match) match.result = s.result ?? ''
+      }
+    }
+    return calls
+  })
 
   let copiedSingle = $state(false)
   async function copySingleOutput() {
@@ -473,8 +511,10 @@
           {#if singleResult}
             <div class="output-card">
               <div class="output-card-header">
-                <span class="output-label">Output</span>
-                {#if singleResult.parse_error}
+                <span class="output-label">{singleResult.tool_steps ? 'Answer' : 'Output'}</span>
+                {#if singleResult.error}
+                  <span class="status-badge s-fail">loop error</span>
+                {:else if singleResult.parse_error}
                   <span class="status-badge s-fail">parse error</span>
                 {:else}
                   <span class="status-badge s-pass">✓ pass</span>
@@ -494,7 +534,13 @@
                 </div>
               </div>
 
-              {#if singleResult.parse_error}
+              {#if singleResult.tool_steps}
+                {#if singleResult.error}
+                  <p class="state-msg error">{singleResult.error}</p>
+                {:else}
+                  <p class="answer-text">{singleResult.answer}</p>
+                {/if}
+              {:else if singleResult.parse_error}
                 <pre class="raw-response">{singleResult.raw_response}</pre>
               {:else if singleResult.output}
                 <table class="output-table">
@@ -511,6 +557,48 @@
                 </table>
               {/if}
             </div>
+
+          {#if toolCallSteps.length > 0}
+            <div class="steps-section" data-testid="tool-trajectory">
+              <span class="steps-label">Trajectory <span class="steps-count">({toolCallSteps.length} {toolCallSteps.length === 1 ? 'call' : 'calls'})</span></span>
+              {#each toolCallSteps as step, i}
+                <div class="step-card tool-step">
+                  <div class="tool-step-header">
+                    <span class="step-num">{i + 1}</span>
+                    <span class="tool-name">{step.name}</span>
+                    <span class="tool-iteration">iteration {step.iteration + 1}</span>
+                  </div>
+                  <div class="tool-step-body">
+                    <div class="tool-io">
+                      <span class="io-label">Arguments</span>
+                      {#if Object.keys(step.arguments ?? {}).length > 0}
+                        <table class="output-table">
+                          <tbody>
+                            {#each outputEntries(step.arguments) as [k, v]}
+                              <tr>
+                                <td class="out-key">{k}</td>
+                                <td class="out-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</td>
+                              </tr>
+                            {/each}
+                          </tbody>
+                        </table>
+                      {:else}
+                        <p class="state-msg">No arguments</p>
+                      {/if}
+                    </div>
+                    <div class="tool-io">
+                      <span class="io-label">Result</span>
+                      {#if step.result != null}
+                        <pre class="tool-result">{step.result}</pre>
+                      {:else}
+                        <p class="state-msg">No result — the loop ended before this call returned.</p>
+                      {/if}
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
 
           {#if singleResult.steps?.length > 0}
             <div class="steps-section">
@@ -1156,6 +1244,63 @@
   .badge.model    { background: var(--pass-bg);  color: var(--pass); }
   .badge.provider { background: var(--warn-bg);  color: var(--warn); }
   .badge.type     { background: var(--info-bg);  color: var(--accent); }
+
+  /* Tool-agent answer and trajectory */
+  .answer-text {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .steps-count {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .tool-step-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+  }
+  .tool-name {
+    font-family: monospace;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+  .tool-iteration {
+    margin-left: auto;
+    font-size: 1.0625rem;
+    color: var(--text-muted);
+  }
+
+  .tool-step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+  }
+  .tool-io { display: flex; flex-direction: column; gap: 0.3rem; }
+
+  .tool-result {
+    margin: 0;
+    padding: 0.5rem 0.65rem;
+    background: var(--bg-raised);
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 1.0625rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+    overflow-x: auto;
+  }
 
   /* Pipeline steps breakdown */
   .steps-section {
