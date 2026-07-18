@@ -2,6 +2,21 @@
 ## Changelog - agents7 UI
 
 
+### v0.26.2 - 18th July 2026
+
+- Filled in `roadmap.md`, which was still an `init-project` stub:
+  - Current phase: frontend e2e test harness (gating new interactive
+    features), then making the Eval page a first-class consumer of
+    `agents7.eval` (gating duplicated eval logic).
+  - Standing invariants: the UI stays a thin, introspecting view over
+    the framework; provider-agnostic by default; the backend is never
+    host-exposed in Compose; registry-claimed host ports; first-party
+    backend records only in `logs/`; 17px raw-text floor.
+  - Refuted directions: version badge in or above the top bar
+    (v0.10.1), a second source of the app version, and `$effect`
+    blocks calling `$state`-reading helpers.
+
+
 ### v0.26.1 - 13th July 2026
 
 - Rotated changelog: archived 18 entries to `changelog/2026.md`.
