@@ -2,6 +2,28 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.0 - 18th July 2026
+
+- Added tool-agent support to the eval endpoint:
+  - `backend/routers/eval.py`: scores a `tool` agent by delegating to
+    `agents7.eval.run_eval_suite`, returning the framework's
+    `trajectory` metrics plus the calls each failed row made, missed
+    and added.
+  - `_find_golden_set()`: falls back to an `eval_data.jsonl` beside
+    the config, so a tool agent's trajectory set is discovered.
+    Agents shipping `data/golden_set.*` are unaffected.
+  - Removed `reject_tool_agent()` from `backend/routers/utils.py` —
+    both endpoints it guarded now serve tool agents.
+- Added the trajectory view to the Eval page:
+  - `frontend/src/pages/Eval.svelte`: renders match mode, call
+    totals, and per-tool recall in place of the per-category table,
+    and lists called/missing/extra calls per mismatch.
+- Added tests:
+  - `backend/tests/test_eval.py`: 10 tests covering eval-set
+    discovery and the trajectory route.
+  - `frontend/e2e/tool-agent-eval.spec.js`: 3 e2e tests.
+
+
 ### v0.28.0 - 18th July 2026
 
 - Added tool-agent support to the run endpoint:

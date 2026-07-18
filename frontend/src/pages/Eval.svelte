@@ -57,12 +57,26 @@
     if (ratio >= 0.7) return 'yellow'
     return 'red'
   }
+
+  // A tool agent is scored on its trajectory, so the run carries a
+  // `trajectory` block instead of the per-category breakdown.
+  let trajectory = $derived(result?.trajectory ?? null)
+
+  let perToolRows = $derived(
+    Object.entries(trajectory?.per_tool ?? {})
+      .map(([name, stats]) => ({
+        name,
+        ...stats,
+        recall: stats.expected > 0 ? stats.matched / stats.expected : 0,
+      }))
+      .sort((a, b) => a.recall - b.recall),
+  )
 </script>
 
 <div class="eval-page">
   <div class="page-header">
     <h2>Evaluation</h2>
-    <p class="intro-desc">Measures accuracy against a golden dataset — curated inputs with known expected outputs. Results include an overall score, a per-category breakdown, and a mismatch list for every failure.</p>
+    <p class="intro-desc">Measures accuracy against a golden dataset — curated inputs with known expected outputs. Results include an overall score, a per-category breakdown, and a mismatch list for every failure. A tool agent is scored on its trajectory instead: which tools it called, in what order, with which arguments.</p>
   </div>
 
   <div class="controls">
@@ -112,6 +126,45 @@
       </p>
     </section>
 
+    {#if trajectory}
+      <section data-testid="trajectory-summary">
+        <h3>Trajectory</h3>
+        <p class="meta traj-meta">
+          Match mode: <span class="mono">{trajectory.mode}</span>
+          · {trajectory.matched_calls}/{trajectory.expected_calls} expected calls made
+          ({pct(trajectory.matched_calls, trajectory.expected_calls)}%)
+          · {trajectory.extra_calls} extra
+        </p>
+
+        {#if perToolRows.length > 0}
+          <table>
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th>Matched</th>
+                <th>Expected</th>
+                <th>Recall</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each perToolRows as row}
+                <tr>
+                  <td class="mono">{row.name}</td>
+                  <td>{row.matched}</td>
+                  <td>{row.expected}</td>
+                  <td>
+                    <span class="badge {accuracyColor(row.recall)}">
+                      {pct(row.matched, row.expected)}%
+                    </span>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        {/if}
+      </section>
+    {/if}
+
     {#if Object.keys(result.per_category).length > 0}
       <section>
         <h3>Per-category</h3>
@@ -154,14 +207,39 @@
                   <span class="label">Input</span>
                   <span class="mono">{fmt(m.input)}</span>
                 </div>
-                <div class="mismatch-row">
-                  <span class="label">Expected</span>
-                  <span class="mono expected">{fmt(m.expected)}</span>
-                </div>
-                <div class="mismatch-row">
-                  <span class="label">Actual</span>
-                  <span class="mono actual">{fmt(m.actual)}</span>
-                </div>
+                {#if trajectory}
+                  <div class="mismatch-row">
+                    <span class="label">Called</span>
+                    <span class="mono">{m.called.length > 0 ? m.called.join(' → ') : '—'}</span>
+                  </div>
+                  {#if m.missing.length > 0}
+                    <div class="mismatch-row">
+                      <span class="label">Missing</span>
+                      <span class="mono actual">{m.missing.join(', ')}</span>
+                    </div>
+                  {/if}
+                  {#if m.extra.length > 0}
+                    <div class="mismatch-row">
+                      <span class="label">Extra</span>
+                      <span class="mono actual">{m.extra.join(', ')}</span>
+                    </div>
+                  {/if}
+                  {#if m.error}
+                    <div class="mismatch-row">
+                      <span class="label">Error</span>
+                      <span class="mono actual">{m.error}</span>
+                    </div>
+                  {/if}
+                {:else}
+                  <div class="mismatch-row">
+                    <span class="label">Expected</span>
+                    <span class="mono expected">{fmt(m.expected)}</span>
+                  </div>
+                  <div class="mismatch-row">
+                    <span class="label">Actual</span>
+                    <span class="mono actual">{fmt(m.actual)}</span>
+                  </div>
+                {/if}
               </div>
             </div>
           {/each}
@@ -264,6 +342,7 @@
   .accuracy-fill.red    { background: var(--fail); }
 
   .meta { margin: 0; font-size: 1.0625rem; color: var(--text-muted); }
+  .traj-meta { margin-bottom: 0.75rem; line-height: 1.5; }
 
   /* Tables */
   section { margin-bottom: 1.75rem; }

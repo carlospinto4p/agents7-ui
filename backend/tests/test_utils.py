@@ -5,10 +5,7 @@ Dotted-path import resolution moved to the framework's
 suite); the local `import_class` duplicate was removed.
 """
 
-import pytest
-from fastapi import HTTPException
-
-from routers.utils import _load_output_schema, reject_tool_agent
+from routers.utils import _load_output_schema
 
 # ── _load_output_schema ────────────────────────────────────────────────────
 
@@ -40,20 +37,3 @@ def test_load_output_schema_valid_model_returns_schema():
     assert isinstance(schema, dict)
     assert "properties" in schema
     assert fields == set(schema["properties"].keys())
-
-
-# ── reject_tool_agent ──────────────────────────────────────────────────────
-
-
-def test_reject_tool_agent_rejects_tool():
-    """A tool agent is refused, not served an empty output."""
-    with pytest.raises(HTTPException) as exc:
-        reject_tool_agent("tool")
-    assert exc.value.status_code == 422
-    assert "trajectory" in exc.value.detail
-
-
-def test_reject_tool_agent_allows_structured_types():
-    """Every structured-output type passes through untouched."""
-    for agent_type in ("labeler", "detector", "classifier", "regressor"):
-        assert reject_tool_agent(agent_type) is None

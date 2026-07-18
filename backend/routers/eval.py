@@ -9,10 +9,11 @@ from agents7.eval import (
     load_eval_rows,
     model_output_fields,
     normalise_rows,
+    run_eval_suite,
 )
 from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
-from routers.utils import _load_config, reject_tool_agent
+from routers.utils import _load_config
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +21,87 @@ router = APIRouter(prefix="/api/eval", tags=["eval"])
 
 
 def _find_golden_set(config_file: Path) -> Path | None:
+    """Locate the eval set an agent ships beside its config.
+
+    Prefers the catalog's ``data/golden_set.*`` convention, then
+    falls back to an ``eval_data.jsonl`` sitting next to the config
+    — the shape a tool agent's trajectory set uses. The order keeps
+    agents that ship both (e.g. `tagger_agent`) on their golden set.
+
+    :param config_file: Path to the agent's YAML config.
+    :return: The eval set path, or None when the agent ships none.
+    """
     data_dir = config_file.parent / "data"
-    for name in ("golden_set.csv", "golden_set.jsonl"):
-        path = data_dir / name
+    candidates = (
+        data_dir / "golden_set.csv",
+        data_dir / "golden_set.jsonl",
+        config_file.parent / "eval_data.jsonl",
+    )
+    for path in candidates:
         if path.exists():
             return path
     return None
+
+
+def _trajectory_row(result) -> dict:
+    """Shape one trajectory `EvalResult` for the response.
+
+    :param result: An `EvalResult` carrying a `TrajectoryResult`.
+    :return: The row payload, with the calls the agent made and the
+        expectations it missed or exceeded.
+    """
+    trajectory = result.trajectory
+    return {
+        "input": result.input_data,
+        "expected": result.expected,
+        "actual": result.actual,
+        "passed": result.passed,
+        "error": result.error,
+        "called": [c.format() for c in trajectory.actual]
+        if trajectory
+        else [],
+        "missing": [e.format() for e in trajectory.missing]
+        if trajectory
+        else [],
+        "extra": [c.format() for c in trajectory.extra] if trajectory else [],
+    }
+
+
+def _eval_tool_agent(config_file: Path, golden_path: Path, cfg: dict) -> dict:
+    """Score a tool agent on its trajectory.
+
+    Delegates the whole route to `agents7.eval.run_eval_suite`, which
+    already branches to trajectory scoring for a `ToolAgent` — this
+    endpoint only reshapes the run for the UI. A trajectory has no
+    categorical field to cross-tabulate, so ``per_category`` stays
+    empty and the ``trajectory`` block carries the call-level detail
+    instead.
+
+    :param config_file: Path to the agent's YAML config.
+    :param golden_path: Path to the golden set to score against.
+    :param cfg: The parsed config.
+    :return: The eval response payload.
+    :raises HTTPException: 422 if the golden set cannot be scored.
+    """
+    try:
+        run = run_eval_suite(config_file, golden_path)
+    except ValueError as exc:
+        # An empty set, or rows with no `tools` column — an authoring
+        # error in the golden set, not a server fault.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    results = [_trajectory_row(r) for r in run.results]
+    return {
+        "agent": cfg.get("name"),
+        "golden_set": golden_path.name,
+        "total": run.metrics["total"],
+        "passed": run.metrics["passed"],
+        "failed": run.metrics["failed"],
+        "accuracy": run.metrics["accuracy"],
+        "per_category": {},
+        "trajectory": run.metrics["trajectory"],
+        "mismatches": [r for r in results if not r["passed"]],
+    }
 
 
 @router.post("/{agent_name}")
@@ -54,7 +130,8 @@ def eval_agent(agent_name: str) -> dict:
                 f"must be one of: {list(AGENT_TYPE_MAP)}"
             ),
         )
-    reject_tool_agent(agent_type)
+    if agent_type == "tool":
+        return _eval_tool_agent(config_file, golden_path, cfg)
 
     rows = load_eval_rows(golden_path)
     if not rows:
