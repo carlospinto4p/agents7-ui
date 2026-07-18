@@ -2,6 +2,19 @@
 ## Changelog - agents7 UI
 
 
+### v0.27.1 - 18th July 2026
+
+- Updated `backend/routers/`:
+  - `utils.py`: added `reject_tool_agent()`. `tool` joined the
+    framework's `AGENT_TYPE_MAP` in agents7 v4.14.0, so it now passes
+    the membership check the run and eval endpoints share; neither can
+    serve it (both read `response.model`, which a `ToolAgent` never
+    populates), so they refuse it with a 422 pointing at the CLI
+    instead of returning an empty output.
+  - `run.py`, `eval.py`: call the guard.
+- Added `backend/tests/test_utils.py` coverage for the guard: 2 tests.
+
+
 ### v0.27.0 - 18th July 2026
 
 - Added a Playwright end-to-end test harness in `frontend/`:

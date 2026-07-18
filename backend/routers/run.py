@@ -7,7 +7,11 @@ from agents7.exceptions import (
     PipelineConfigurationError,
 )
 from routers.catalog import CATALOG_PATH, find_config_file
-from routers.utils import _load_config, _resolve_agent_path
+from routers.utils import (
+    _load_config,
+    _resolve_agent_path,
+    reject_tool_agent,
+)
 
 router = APIRouter(prefix="/api/run", tags=["run"])
 
@@ -138,6 +142,7 @@ async def run_agent(agent_name: str, request: Request) -> dict:
                 f"must be one of: {list(AGENT_TYPE_MAP) + ['pipeline']}"
             ),
         )
+    reject_tool_agent(agent_type)
 
     agent = build_agent(config_file, agent_type)
 

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import yaml
+from fastapi import HTTPException
 
 
 # Structured-agent type→class resolution lives in the framework
@@ -57,6 +58,32 @@ def _resolve_agent_path(
             f"Step agent path escapes catalog root: {agent_path!r}"
         )
     return str(resolved)
+
+
+def reject_tool_agent(agent_type: str) -> None:
+    """Reject a tool agent on the structured-output endpoints.
+
+    ``tool`` joined `agents7.eval.AGENT_TYPE_MAP` when the framework
+    gained trajectory scoring, so it now passes the membership check
+    both the run and eval endpoints use. Neither can serve it: they
+    read ``response.model``, which a `ToolAgent` never populates —
+    it answers in free text and is scored on the calls it makes.
+    Fail loudly here rather than return an empty output as if the
+    agent had produced nothing.
+
+    :param agent_type: The config's ``agent_type``, lowercased.
+    :raises HTTPException: 422 if *agent_type* is ``tool``.
+    """
+    if agent_type == "tool":
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Tool agents are not supported by this endpoint — "
+                "they answer in free text and are scored on their "
+                "tool-call trajectory. Use `agents7 eval` or "
+                "`agents7.eval.run_eval_suite`."
+            ),
+        )
 
 
 def _load_config(config_file: Path) -> tuple[dict, str]:

@@ -12,7 +12,7 @@ from agents7.eval import (
 )
 from agents7.exceptions import Agents7Exception
 from routers.catalog import find_config_file
-from routers.utils import _load_config
+from routers.utils import _load_config, reject_tool_agent
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,7 @@ def eval_agent(agent_name: str) -> dict:
                 f"must be one of: {list(AGENT_TYPE_MAP)}"
             ),
         )
+    reject_tool_agent(agent_type)
 
     rows = load_eval_rows(golden_path)
     if not rows:
