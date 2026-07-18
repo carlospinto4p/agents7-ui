@@ -8,3 +8,9 @@
 ### Testing — 12th July 2026
 
 - [ ] Bootstrap a frontend test harness (Playwright e2e). The frontend has no automated tests, so interactive/render features ship verified only by build + manual check. First candidate to cover: sidebar drag-to-resize + width persistence added in v0.22.0. (MED, M)
+  - Second candidate, and a regression test owed: the v0.26.3 Chatter
+    fix (an override with no model is blocked client-side instead of
+    failing as a 400) shipped with no test, because there is no harness
+    to put one in. Cover both branches — Ollama with an empty model
+    list, and `openai_compat` whose model comes from the environment
+    and must still be allowed through.

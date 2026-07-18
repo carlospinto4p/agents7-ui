@@ -26,6 +26,12 @@
   // ollama picks from the installed list; API providers take a free
   // model name (openai_compat may read it from the environment).
   let modelIsList = $derived(ovProvider === 'ollama')
+  // An override with no model can only work when the provider supplies
+  // one itself (openai_compat, via the environment). Otherwise starting
+  // would fail server-side with a 400, so block it here instead.
+  let needsModel = $derived(
+    !!ovProvider && !ovModel && !providerInfo?.model
+  )
 
   // Reset to the agent's default engine whenever the agent changes,
   // so an override never silently carries across a different persona.
@@ -190,6 +196,15 @@
       {ovProvider} is not ready: {providerInfo.detail}. Starting a chat
       with it will fail until configured.
     </p>
+  {:else if needsModel}
+    <p class="override-warn">
+      {#if modelIsList}
+        No Ollama model to run {ovProvider} with — install one, or pick
+        a different provider.
+      {:else}
+        Enter a model name to chat with {ovProvider}.
+      {/if}
+    </p>
   {/if}
 
   {#if selectedAgent}
@@ -245,7 +260,7 @@
     </div>
   {/if}
 
-  {#if agentName}
+  {#if agentName && !needsModel}
     <div class="panel-wrap">
       <ChatPanel
         bind:this={chatPanel}
@@ -256,7 +271,13 @@
     </div>
   {:else}
     <div class="transcript-placeholder">
-      <p class="empty-msg">Select an agent to start chatting.</p>
+      <p class="empty-msg">
+        {#if !agentName}
+          Select an agent to start chatting.
+        {:else}
+          Choose a model for {ovProvider} to start chatting.
+        {/if}
+      </p>
     </div>
   {/if}
 

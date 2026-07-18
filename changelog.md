@@ -2,6 +2,23 @@
 ## Changelog - agents7 UI
 
 
+### v0.26.3 - 18th July 2026
+
+- Fixed the **Chatter** page starting a session with an engine override
+  that has no model, which failed server-side as a 400 and logged a
+  warning:
+  - `frontend/src/pages/Chatter.svelte`: new `needsModel` derived flag —
+    true when a provider is selected, no model is set, and the provider
+    does not supply one itself. `onProviderChange()` leaves `ovModel`
+    empty whenever Ollama reports no installed models (or has not
+    answered yet), and nothing downstream re-checked it.
+  - While `needsModel` holds, `ChatPanel` is not mounted and the page
+    explains what is missing, instead of handing the backend an
+    override it will reject.
+  - `openai_compat` is unaffected: its model may legitimately come from
+    the environment, which `/api/chat/providers` reports as `model`.
+
+
 ### v0.26.2 - 18th July 2026
 
 - Filled in `roadmap.md`, which was still an `init-project` stub:
