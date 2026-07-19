@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.1 - 19th July 2026
+
+- Rotated changelog: archived 7 entries to `changelog/2026.md`.
+
+
 ### v0.29.0 - 18th July 2026
 
 - Added tool-agent support to the eval endpoint:
@@ -412,96 +417,3 @@
     blocks.
 - Added a catalog search/filter box that filters agents by name,
   type, provider, or model.
-
-
-### v0.19.0 - 14th June 2026
-
-- Added token-by-token chat streaming:
-  - `backend/routers/chat.py`: new `POST /api/chat/{session_id}/stream`
-    endpoint that streams the reply as Server-Sent Events (one
-    `delta` frame per chunk, a final `done` frame with metrics,
-    and an `error` frame on framework failure). Built on the
-    framework's `chat_stream_async`.
-  - `frontend/src/components/ChatPanel.svelte`: consume the SSE
-    stream, appending tokens to a live assistant bubble instead
-    of waiting for the whole response.
-  - `backend/tests/test_chat.py`: cover the SSE framing and the
-    delta / done / error paths.
-
-
-### v0.18.5 - 14th June 2026
-
-- Added `backend/tests/test_utils.py`: error-path coverage for
-  `import_class` (missing module, missing attribute, malformed dotted
-  path) and `_load_output_schema` (absent/empty path, suppressed
-  import/attribute errors, valid-model schema).
-
-
-### v0.18.4 - 14th June 2026
-
-- `frontend/src/pages/Catalog.svelte`, `Chatter.svelte`: moved the
-  top-level `/api/catalog` fetch from a `$effect` to `onMount`, so the
-  one-time load can never re-fire on unrelated state changes. The
-  `agentName`-driven detail fetch in `Chatter.svelte` stays a
-  reactive `$effect` (it correctly depends on the selection).
-
-
-### v0.18.3 - 14th June 2026
-
-- `backend/routers/utils.py`: added the `-> type` return annotation
-  to `import_class`.
-- `backend/routers/catalog.py`: `_resolve_pipeline_step_details` now
-  logs a warning when a step config can't be read instead of
-  swallowing the error silently (listing stays resilient).
-- Added `tests/test_security.py`: malformed-step-config resilience.
-
-
-### v0.18.2 - 14th June 2026
-
-- `backend/main.py`:
-  - Cached `/api/info` version via `_read_version()` (`lru_cache`) —
-    `pyproject.toml` is read once, not per request.
-  - Cached `/api/readme` via `_read_readme()` (`lru_cache`) —
-    `README.md` is read once, not per request.
-  - Added an app lifespan that runs a periodic chat-session cleanup
-    task.
-- `backend/routers/chat.py`: added `_SessionStore.run_periodic_cleanup()`
-  (evicts expired sessions every 5 min), complementing the on-demand
-  eviction so idle sessions are reclaimed without new chats.
-- Added `tests/test_security.py` cases: version/README caching, expired
-  eviction, periodic cleanup.
-
-
-### v0.18.1 - 14th June 2026
-
-- Fixed path traversal in catalog pipeline-step display:
-  - `routers/utils.py`: extracted `_resolve_agent_path()` (shared
-    guard, with an `allow_absolute` flag) from `run.py`.
-  - `routers/catalog.py`: `_resolve_pipeline_step_details` now
-    resolves step paths through the guard (`allow_absolute=False`)
-    and skips reading any path escaping the catalog root, so a
-    crafted pipeline config can no longer leak arbitrary files.
-  - `routers/run.py`: imports the shared guard (behaviour
-    unchanged).
-- Added `tests/test_security.py` cases for the catalog guard and the
-  absolute-path rejection.
-
-
-### v0.18.0 - 14th June 2026
-
-- Added `backend/logging_setup.py`: file-based WARNING/ERROR logging
-  following the canonical local-dev observability pattern.
-  - `configure_logging()`: console + level-segregated rotating file
-    handlers — WARNING → `logs/warnings/`, ERROR/CRITICAL →
-    `logs/errors/`, one file per process start, UTC timestamps, clean
-    level split. Attached to the root logger (captures `routers.*`)
-    and to `uvicorn.error`.
-  - Log root anchored to `$LOGS_DIR/logs`, falling back to
-    `backend/logs/`.
-- Updated `backend/main.py`: call `configure_logging()` at startup.
-- Updated `docker-compose.yml`: `LOGS_DIR=/app` and bind-mount
-  `./agents7_ui/logs:/app/logs` on the backend service.
-- Added `backend/tests/test_logging.py`: env anchoring, clean level
-  split, idempotency.
-- Updated `.gitignore` (`logs/`, `*.log`) and `README.md` (Logs
-  section).
