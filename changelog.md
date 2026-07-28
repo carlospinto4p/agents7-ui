@@ -2,6 +2,11 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.3 - 28th July 2026
+
+- Rotated changelog: archived 2 entries to `changelog/2026.md`.
+
+
 ### v0.29.2 - 26th July 2026
 
 - Redeployed the hardened `scripts/changelog-add.sh`: guards against
@@ -398,30 +403,3 @@
 - Updated `README.md` and `.env.example`: document `FRONTEND_PORT` and the
   new dev/compose ports.
 - Updated `tests/test_security.py`: sample CORS origins use the new ports.
-
-
-### v0.20.1 - 21st June 2026
-
-- `frontend/package.json`: bumped the pinned pnpm to `11.8.0` to match
-  this machine's corepack canonical version. The stale `11.5.3` pin
-  hard-fails `pnpm` builds under corepack (the corepack trap in
-  `pnpm-for-frontend.md`); part of the fleet-wide sweep.
-
-
-### v0.20.0 - 14th June 2026
-
-- Added `frontend/src/lib/format.js`: shared `fmtCost`,
-  `metricsLine`, `copyText`, `downloadText`, and `downloadJson`
-  helpers.
-- Added cost display: run (single + steps) and chat metrics now
-  show `cost_cents` when present (omitted for local providers
-  that report no cost).
-  - `backend/routers/chat.py`: include `cost_cents` in the chat
-    stream `done` frame and the `/message` response metrics.
-- Added export & copy:
-  - Download JSON for run output, batch results, eval results,
-    and chat transcripts.
-  - Copy-to-clipboard buttons on the run output and YAML source
-    blocks.
-- Added a catalog search/filter box that filters agents by name,
-  type, provider, or model.
