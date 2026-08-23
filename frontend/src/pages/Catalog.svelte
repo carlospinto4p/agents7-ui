@@ -249,6 +249,9 @@
 
     <div class="detail-header">
       <h1>{selected.display_name ?? selected.name}</h1>
+      {#if selected.description}
+        <p class="detail-desc">{selected.description}</p>
+      {/if}
       <div class="badges">
         {#if selected.agent_type}
           <span class="badge type">{selected.agent_type}</span>
@@ -629,6 +632,9 @@
                     <span class="badge model">{model}</span>
                   {/each}
                 </div>
+                {#if agent.description}
+                  <div class="card-desc">{agent.description}</div>
+                {/if}
                 {#if agent.pipeline_steps?.length}
                   <div class="card-steps">{agent.pipeline_steps.join(' → ')}</div>
                 {/if}
@@ -727,6 +733,15 @@
     white-space: nowrap;
   }
   .card-meta { display: flex; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
+  .card-desc {
+    font-size: 1.0625rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .card-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; }
   .card-footer { font-size: 1.0625rem; color: var(--text-muted); }
 
@@ -775,6 +790,13 @@
     font-weight: 700;
     margin: 0 0 0.6rem;
     color: var(--text-strong);
+  }
+  .detail-desc {
+    font-size: 1.0625rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin: 0 0 0.85rem;
+    max-width: 700px;
   }
   .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .detail-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem; }

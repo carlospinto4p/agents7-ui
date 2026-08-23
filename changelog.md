@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.5 - 23rd August 2026
+
+- Fixed `frontend/src/pages/Catalog.svelte`: the backend already
+  returned each agent's `description` (from its `config.yml`), but
+  the Catalog page never rendered it. Added a clamped description
+  line to each grid card and the full description to the agent
+  detail header.
+
+
 ### v0.29.4 - 23rd August 2026
 
 - Fixed `backend/main.py`: the framework README path used
