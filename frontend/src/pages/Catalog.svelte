@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import JsonViewer from '../components/JsonViewer.svelte';
   import ChatPanel from '../components/ChatPanel.svelte';
-  import { CHATTER_TYPES } from '../constants.js';
+  import { CHATTER_TYPES, isToolAgent } from '../constants.js';
   import { fmtCost, copyText, downloadJson } from '../lib/format.js';
 
   let agents       = $state([])
@@ -88,10 +88,54 @@
       : []
   )
 
-  // Single text input when example input is a plain string
-  let runnerIsText = $derived(
-    runnerFields.length === 0 && typeof runnerExInput === 'string'
+  let isToolAgentSelected = $derived(
+    !!selected && isToolAgent(selected.agent_type)
   )
+
+  // Single text input when example input is a plain string, or when
+  // this is a tool agent — it answers a user message in free text and
+  // has neither an output model nor a field input schema to fall back
+  // on, so it takes free text even with no `system_examples` entry.
+  let runnerIsText = $derived(
+    runnerFields.length === 0 &&
+    (typeof runnerExInput === 'string' || isToolAgentSelected)
+  )
+
+  let runnerDesc = $derived(
+    runnerFields.length > 0 || (runnerIsText && runnerExInput != null)
+      ? 'Prefilled from a sample input — edit the values and Run.'
+      : isToolAgentSelected
+        ? 'Ask this agent a question in plain text.'
+        : "Enter a JSON object matching this agent's input."
+  )
+
+  // Pair each tool call with the result that answered it — same
+  // pairing logic as the standalone Runner page.
+  let toolCallSteps = $derived.by(() => {
+    const steps = runnerResult?.tool_steps
+    if (!steps) return []
+    const calls = []
+    const byIteration = new Map()
+    for (const s of steps) {
+      if (s.kind === 'tool_call') {
+        const call = {
+          name: s.name,
+          iteration: s.iteration,
+          arguments: s.arguments ?? {},
+          result: null,
+        }
+        calls.push(call)
+        if (!byIteration.has(s.iteration)) byIteration.set(s.iteration, [])
+        byIteration.get(s.iteration).push(call)
+      } else if (s.kind === 'tool_result') {
+        const match = (byIteration.get(s.iteration) ?? []).find(
+          c => c.result === null,
+        )
+        if (match) match.result = s.result ?? ''
+      }
+    }
+    return calls
+  })
 
   let runnerSubmittable = $derived(
     !runnerRunning &&
@@ -312,11 +356,7 @@
               onclick={() => catalogChat?.restart()}
             >Reset conversation</button>
           {:else}
-            <p class="section-desc">
-              {runnerFields.length > 0 || runnerIsText
-                ? 'Prefilled from a sample input — edit the values and Run.'
-                : "Enter a JSON object matching this agent's input."}
-            </p>
+            <p class="section-desc">{runnerDesc}</p>
             {#if runnerFields.length > 0}
               <div class="runner-fields">
                 {#each runnerFields as f}
@@ -376,8 +416,10 @@
           {#if runnerResult}
             <div class="output-card">
               <div class="output-card-hdr">
-                <span class="output-label">Output</span>
-                {#if runnerResult.parse_error}
+                <span class="output-label">{runnerResult.tool_steps ? 'Answer' : 'Output'}</span>
+                {#if runnerResult.error}
+                  <span class="status-badge s-fail">loop error</span>
+                {:else if runnerResult.parse_error}
                   <span class="status-badge s-fail">parse error</span>
                 {:else}
                   <span class="status-badge s-pass">✓ pass</span>
@@ -395,7 +437,13 @@
                   {/if}
                 </div>
               </div>
-              {#if runnerResult.parse_error}
+              {#if runnerResult.tool_steps}
+                {#if runnerResult.error}
+                  <p class="runner-error">{runnerResult.error}</p>
+                {:else}
+                  <p class="answer-text">{runnerResult.answer}</p>
+                {/if}
+              {:else if runnerResult.parse_error}
                 <pre class="raw-response">{runnerResult.raw_response}</pre>
               {:else if runnerResult.output}
                 <table class="output-table">
@@ -414,6 +462,48 @@
                 </table>
               {/if}
             </div>
+
+          {#if toolCallSteps.length > 0}
+            <div class="steps-section" data-testid="tool-trajectory">
+              <span class="steps-label">Trajectory <span class="steps-count">({toolCallSteps.length} {toolCallSteps.length === 1 ? 'call' : 'calls'})</span></span>
+              {#each toolCallSteps as step, i}
+                <div class="step-card tool-step">
+                  <div class="tool-step-header">
+                    <span class="step-num">{i + 1}</span>
+                    <span class="tool-name">{step.name}</span>
+                    <span class="tool-iteration">iteration {step.iteration + 1}</span>
+                  </div>
+                  <div class="tool-step-body">
+                    <div class="tool-io">
+                      <span class="io-label">Arguments</span>
+                      {#if Object.keys(step.arguments ?? {}).length > 0}
+                        <table class="output-table">
+                          <tbody>
+                            {#each outputEntries(step.arguments) as [k, v]}
+                              <tr>
+                                <td class="out-key">{k}</td>
+                                <td class="out-val">{typeof v === 'object' ? JSON.stringify(v) : String(v)}</td>
+                              </tr>
+                            {/each}
+                          </tbody>
+                        </table>
+                      {:else}
+                        <p class="muted">No arguments</p>
+                      {/if}
+                    </div>
+                    <div class="tool-io">
+                      <span class="io-label">Result</span>
+                      {#if step.result != null}
+                        <pre class="tool-result">{step.result}</pre>
+                      {:else}
+                        <p class="muted">No result — the loop ended before this call returned.</p>
+                      {/if}
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          {/if}
 
           {#if runnerResult.steps?.length > 0}
             <div class="steps-section">
@@ -1151,6 +1241,56 @@
     letter-spacing: 0.05em;
     color: var(--text-muted);
   }
+  .steps-count { font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  /* Tool-agent answer and trajectory */
+  .answer-text {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+  .tool-step-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.85rem;
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+  }
+  .tool-name {
+    font-family: monospace;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-strong);
+  }
+  .tool-iteration {
+    margin-left: auto;
+    font-size: 1.0625rem;
+    color: var(--text-muted);
+  }
+  .tool-step-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+  }
+  .tool-io { display: flex; flex-direction: column; gap: 0.3rem; }
+  .tool-result {
+    margin: 0;
+    padding: 0.5rem 0.65rem;
+    background: var(--bg-raised);
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 1.0625rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+    overflow-x: auto;
+  }
+
   .step-card {
     border: 1px solid var(--border);
     border-radius: 8px;

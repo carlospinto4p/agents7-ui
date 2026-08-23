@@ -2,6 +2,22 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.6 - 23rd August 2026
+
+- Fixed `frontend/src/pages/Catalog.svelte`: the embedded Runner
+  on an agent's detail page never got the v0.28.0 tool-agent
+  handling that the standalone Runner page has. A `tool` agent
+  (e.g. `StoreAssistant`) fell back to a generic
+  `{ "field": "value" }` JSON textarea, and its result — which has
+  no `output`, only `answer` and `tool_steps` — rendered nothing.
+  - Ported `isToolAgent()`-based free-text input detection from
+    `Runner.svelte`.
+  - Added the `Answer` label, the loop-error state, and the tool
+    call trajectory (arguments/result per call) to the result card.
+  - Added `frontend/e2e/tool-agent-catalog.spec.js`: 2 tests
+    covering the free-text fallback and the rendered trajectory.
+
+
 ### v0.29.5 - 23rd August 2026
 
 - Fixed `frontend/src/pages/Catalog.svelte`: the backend already
