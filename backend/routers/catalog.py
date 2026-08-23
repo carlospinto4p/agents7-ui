@@ -111,6 +111,22 @@ def _description(cfg: dict) -> str | None:
     return None
 
 
+def _demonstrates(cfg: dict) -> str | None:
+    """Return what framework capability this agent demonstrates.
+
+    Only meaningful for samples under `examples/` — a catalog agent
+    solves a real task rather than showcasing a capability, so it
+    typically has no `demonstrates` field.
+
+    :param cfg: Parsed agent config dictionary.
+    :return: The `demonstrates` string, or `None` if absent.
+    """
+    demonstrates = cfg.get("demonstrates")
+    if not demonstrates:
+        return None
+    return str(demonstrates).strip() or None
+
+
 def _resolve_pipeline_step_details(
     config_file: Path, steps: list[dict]
 ) -> list[dict]:
@@ -178,6 +194,7 @@ def _parse_summary(config_file: Path) -> dict:
         "name": cfg.get("name"),
         "display_name": _display_name(cfg),
         "description": _description(cfg),
+        "demonstrates": _demonstrates(cfg),
         "version": cfg.get("version"),
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),
@@ -198,6 +215,7 @@ def _parse_detail(config_file: Path) -> dict:
         "name": cfg.get("name"),
         "display_name": _display_name(cfg),
         "description": _description(cfg),
+        "demonstrates": _demonstrates(cfg),
         "version": cfg.get("version"),
         "agent_type": cfg.get("agent_type"),
         "provider": engine.get("provider"),

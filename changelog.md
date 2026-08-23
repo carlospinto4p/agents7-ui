@@ -2,6 +2,20 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.8 - 23rd August 2026
+
+- Added a `demonstrates` field to the Catalog page, separate from
+  `description`:
+  - `backend/routers/catalog.py`: `_demonstrates()` reads a
+    sample's `demonstrates` config key and returns it in both the
+    catalog list and agent detail responses.
+  - `frontend/src/pages/Catalog.svelte`: each card and the agent
+    detail page render it in its own labeled box, instead of the
+    previous approach of appending it as a sentence onto
+    `description`.
+  - Added `frontend/e2e/catalog-demonstrates.spec.js`: 3 tests.
+
+
 ### v0.29.7 - 23rd August 2026
 
 - Bumped the `agents7` dependency to v4.15.0

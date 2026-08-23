@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from routers.catalog import (
+    _demonstrates,
     _description,
     _first_sentences,
     _is_catalog_config,
@@ -68,6 +69,22 @@ def test_description_skips_auto_generated_prompt():
 
 def test_description_none_when_nothing_available():
     assert _description({"name": "Foo"}) is None
+
+
+# ── _demonstrates Tests ─────────────────────────────────────────────
+
+
+def test_demonstrates_is_stripped():
+    cfg = {"demonstrates": "  A `Labeler` writing prose.  "}
+    assert _demonstrates(cfg) == "A `Labeler` writing prose."
+
+
+def test_demonstrates_none_when_absent():
+    assert _demonstrates({"name": "Foo"}) is None
+
+
+def test_demonstrates_none_when_blank():
+    assert _demonstrates({"demonstrates": "   "}) is None
 
 
 # ── _first_sentences Tests ─────────────────────────────────────────

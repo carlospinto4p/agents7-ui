@@ -296,6 +296,12 @@
       {#if selected.description}
         <p class="detail-desc">{selected.description}</p>
       {/if}
+      {#if selected.demonstrates}
+        <div class="demonstrates-box">
+          <span class="demonstrates-label">Demonstrates</span>
+          <span class="demonstrates-text">{selected.demonstrates}</span>
+        </div>
+      {/if}
       <div class="badges">
         {#if selected.agent_type}
           <span class="badge type">{selected.agent_type}</span>
@@ -725,6 +731,12 @@
                 {#if agent.description}
                   <div class="card-desc">{agent.description}</div>
                 {/if}
+                {#if agent.demonstrates}
+                  <div class="card-demonstrates">
+                    <span class="demonstrates-label">Demonstrates</span>
+                    {agent.demonstrates}
+                  </div>
+                {/if}
                 {#if agent.pipeline_steps?.length}
                   <div class="card-steps">{agent.pipeline_steps.join(' → ')}</div>
                 {/if}
@@ -832,8 +844,26 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .card-demonstrates {
+    font-size: 1.0625rem;
+    color: var(--accent);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .card-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; }
   .card-footer { font-size: 1.0625rem; color: var(--text-muted); }
+
+  /* Demonstrates label — shared between card and detail view */
+  .demonstrates-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.9rem;
+    margin-right: 0.35rem;
+  }
 
   /* Badges */
   .badge {
@@ -887,6 +917,24 @@
     line-height: 1.55;
     margin: 0 0 0.85rem;
     max-width: 700px;
+  }
+  .demonstrates-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem;
+    max-width: 700px;
+    margin: 0 0 0.85rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--info-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+  }
+  .demonstrates-box .demonstrates-label { color: var(--accent); }
+  .demonstrates-text {
+    font-size: 1.0625rem;
+    color: var(--text);
+    line-height: 1.5;
   }
   .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .detail-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem; }
