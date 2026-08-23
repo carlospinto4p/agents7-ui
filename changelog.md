@@ -2,6 +2,20 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.11 - 23rd August 2026
+
+- Added `scripts/install_catalog.py`: installs every `agents_catalog/*`
+  package into the backend's virtualenv, editable and `--no-deps`,
+  then each package's third-party dependencies. Without it, running
+  the backend locally (no Docker) fails any agent whose
+  `output_model` / `tools` resolve to a dotted path outside the
+  framework — `POST /api/run/Tagger agent` raised
+  `ModuleNotFoundError: No module named 'tagger_agent'`. The Compose
+  stack already handled this in `Dockerfile.backend`.
+- Updated `README.md`: added the catalog-install step to
+  "Run locally (no Docker)".
+
+
 ### v0.29.10 - 23rd August 2026
 
 - Restructured a sample's `demonstrates` field from a prose sentence

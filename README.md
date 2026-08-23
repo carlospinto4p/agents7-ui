@@ -16,21 +16,36 @@ the backend at `localhost:11434` and the repo's `agents_catalog/`.
    ollama serve            # or: systemctl start ollama
    ```
 
-2. **Backend** — port 8002 (the dev frontend proxies `/api` to it):
+2. **Catalog packages** — install every catalog agent that ships as a
+   package into the backend's venv:
+
+   ```bash
+   uv run --project agents7_ui/backend python agents7_ui/scripts/install_catalog.py
+   ```
+
+   Those agents resolve their `output_model` / `tools` by dotted path
+   (e.g. `tagger_agent.models.NickTag`), so without this step
+   `POST /api/run/Tagger agent` fails with `ModuleNotFoundError`. The
+   script installs each package editable and `--no-deps`, then its
+   third-party dependencies. Re-run it after adding a new catalog
+   package. The Compose stack does the same thing in
+   `Dockerfile.backend` and needs no manual step.
+
+3. **Backend** — port 8002 (the dev frontend proxies `/api` to it):
 
    ```bash
    cd agents7_ui/backend
    uv run uvicorn main:app --port 8002 --reload
    ```
 
-3. **Frontend** — Vite dev server on :5186, proxies `/api` → :8002:
+4. **Frontend** — Vite dev server on :5186, proxies `/api` → :8002:
 
    ```bash
    corepack pnpm --dir agents7_ui/frontend install
    corepack pnpm --dir agents7_ui/frontend dev
    ```
 
-4. Open <http://localhost:5186>.
+5. Open <http://localhost:5186>.
 
 ## Run with Docker Compose
 
