@@ -734,7 +734,7 @@
                 {#if agent.demonstrates}
                   <div class="card-demonstrates">
                     <span class="demonstrates-label">Demonstrates</span>
-                    {agent.demonstrates}
+                    <span class="card-demonstrates-text">{agent.demonstrates}</span>
                   </div>
                 {/if}
                 {#if agent.pipeline_steps?.length}
@@ -845,8 +845,18 @@
     overflow: hidden;
   }
   .card-demonstrates {
-    font-size: 1.0625rem;
-    color: var(--accent);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem;
+    padding: 0.4rem 0.55rem;
+    background: var(--info-bg);
+    border-radius: 6px;
+  }
+  .card-demonstrates .demonstrates-label { font-size: 0.8rem; }
+  .card-demonstrates-text {
+    font-size: 1rem;
+    color: var(--text-muted);
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -862,7 +872,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-size: 0.9rem;
-    margin-right: 0.35rem;
+    color: var(--accent);
   }
 
   /* Badges */

@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.9 - 23rd August 2026
+
+- Fixed `frontend/src/pages/Catalog.svelte`: a card's Demonstrates
+  line rendered as solid accent-colored text the same weight as its
+  label, reading as a wall of blue. Restyled it as a small tinted
+  chip — only the "DEMONSTRATES" label keeps the accent color, the
+  capability text is muted like the rest of the card.
+
+
 ### v0.29.8 - 23rd August 2026
 
 - Added a `demonstrates` field to the Catalog page, separate from
