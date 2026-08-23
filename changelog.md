@@ -2,6 +2,28 @@
 ## Changelog - agents7 UI
 
 
+### v0.30.1 - 23rd August 2026
+
+- Added `backend/env_setup.py`: loads `agents7_ui/.env` into the
+  environment on import, so a locally-run backend
+  (`uv run uvicorn main:app`) sees the same variables the Compose stack
+  gets through `env_file:`. Previously every non-Ollama provider reported
+  "not ready" on the Chatter page outside Docker even with its key in the
+  file. A real environment variable still wins over the file, so
+  `docker-compose.yml`'s `environment:` block keeps priority.
+  - Imported first in `backend/main.py`: `logging_setup`,
+    `routers.engine` and `routers.catalog` read variables at import time.
+  - Declared `python-dotenv` explicitly in `backend/pyproject.toml`;
+    it was only present transitively via `uvicorn[standard]`.
+  - Added `backend/tests/test_env_setup.py`: 4 tests covering the path
+    resolved, an unset name taken from the file, a real environment
+    variable winning, and a missing file being a no-op.
+- Updated docs for the same change:
+  - `README.md`: the local-run and Configuration sections now say both
+    start-up paths read `.env`.
+  - `.env.example`: header documents both readers, not just Compose.
+
+
 ### v0.30.0 - 23rd August 2026
 
 - Added a **Character** section to the Catalog detail page, below the

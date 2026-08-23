@@ -7,8 +7,10 @@ chat, evaluate, and inspect the Ollama engine. FastAPI backend + Svelte
 ## Run locally (no Docker)
 
 The default workflow. Needs a local Ollama plus `uv` and `pnpm` (via
-corepack). No environment configuration is required — the defaults point
-the backend at `localhost:11434` and the repo's `agents_catalog/`.
+corepack). No environment configuration is required to run against Ollama
+— the defaults point the backend at `localhost:11434` and the repo's
+`agents_catalog/`. Anything you do put in `.env` (provider keys, ports) is
+read on startup; see [Configuration](#configuration).
 
 1. **Ollama** — run it on the host on its default port:
 
@@ -104,7 +106,17 @@ The e2e specs need **no backend**: every `/api` call is stubbed in
 
 See [`.env.example`](.env.example) for all environment variables
 (`OLLAMA_HOST`, `CORS_ORIGINS`, `API_KEY`, provider keys, tuning). Copy it
-to `.env` for the Compose stack; secrets never belong in `docker-compose.yml`.
+to `.env`; secrets never belong in `docker-compose.yml`.
+
+Both ways of starting the backend read that one file. Compose hands it to
+the container through `env_file:`; a direct `uv run uvicorn main:app`
+loads it in `backend/env_setup.py`. So a provider key set in `.env` makes
+that provider usable on the Chatter page either way — before v0.30.1 it
+worked only under Compose.
+
+A real environment variable always wins over the file, which keeps the
+values `docker-compose.yml` sets in `environment:` — and an explicit
+`VAR=... uv run uvicorn ...` — in charge.
 
 ## Logs
 

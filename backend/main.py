@@ -5,6 +5,10 @@ import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+# Must precede every import below: reads `agents7_ui/.env` into the
+# environment, and `logging_setup` / `routers.engine` /
+# `routers.catalog` all read variables at import time.
+import env_setup  # noqa: F401
 import tomllib
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
