@@ -136,6 +136,54 @@ def _demonstrates(cfg: dict) -> dict | None:
     return result
 
 
+# Guard tuning lives at the top level of the config, not inside the
+# `guard:` block — the framework reads it off the chatter itself
+# (see agents7.agents.config_loader._GUARDED_OPTIONAL_FIELDS).
+_GUARD_SETTING_KEYS = (
+    "max_guard_retries",
+    "guard_context_turns",
+    "guard_buffer_stream",
+    "guard_fail_open",
+    "guard_fallback_response",
+)
+
+
+def _guard_data(cfg: dict) -> dict | None:
+    """Return the agent's context-guard configuration, if it has one.
+
+    A `guarded_*` agent always runs a guard, even with no `guard:`
+    block — the framework falls back to the agent's own engine and to
+    a persona-derived summary. So the guard is reported whenever the
+    agent type calls for one or any guard setting is present, and the
+    engine carries an `engine_inherited` flag saying which case it is.
+
+    :param cfg: Parsed agent config dictionary.
+    :return: A dict describing the guard, or `None` when the agent
+        has no guard at all.
+    """
+    guard_raw = cfg.get("guard")
+    guard_raw = guard_raw if isinstance(guard_raw, dict) else {}
+    settings = {k: cfg[k] for k in _GUARD_SETTING_KEYS if k in cfg}
+    is_guarded = "guard" in str(cfg.get("agent_type") or "").lower()
+    if not guard_raw and not settings and not is_guarded:
+        return None
+
+    engine = guard_raw.get("engine")
+    inherited = not isinstance(engine, dict)
+    if inherited:
+        engine = cfg.get("engine") or {}
+
+    return {
+        "provider": engine.get("provider"),
+        "model": engine.get("model"),
+        "engine_inherited": inherited,
+        "think": guard_raw.get("think"),
+        "forbidden_terms": guard_raw.get("forbidden_terms"),
+        "persona_summary": guard_raw.get("persona_summary"),
+        "settings": settings,
+    }
+
+
 def _resolve_pipeline_step_details(
     config_file: Path, steps: list[dict]
 ) -> list[dict]:
@@ -234,6 +282,7 @@ def _parse_detail(config_file: Path) -> dict:
         "system_prompt": cfg.get("system_prompt"),
         "persona": cfg.get("persona"),
         "scene": cfg.get("scene"),
+        "guard": _guard_data(cfg),
         "output_model": cfg.get("output_model"),
         "output_schema": output_schema,
         "system_examples": cfg.get("system_examples"),

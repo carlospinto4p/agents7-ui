@@ -4,6 +4,7 @@ from routers.catalog import (
     _demonstrates,
     _description,
     _first_sentences,
+    _guard_data,
     _is_catalog_config,
 )
 
@@ -109,3 +110,78 @@ def test_first_sentences_truncates_on_word_boundary():
     assert out.endswith("…")
     assert len(out) <= 221
     assert "wor…" not in out  # truncated on a space, not mid-word
+
+
+# ── _guard_data Tests ──────────────────────────────────────────────
+
+
+def test_guard_data_none_for_unguarded_agent():
+    cfg = {"agent_type": "chatter", "engine": {"model": "qwen3:4b"}}
+    assert _guard_data(cfg) is None
+
+
+def test_guard_data_reads_its_own_engine():
+    cfg = {
+        "agent_type": "guarded_chatter",
+        "engine": {"provider": "ollama", "model": "qwen3:4b"},
+        "guard": {
+            "engine": {"provider": "ollama", "model": "gemma4:e4b"},
+            "think": True,
+        },
+    }
+    guard = _guard_data(cfg)
+    assert guard["model"] == "gemma4:e4b"
+    assert guard["engine_inherited"] is False
+    assert guard["think"] is True
+
+
+def test_guard_data_inherits_the_agent_engine():
+    cfg = {
+        "agent_type": "guarded_scene_chatter",
+        "engine": {"provider": "ollama", "model": "qwen3:4b"},
+    }
+    guard = _guard_data(cfg)
+    assert guard["model"] == "qwen3:4b"
+    assert guard["provider"] == "ollama"
+    assert guard["engine_inherited"] is True
+
+
+def test_guard_data_collects_top_level_settings():
+    cfg = {
+        "agent_type": "guarded_chatter",
+        "engine": {"model": "qwen3:4b"},
+        "max_guard_retries": 2,
+        "guard_context_turns": 3,
+        "temperature": 0.7,
+    }
+    guard = _guard_data(cfg)
+    assert guard["settings"] == {
+        "max_guard_retries": 2,
+        "guard_context_turns": 3,
+    }
+
+
+def test_guard_data_found_via_settings_without_guarded_type():
+    cfg = {"agent_type": "chatter", "engine": {}, "max_guard_retries": 1}
+    assert _guard_data(cfg)["settings"] == {"max_guard_retries": 1}
+
+
+def test_guard_data_carries_forbidden_terms_and_summary():
+    cfg = {
+        "agent_type": "guarded_chatter",
+        "engine": {},
+        "guard": {
+            "forbidden_terms": ["as an AI"],
+            "persona_summary": "A Spanish journalist.",
+        },
+    }
+    guard = _guard_data(cfg)
+    assert guard["forbidden_terms"] == ["as an AI"]
+    assert guard["persona_summary"] == "A Spanish journalist."
+
+
+def test_guard_data_tolerates_non_mapping_guard_block():
+    cfg = {"agent_type": "guarded_chatter", "engine": {}, "guard": "yes"}
+    guard = _guard_data(cfg)
+    assert guard["engine_inherited"] is True
+    assert guard["think"] is None

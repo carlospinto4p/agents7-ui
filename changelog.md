@@ -2,6 +2,34 @@
 ## Changelog - agents7 UI
 
 
+### v0.30.0 - 23rd August 2026
+
+- Added a **Character** section to the Catalog detail page, below the
+  Runner, with one tab per block the agent actually defines:
+  - `Persona`: identity fields, physical appearance, personality and
+    interest chips, backstory, speaking style, and `extra` details.
+  - `Scene`: time period, setting, situation, goal, and numbered lists
+    of rules and other characters.
+  - `Guard`: the guard's model (flagged when inherited from the
+    agent's own engine), thinking mode, forbidden terms, the
+    `max_guard_retries` / `guard_context_turns` tuning, and the
+    character summary the guard judges against.
+- Added `routers/catalog.py`:
+  - `_guard_data()`: reads the `guard:` block plus the top-level
+    `guard_*` settings, resolving the engine the guard actually runs
+    on. `/api/catalog/<agent>` now returns a `guard` key; a
+    `guarded_*` agent reports its guard even with no `guard:` block.
+- Added tests:
+  - `backend/tests/test_catalog.py`: 7 tests for `_guard_data()`.
+  - `frontend/e2e/catalog-character.spec.js`: 7 tests covering tab
+    rendering per agent shape, tab switching, and the absence of the
+    section for an agent with no persona, scene, or guard.
+- Updated `README.md`: the catalog-install step now notes that
+  `uv sync` on the backend uninstalls the catalog packages, since they
+  are not backend dependencies, so `install_catalog.py` must be re-run
+  after one.
+
+
 ### v0.29.11 - 23rd August 2026
 
 - Added `scripts/install_catalog.py`: installs every `agents_catalog/*`

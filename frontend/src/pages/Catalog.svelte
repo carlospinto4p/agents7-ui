@@ -13,7 +13,7 @@
 
   // ── Collapse state (persists while component is mounted) ──
   let open = $state({
-    runner: true, schema: true, examples: true,
+    runner: true, character: true, schema: true, examples: true,
     prompt: false, yaml: false,
   })
 
@@ -166,6 +166,119 @@
     if (modelLabel) parts.push(modelLabel)
     return parts.join(' · ')
   })
+
+  // ── Character panel (persona / scene / guard) ───────────────
+  // Roleplay agents carry three structured blocks the runner alone
+  // never shows. Field order below mirrors the framework's Persona
+  // and Scene dataclasses so the panel reads like the config does.
+  const PERSONA_ROWS = [
+    ['full_name', 'Full name'],
+    ['birthdate', 'Birthdate'],
+    ['nationality', 'Nationality'],
+    ['occupation', 'Occupation'],
+    ['language', 'Language'],
+  ]
+  const PHYSICAL_ROWS = [
+    ['height', 'Height'],
+    ['build', 'Build'],
+    ['hair', 'Hair'],
+    ['eyes', 'Eyes'],
+    ['skin', 'Skin'],
+    ['distinguishing_features', 'Distinguishing features'],
+  ]
+  const PERSONA_CHIPS = [
+    ['personality', 'Personality'],
+    ['interests', 'Interests'],
+  ]
+  const PERSONA_TEXTS = [
+    ['backstory', 'Backstory'],
+    ['speaking_style', 'Speaking style'],
+  ]
+  const SCENE_ROWS = [['time_period', 'Time period']]
+  const SCENE_TEXTS = [
+    ['setting', 'Setting'],
+    ['situation', 'Situation'],
+    ['goal', 'Goal'],
+  ]
+  const SCENE_LISTS = [
+    ['rules', 'Rules'],
+    ['other_characters', 'Other characters'],
+  ]
+
+  // Label/value pairs for the fields in `spec` that are actually set.
+  function rows(obj, spec) {
+    if (!obj || typeof obj !== 'object') return []
+    return spec
+      .map(([key, label]) => ({ label, value: obj[key] }))
+      .filter(r => r.value != null && String(r.value).trim() !== '')
+  }
+
+  function listOf(obj, key) {
+    const v = obj?.[key]
+    return Array.isArray(v) ? v.filter(x => x != null && x !== '') : []
+  }
+
+  // `extra` is a free-form key/value map on both Persona and Scene.
+  function extraRows(obj) {
+    const extra = obj?.extra
+    if (!extra || typeof extra !== 'object' || Array.isArray(extra)) return []
+    return Object.entries(extra)
+      .filter(([, v]) => v != null && String(v).trim() !== '')
+      .map(([label, value]) => ({ label, value }))
+  }
+
+  // A YAML literal block (`|`) keeps the config file's hard line
+  // wraps, which render as a ragged narrow column. Reflow each
+  // paragraph and keep blank lines as paragraph breaks. The YAML
+  // Source section below still shows the text exactly as written.
+  function prose(text) {
+    return String(text)
+      .split(/\n\s*\n/)
+      .map(p => p.replace(/\s*\n\s*/g, ' ').trim())
+      .filter(Boolean)
+      .join('\n\n')
+  }
+
+  // `max_guard_retries` → `Max guard retries`.
+  function humanize(key) {
+    const spaced = key.replace(/_/g, ' ')
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+  }
+
+  function fmtValue(value) {
+    if (typeof value === 'boolean') return value ? 'yes' : 'no'
+    return String(value)
+  }
+
+  let persona = $derived(selected?.persona ?? null)
+  let scene   = $derived(selected?.scene ?? null)
+  let guard   = $derived(selected?.guard ?? null)
+
+  let guardSettingRows = $derived(
+    Object.entries(guard?.settings ?? {}).map(([k, v]) => ({
+      label: humanize(k),
+      value: fmtValue(v),
+    }))
+  )
+
+  let characterTabs = $derived(
+    [
+      persona ? { key: 'persona', label: 'Persona' } : null,
+      scene ? { key: 'scene', label: 'Scene' } : null,
+      guard ? { key: 'guard', label: 'Guard' } : null,
+    ].filter(Boolean)
+  )
+
+  let characterTab = $state(null)
+
+  // Derived rather than reset in an effect: selecting another agent
+  // whose tabs differ falls back to its first tab on its own, with no
+  // reactive dependency on the fetch state.
+  let activeCharacterTab = $derived(
+    characterTabs.some(t => t.key === characterTab)
+      ? characterTab
+      : (characterTabs[0]?.key ?? null)
+  )
 
   // Load the catalog once on mount — not a reactive effect, so it
   // can never re-fire on unrelated state changes.
@@ -577,6 +690,195 @@
       {/if}
     </section>
 
+    <!-- Persona / Scene / Guard -->
+    {#if characterTabs.length > 0}
+      <section class="character-section">
+        <button class="sec-hdr" onclick={() => toggle('character')}>
+          <h2>Character</h2>
+          <span class="chevron" class:closed={!open.character}>▾</span>
+        </button>
+        {#if open.character}
+          <div class="char-tabs">
+            {#each characterTabs as t}
+              <button
+                class="tab-btn"
+                class:active={activeCharacterTab === t.key}
+                onclick={() => characterTab = t.key}
+              >{t.label}</button>
+            {/each}
+          </div>
+
+          {#if activeCharacterTab === 'persona'}
+            <p class="section-desc">
+              The character this agent plays, rendered into its system
+              prompt before every request.
+            </p>
+            <div class="char-panel">
+              {#each rows(persona, PERSONA_ROWS) as r}
+                <div class="kv-row">
+                  <span class="kv-label">{r.label}</span>
+                  <span class="kv-value">{r.value}</span>
+                </div>
+              {/each}
+
+              {#if rows(persona.physical, PHYSICAL_ROWS).length > 0}
+                <div class="char-block">
+                  <h3 class="char-block-title">Physical appearance</h3>
+                  {#each rows(persona.physical, PHYSICAL_ROWS) as r}
+                    <div class="kv-row">
+                      <span class="kv-label">{r.label}</span>
+                      <span class="kv-value">{r.value}</span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+
+              {#each PERSONA_CHIPS as [key, label]}
+                {#if listOf(persona, key).length > 0}
+                  <div class="char-block">
+                    <h3 class="char-block-title">{label}</h3>
+                    <div class="chip-row">
+                      {#each listOf(persona, key) as item}
+                        <span class="badge trait">{item}</span>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+              {/each}
+
+              {#each PERSONA_TEXTS as [key, label]}
+                {#if persona[key]}
+                  <div class="char-block">
+                    <h3 class="char-block-title">{label}</h3>
+                    <p class="char-text">{prose(persona[key])}</p>
+                  </div>
+                {/if}
+              {/each}
+
+              {#if extraRows(persona).length > 0}
+                <div class="char-block">
+                  <h3 class="char-block-title">Additional details</h3>
+                  {#each extraRows(persona) as r}
+                    <div class="kv-row">
+                      <span class="kv-label">{r.label}</span>
+                      <span class="kv-value">{r.value}</span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+
+          {:else if activeCharacterTab === 'scene'}
+            <p class="section-desc">
+              Where the character is and what constrains them. Rendered
+              into the system prompt alongside the persona.
+            </p>
+            <div class="char-panel">
+              {#each rows(scene, SCENE_ROWS) as r}
+                <div class="kv-row">
+                  <span class="kv-label">{r.label}</span>
+                  <span class="kv-value">{r.value}</span>
+                </div>
+              {/each}
+
+              {#each SCENE_TEXTS as [key, label]}
+                {#if scene[key]}
+                  <div class="char-block">
+                    <h3 class="char-block-title">{label}</h3>
+                    <p class="char-text">{prose(scene[key])}</p>
+                  </div>
+                {/if}
+              {/each}
+
+              {#each SCENE_LISTS as [key, label]}
+                {#if listOf(scene, key).length > 0}
+                  <div class="char-block">
+                    <h3 class="char-block-title">
+                      {label} ({listOf(scene, key).length})
+                    </h3>
+                    <ul class="char-list">
+                      {#each listOf(scene, key) as item}
+                        <li>{item}</li>
+                      {/each}
+                    </ul>
+                  </div>
+                {/if}
+              {/each}
+
+              {#if extraRows(scene).length > 0}
+                <div class="char-block">
+                  <h3 class="char-block-title">Additional details</h3>
+                  {#each extraRows(scene) as r}
+                    <div class="kv-row">
+                      <span class="kv-label">{r.label}</span>
+                      <span class="kv-value">{r.value}</span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+
+          {:else if activeCharacterTab === 'guard'}
+            <p class="section-desc">
+              A second model checks every reply before it reaches the
+              conversation, and asks for a rewrite when the reply breaks
+              character or the scene's rules.
+            </p>
+            <div class="char-panel">
+              <div class="kv-row">
+                <span class="kv-label">Guard model</span>
+                <span class="kv-value">
+                  {[guard.provider, guard.model].filter(Boolean).join(' / ')
+                    || '—'}
+                  {#if guard.engine_inherited}
+                    <span class="kv-note">inherited from the agent</span>
+                  {/if}
+                </span>
+              </div>
+              {#if guard.think != null}
+                <div class="kv-row">
+                  <span class="kv-label">Thinking</span>
+                  <span class="kv-value">{fmtValue(guard.think)}</span>
+                </div>
+              {/if}
+              {#each guardSettingRows as r}
+                <div class="kv-row">
+                  <span class="kv-label">{r.label}</span>
+                  <span class="kv-value">{r.value}</span>
+                </div>
+              {/each}
+
+              {#if listOf(guard, 'forbidden_terms').length > 0}
+                <div class="char-block">
+                  <h3 class="char-block-title">
+                    Forbidden terms
+                    ({listOf(guard, 'forbidden_terms').length})
+                  </h3>
+                  <div class="chip-row">
+                    {#each listOf(guard, 'forbidden_terms') as term}
+                      <span class="badge forbidden">{term}</span>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+
+              <div class="char-block">
+                <h3 class="char-block-title">Character summary</h3>
+                {#if guard.persona_summary}
+                  <p class="char-text">{prose(guard.persona_summary)}</p>
+                {:else}
+                  <p class="char-text muted">
+                    Not set in the config — derived from the persona{
+                      scene ? ' and scene' : ''}.
+                  </p>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        {/if}
+      </section>
+    {/if}
+
     <!-- Output Schema / Model -->
     {#if selected.output_schema}
       <section>
@@ -898,6 +1200,110 @@
     font-family: ui-monospace, 'Cascadia Code', monospace;
   }
   .badge.demo-feature { background: var(--neutral-bg); color: var(--neutral); }
+  .badge.trait     { background: var(--info-bg);    color: var(--accent); }
+  .badge.forbidden {
+    background: var(--fail-bg);
+    color: var(--fail);
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+  }
+
+  /* Character panel (persona / scene / guard) */
+  .char-tabs {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 0.7rem;
+  }
+  .tab-btn {
+    padding: 0.35rem 0.85rem;
+    border: none;
+    background: var(--bg-surface);
+    font-size: 1.0625rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .tab-btn + .tab-btn { border-left: 1px solid var(--border); }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .tab-btn:not(.active):hover { background: var(--bg-raised); }
+
+  .char-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 0;
+  }
+  .kv-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+  .kv-label {
+    flex: 0 0 11rem;
+    max-width: 100%;
+    font-size: 1.0625rem;
+    color: var(--text-muted);
+  }
+  .kv-value {
+    flex: 1 1 14rem;
+    min-width: 0;
+    font-size: 1.0625rem;
+    color: var(--text-strong);
+    overflow-wrap: anywhere;
+  }
+  .kv-note {
+    margin-left: 0.4rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .char-block {
+    margin-top: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+  .char-block-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0;
+  }
+  .char-text {
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--text);
+    /* Backstories and scene settings keep their config line breaks. */
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .char-text.muted { color: var(--text-muted); }
+  .char-list {
+    margin: 0;
+    padding-left: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 1.0625rem;
+    color: var(--text);
+  }
+  .char-list li { overflow-wrap: anywhere; }
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-width: 0;
+  }
 
   /* Back button */
   .back-btn {
