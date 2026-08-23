@@ -2,6 +2,21 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.10 - 23rd August 2026
+
+- Restructured a sample's `demonstrates` field from a prose sentence
+  into `{class, feature}` — a framework class name (e.g. `Labeler`)
+  and an optional short feature tag (e.g. `tool calling`):
+  - `backend/routers/catalog.py`: `_demonstrates()` now returns
+    that shape (or `None` when `class` is missing), instead of a
+    stripped string.
+  - `frontend/src/pages/Catalog.svelte`: the card and detail page
+    render `class`/`feature` as badges next to the "Demonstrates"
+    label, instead of a sentence in a tinted box.
+  - Updated `frontend/e2e/catalog-demonstrates.spec.js` for the new
+    shape; added a class-only (no feature) case.
+
+
 ### v0.29.9 - 23rd August 2026
 
 - Fixed `frontend/src/pages/Catalog.svelte`: a card's Demonstrates

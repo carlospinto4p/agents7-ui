@@ -297,9 +297,12 @@
         <p class="detail-desc">{selected.description}</p>
       {/if}
       {#if selected.demonstrates}
-        <div class="demonstrates-box">
+        <div class="demonstrates-row">
           <span class="demonstrates-label">Demonstrates</span>
-          <span class="demonstrates-text">{selected.demonstrates}</span>
+          <span class="badge demo-class">{selected.demonstrates.class}</span>
+          {#if selected.demonstrates.feature}
+            <span class="badge demo-feature">{selected.demonstrates.feature}</span>
+          {/if}
         </div>
       {/if}
       <div class="badges">
@@ -734,7 +737,10 @@
                 {#if agent.demonstrates}
                   <div class="card-demonstrates">
                     <span class="demonstrates-label">Demonstrates</span>
-                    <span class="card-demonstrates-text">{agent.demonstrates}</span>
+                    <span class="badge demo-class">{agent.demonstrates.class}</span>
+                    {#if agent.demonstrates.feature}
+                      <span class="badge demo-feature">{agent.demonstrates.feature}</span>
+                    {/if}
                   </div>
                 {/if}
                 {#if agent.pipeline_steps?.length}
@@ -847,22 +853,10 @@
   .card-demonstrates {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.3rem;
-    padding: 0.4rem 0.55rem;
-    background: var(--info-bg);
-    border-radius: 6px;
+    align-items: center;
+    gap: 0.35rem;
   }
   .card-demonstrates .demonstrates-label { font-size: 0.8rem; }
-  .card-demonstrates-text {
-    font-size: 1rem;
-    color: var(--text-muted);
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
   .card-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; }
   .card-footer { font-size: 1.0625rem; color: var(--text-muted); }
 
@@ -872,7 +866,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-size: 0.9rem;
-    color: var(--accent);
+    color: var(--text-muted);
   }
 
   /* Badges */
@@ -898,6 +892,12 @@
   }
   .badge.provider { background: var(--warn-bg);     color: var(--warn); }
   .badge.version  { background: var(--neutral-bg);  color: var(--neutral); }
+  .badge.demo-class {
+    background: var(--info-bg);
+    color: var(--accent);
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+  }
+  .badge.demo-feature { background: var(--neutral-bg); color: var(--neutral); }
 
   /* Back button */
   .back-btn {
@@ -928,23 +928,12 @@
     margin: 0 0 0.85rem;
     max-width: 700px;
   }
-  .demonstrates-box {
+  .demonstrates-row {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.3rem;
-    max-width: 700px;
+    align-items: center;
+    gap: 0.4rem;
     margin: 0 0 0.85rem;
-    padding: 0.5rem 0.75rem;
-    background: var(--info-bg);
-    border-left: 3px solid var(--accent);
-    border-radius: 4px;
-  }
-  .demonstrates-box .demonstrates-label { color: var(--accent); }
-  .demonstrates-text {
-    font-size: 1.0625rem;
-    color: var(--text);
-    line-height: 1.5;
   }
   .badges { display: flex; gap: 0.4rem; flex-wrap: wrap; }
   .detail-steps { font-size: 1.0625rem; color: var(--text-muted); font-style: italic; margin-top: 0.5rem; }

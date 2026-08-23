@@ -111,20 +111,29 @@ def _description(cfg: dict) -> str | None:
     return None
 
 
-def _demonstrates(cfg: dict) -> str | None:
-    """Return what framework capability this agent demonstrates.
+def _demonstrates(cfg: dict) -> dict | None:
+    """Return the framework class (and optional feature) this
+    agent demonstrates.
 
     Only meaningful for samples under `examples/` — a catalog agent
     solves a real task rather than showcasing a capability, so it
     typically has no `demonstrates` field.
 
     :param cfg: Parsed agent config dictionary.
-    :return: The `demonstrates` string, or `None` if absent.
+    :return: ``{"class": <name>}``, plus a ``"feature"`` key when
+        one is set, or `None` if `demonstrates` or its `class` is
+        missing.
     """
     demonstrates = cfg.get("demonstrates")
-    if not demonstrates:
+    if not isinstance(demonstrates, dict):
         return None
-    return str(demonstrates).strip() or None
+    cls = demonstrates.get("class")
+    if not cls:
+        return None
+    result = {"class": str(cls).strip()}
+    if feature := demonstrates.get("feature"):
+        result["feature"] = str(feature).strip()
+    return result
 
 
 def _resolve_pipeline_step_details(

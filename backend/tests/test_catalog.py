@@ -74,17 +74,26 @@ def test_description_none_when_nothing_available():
 # ── _demonstrates Tests ─────────────────────────────────────────────
 
 
-def test_demonstrates_is_stripped():
-    cfg = {"demonstrates": "  A `Labeler` writing prose.  "}
-    assert _demonstrates(cfg) == "A `Labeler` writing prose."
+def test_demonstrates_class_and_feature():
+    cfg = {"demonstrates": {"class": "  Labeler  ", "feature": "  prose  "}}
+    assert _demonstrates(cfg) == {"class": "Labeler", "feature": "prose"}
+
+
+def test_demonstrates_class_only():
+    cfg = {"demonstrates": {"class": "Classifier"}}
+    assert _demonstrates(cfg) == {"class": "Classifier"}
 
 
 def test_demonstrates_none_when_absent():
     assert _demonstrates({"name": "Foo"}) is None
 
 
-def test_demonstrates_none_when_blank():
-    assert _demonstrates({"demonstrates": "   "}) is None
+def test_demonstrates_none_when_not_a_mapping():
+    assert _demonstrates({"demonstrates": "A Labeler writing prose."}) is None
+
+
+def test_demonstrates_none_when_class_missing():
+    assert _demonstrates({"demonstrates": {"feature": "prose"}}) is None
 
 
 # ── _first_sentences Tests ─────────────────────────────────────────
