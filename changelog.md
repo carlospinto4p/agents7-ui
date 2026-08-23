@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.4 - 23rd August 2026
+
+- Fixed `backend/main.py`: the framework README path used
+  `Path(__file__).parents[1]`, resolving to a nonexistent
+  `agents7_ui/agents7_framework/README.md` and 404ing the Home
+  page's README fetch. Corrected to `parents[2]` to reach the
+  repo-root `agents7_framework/README.md`.
+
+
 ### v0.29.3 - 28th July 2026
 
 - Rotated changelog: archived 2 entries to `changelog/2026.md`.

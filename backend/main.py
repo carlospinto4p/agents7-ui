@@ -2,14 +2,13 @@ import asyncio
 import functools
 import os
 import re
-import tomllib
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import tomllib
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
-
 from logging_setup import configure_logging
 from routers import catalog, chat, classes, engine, eval, run
 
@@ -81,7 +80,7 @@ app.include_router(engine.router)
 app.include_router(eval.router)
 app.include_router(chat.router)
 
-_README = Path(__file__).parents[1] / "agents7_framework" / "README.md"
+_README = Path(__file__).parents[2] / "agents7_framework" / "README.md"
 
 
 @functools.lru_cache(maxsize=1)
