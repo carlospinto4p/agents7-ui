@@ -2,6 +2,21 @@
 ## Changelog - agents7 UI
 
 
+### v0.29.7 - 23rd August 2026
+
+- Bumped the `agents7` dependency to v4.15.0
+  (`agents7.tools.demo`, added for the `StoreAssistant` catalog
+  reclassification below — no `agents7_ui` code changed).
+- `StoreAssistant` moved from `agents_catalog/store_assistant/` (a
+  catalog agent package) to `agents_catalog/examples/store_assistant/`
+  (a sample); the Catalog page now lists it under "Framework
+  Examples" instead of "Catalog Agents". Its tools now resolve from
+  `agents7.tools.demo` — which, as a bonus, fixes running it locally
+  without Docker (its tools now live in the framework, already a
+  backend dependency, instead of a separate package the backend's
+  venv never had installed).
+
+
 ### v0.29.6 - 23rd August 2026
 
 - Fixed `frontend/src/pages/Catalog.svelte`: the embedded Runner
