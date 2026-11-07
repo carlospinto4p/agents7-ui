@@ -2,6 +2,25 @@
 ## Changelog - agents7 UI
 
 
+### v0.48.1 - 7th November 2026
+
+- Added the project's Claude Code setup, carried over from the old
+  combined repository and cleaned for a public repository:
+  - `CLAUDE.md`: written for the UI, with the old file's general rules
+    kept as they were.
+  - `.claude/rules/`: committing, versioning, testing, the review-area
+    notes (with the Svelte `$effect` notes), `metrics-completeness.md`
+    (triggered by `backend/` and `frontend/src/`), and a rule index.
+  - `.claude/skills/fix-errors/` and its `.opencode/` command, with
+    paths at the repository root.
+  - `.claude/settings.json`: tool permissions.
+- Added the pre-commit setup: `.pre-commit-config.yaml` (ruff pinned to
+  v0.15.9, changelog and version guards) and `.pre-commit-scripts/`;
+  `pre-commit` joins the backend's dev dependencies so the hook has a
+  stable environment.
+- Added `scripts/changelog-add.sh`.
+
+
 ### v0.48.0 - 7th November 2026
 
 - The UI is now its own repository, cut from the old combined one with

@@ -1,6 +1,6 @@
 [project]
 name = "agents7-ui-backend"
-version = "0.48.0"
+version = "0.48.1"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
@@ -40,7 +40,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "pre-commit>=4.0"]
 
 # Catalog agents are deliberately absent here. Each one is an
 # independent package with its own version and venv, so naming them
