@@ -338,6 +338,36 @@ def test_a_session_that_said_nothing_cannot_be_saved(agent_package):
         _store.delete(sid)
 
 
+def test_an_agent_outside_the_catalog_is_refused_before_writing(
+    tmp_path, monkeypatch
+):
+    """An agent found only as an installed package lives outside
+    `CATALOG_PATH`. Its read used to be written into the installed
+    package and then answered with a server error, because its path
+    could not be made relative to the catalog."""
+    catalog = tmp_path / "catalog"
+    catalog.mkdir()
+    monkeypatch.setattr(chat_mod, "CATALOG_PATH", catalog)
+    pkg = tmp_path / "site-packages" / "demo"
+    pkg.mkdir(parents=True)
+    (pkg / "pyproject.toml").write_text(
+        '[project]\nname = "demo"\nversion = "1.0.0"\n', encoding="utf-8"
+    )
+    config = pkg / "config.yml"
+    config.write_text("name: demo\n", encoding="utf-8")
+    t = _transcript(config)
+    t.record(None, _resp("buenas"), (), 1.0)
+    sid = _store.create(_FakeGuarded(), t)
+    try:
+        with pytest.raises(HTTPException) as exc:
+            _save(sid, read_id="r", conversation_id="c")
+        assert exc.value.status_code == 422
+        assert exc.value.detail.startswith("Could not save")
+        assert not (pkg / "docs").exists()
+    finally:
+        _store.delete(sid)
+
+
 def test_an_unknown_session_is_a_404():
     with pytest.raises(HTTPException) as exc:
         _save("nope")

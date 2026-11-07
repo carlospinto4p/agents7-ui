@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import time
+import tomllib
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -13,7 +14,6 @@ from datetime import UTC, datetime
 from importlib.util import find_spec
 from pathlib import Path
 
-import tomllib
 from agents7.agents.config_loader import build_engine
 from agents7.agents.utils import import_from_path
 from agents7.eval.chat_review import (
@@ -985,9 +985,21 @@ async def save_as_read(session_id: str, request: Request) -> dict:
                 ),
             )
 
-    folder = (
-        _package_root(transcript.config_file) / "docs" / "reads" / read_id
-    )
+    package = _package_root(transcript.config_file)
+    if not package.is_relative_to(CATALOG_PATH.resolve()):
+        # An agent found only as an installed package: its read would
+        # land inside the installed package, where the Reads page
+        # (which lists `CATALOG_PATH`) never looks.
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Could not save: this agent is installed at {package}, "
+                f"outside the catalog folder {CATALOG_PATH.resolve()}. "
+                f"Point CATALOG_PATH at the agent's checkout to save "
+                f"its reads."
+            ),
+        )
+    folder = package / "docs" / "reads" / read_id
     target = folder / f"{conversation_id}.json"
     if target.exists():
         raise HTTPException(

@@ -19,6 +19,11 @@ recording under that agent's `docs/reads/`. Saving leaves the session
 open, so you can save and keep chatting. An existing recording is never
 overwritten. The confirmation links to the saved conversation.
 
+Saving needs the agent's folder to be inside the catalog folder
+(`CATALOG_PATH`), because that is where the Reads page looks. An agent
+found only as an installed package is refused with a message saying so;
+to save its reads, point `CATALOG_PATH` at the agent's checkout.
+
 The **Download** button beside it is different. It writes only
 `{role, text}`, with no metrics, guard verdicts or context, so no read
 can be built from it.

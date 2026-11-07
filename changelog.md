@@ -2,6 +2,17 @@
 ## Changelog - agents7 UI
 
 
+### v0.49.4 - 7th November 2026
+
+- Fixed `backend/routers/chat.py` `save_as_read`: for an agent found
+  only as an installed package (outside `CATALOG_PATH`), the read was
+  written into the installed package and then answered with a server
+  error. It is now refused before anything is written, with a message
+  saying to point `CATALOG_PATH` at the agent's checkout.
+- `backend/tests/test_chat_save_read.py`: regression test for it.
+- `docs/reads.md`: says which agents can be saved.
+
+
 ### v0.49.3 - 7th November 2026
 
 - `README.md`: three screenshots, in `docs/screenshots/`: the Catalog,
