@@ -1,5 +1,19 @@
 # Backlog - agents7 UI
 
+### 2026.11.07 (found taking the README screenshots)
+
+- [ ] **Reads page shows "vunknown" for a sample's version.** A read
+  saved from the Chatter page for a framework sample (no package, so no
+  version) is stamped `unknown`, and the page prints it as
+  "david vunknown" in the read picker and the Run block. Show the name
+  alone when the version is unknown. (LOW, S)
+- [ ] **Em dashes in on-screen text.** Text the user reads in the app
+  should not use them (the owner's writing rule for public text). Seen
+  in the Eval page intro ("a golden dataset — curated inputs…"), the
+  empty chat ("Session started — say something.") and the Reads page
+  ("the recordings are shown on their own"). Grep `frontend/src` for the
+  glyph and reword each sentence. (LOW, S)
+
 ### 2026.10.25 (global Svelte rule changed)
 
 - [ ] Log a failed `/api/info` with `console.warn` in

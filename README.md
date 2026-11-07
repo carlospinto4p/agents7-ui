@@ -6,6 +6,12 @@ sets. You can also read back recorded conversations and correct them
 turn by turn ([docs/reads.md](docs/reads.md)). FastAPI backend, Svelte
 frontend.
 
+![The Catalog page, listing the framework's sample agents](docs/screenshots/catalog.png)
+
+![A conversation with the sample persona agent on the Chatter page](docs/screenshots/chatter.png)
+
+![The sentiment classifier scored against its eval set on the Eval page](docs/screenshots/eval.png)
+
 ## Which agents it shows
 
 The UI ships no agents. It lists two kinds:

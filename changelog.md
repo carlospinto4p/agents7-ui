@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.49.3 - 7th November 2026
+
+- `README.md`: three screenshots, in `docs/screenshots/`: the Catalog,
+  a Chatter conversation and an Eval run. Taken with the framework's
+  public samples and the public sentiment classifier, with real model
+  calls on Ollama.
+- `backlog.md`: two display issues seen while taking them.
+
+
 ### v0.49.2 - 7th November 2026
 
 - `README.md` is a short overview (104 lines, was 211): what the UI does,
