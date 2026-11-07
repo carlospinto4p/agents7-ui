@@ -249,7 +249,6 @@
     font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
-    max-width: 600px;
   }
 
   .header-actions {

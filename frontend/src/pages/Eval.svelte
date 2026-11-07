@@ -1,5 +1,5 @@
 <script>
-  import { downloadJson } from '../lib/format.js'
+  import { downloadJson, fmtCost, retryLabel } from '../lib/format.js'
 
   let agents = $state([])
   let selectedAgent = $state('')
@@ -71,12 +71,69 @@
       }))
       .sort((a, b) => a.recall - b.recall),
   )
+
+  // Accuracy per output field, worst first — a run can score well
+  // overall while one field is carrying the others.
+  //
+  // A tool agent is scored on one synthetic field holding its whole
+  // trajectory, so its per-field table would be a single row saying
+  // what the trajectory block above already says. Omit it there.
+  let perFieldRows = $derived(
+    trajectory
+      ? []
+      : Object.entries(result?.per_field ?? {})
+          .map(([name, accuracy]) => ({ name, accuracy }))
+          .sort((a, b) => a.accuracy - b.accuracy),
+  )
+
+  // What the run cost, in one line:
+  // "12 calls · 4,320 tok · 41.2s (3.4s avg, 1.5–6.0s) · $0.0034".
+  //
+  // A run is measured in LLM calls, not rows — `run_evaluation`
+  // batches, so ten rows can be one call. The spread is shown only
+  // when there was more than one call to compare.
+  //
+  // An agent that makes no LLM call at all — a rule-based one —
+  // reports no calls, and the line is omitted rather than rendered
+  // as a run of zero.
+  let callsLine = $derived.by(() => {
+    const c = result?.calls
+    if (!c) return ''
+    const t = result?.timing
+    const parts = [`${c.calls} ${c.calls === 1 ? 'call' : 'calls'}`]
+    if (c.tokens || c.prompt_tokens) {
+      parts.push(`${(c.tokens + c.prompt_tokens).toLocaleString()} tok`)
+    }
+    let time = `${c.total_duration.toFixed(1)}s`
+    if (c.calls > 1) {
+      time += ` (${c.avg_duration.toFixed(1)}s avg`
+      if (t) time += `, ${t.min_s.toFixed(1)}–${t.max_s.toFixed(1)}s`
+      time += ')'
+    }
+    parts.push(time)
+    // An unpriced run is not a free one, so it says so in words
+    // rather than showing $0.00.
+    parts.push(
+      c.cost_cents == null ? 'unpriced' : fmtCost(c.cost_cents) || '$0.00',
+    )
+    if (c.cached_calls) parts.push(`${c.cached_calls} cached`)
+    const retries = retryLabel(c)
+    if (retries) parts.push(retries)
+    return parts.join(' · ')
+  })
+
+  // The rows the agent never answered, as opposed to answered
+  // wrongly. Counted separately because an accuracy that folds
+  // them in is reporting a broken run as a bad one.
+  let erroredCount = $derived(
+    (result?.mismatches ?? []).filter(m => m.error).length,
+  )
 </script>
 
 <div class="eval-page">
   <div class="page-header">
     <h2>Evaluation</h2>
-    <p class="intro-desc">Measures accuracy against a golden dataset — curated inputs with known expected outputs. Results include an overall score, a per-category breakdown, and a mismatch list for every failure. A tool agent is scored on its trajectory instead: which tools it called, in what order, with which arguments.</p>
+    <p class="intro-desc">Measures accuracy against a golden dataset — curated inputs with known expected outputs. Results include an overall score, accuracy per output field, a per-category breakdown, what the run cost in calls, tokens, time and money, and a mismatch list for every failure. A tool agent is scored on its trajectory instead: which tools it called, in what order, with which arguments.</p>
   </div>
 
   <div class="controls">
@@ -123,7 +180,16 @@
         Golden set: <span class="mono">{result.golden_set}</span>
         · {result.total} entries
         · {result.failed} failed
+        {#if erroredCount > 0}
+          · <span class="errored">{erroredCount} never answered</span>
+        {/if}
+        {#if result.model}
+          · <span class="mono">{result.model}</span>
+        {/if}
       </p>
+      {#if callsLine}
+        <p class="meta" data-testid="eval-calls">{callsLine}</p>
+      {/if}
     </section>
 
     {#if trajectory}
@@ -134,6 +200,7 @@
           · {trajectory.matched_calls}/{trajectory.expected_calls} expected calls made
           ({pct(trajectory.matched_calls, trajectory.expected_calls)}%)
           · {trajectory.extra_calls} extra
+          · {trajectory.failed_calls ?? 0} rejected
         </p>
 
         {#if perToolRows.length > 0}
@@ -162,6 +229,38 @@
             </tbody>
           </table>
         {/if}
+      </section>
+    {/if}
+
+    {#if perFieldRows.length > 0}
+      <section data-testid="per-field">
+        <h3>Per-field</h3>
+        <p class="meta">
+          How often each output field matched, across all
+          {result.total} entries. A row passes only when every field
+          does, so overall accuracy is never higher than the worst
+          field here.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Accuracy</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each perFieldRows as row}
+              <tr>
+                <td class="mono">{row.name}</td>
+                <td>
+                  <span class="badge {accuracyColor(row.accuracy)}">
+                    {Math.round(row.accuracy * 100)}%
+                  </span>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
       </section>
     {/if}
 
@@ -235,10 +334,20 @@
                     <span class="label">Expected</span>
                     <span class="mono expected">{fmt(m.expected)}</span>
                   </div>
-                  <div class="mismatch-row">
-                    <span class="label">Actual</span>
-                    <span class="mono actual">{fmt(m.actual)}</span>
-                  </div>
+                  {#if m.error}
+                    <!-- The agent never answered this row. Showing
+                         "Actual —" instead would read as a confident
+                         empty answer rather than a failed call. -->
+                    <div class="mismatch-row">
+                      <span class="label">Error</span>
+                      <span class="mono actual">{m.error}</span>
+                    </div>
+                  {:else}
+                    <div class="mismatch-row">
+                      <span class="label">Actual</span>
+                      <span class="mono actual">{fmt(m.actual)}</span>
+                    </div>
+                  {/if}
                 {/if}
               </div>
             </div>
@@ -266,7 +375,6 @@
     font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
-    max-width: 680px;
   }
 
   .controls {
@@ -278,7 +386,6 @@
 
   .agent-desc {
     margin: -1rem 0 1.5rem;
-    max-width: 640px;
     font-size: 1.0625rem;
     line-height: 1.5;
     color: var(--text-muted);
@@ -429,5 +536,6 @@
 
   .msg { padding: 0.5rem 0; }
   .error { color: var(--fail); }
+  .errored { color: var(--fail); }
   .muted { color: var(--text-muted); }
 </style>

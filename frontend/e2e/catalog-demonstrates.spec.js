@@ -30,8 +30,8 @@ const CLASS_ONLY_AGENT = {
 }
 
 const CATALOG_AGENT = {
-  name: 'tagger_agent',
-  display_name: 'Tagger agent',
+  name: 'my_tagger',
+  display_name: 'MyTagger',
   agent_type: 'classifier',
   provider: 'ollama',
   model: 'gemma3:12b',
@@ -76,7 +76,7 @@ test('a catalog agent with no demonstrates field shows no such label', async ({
 }) => {
   await page.goto('/#/catalog')
 
-  const card = page.locator('.card', { hasText: 'Tagger agent' })
+  const card = page.locator('.card', { hasText: 'MyTagger' })
   await expect(card).not.toContainText('Demonstrates')
 })
 

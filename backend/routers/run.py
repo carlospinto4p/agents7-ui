@@ -1,4 +1,3 @@
-from fastapi import APIRouter, HTTPException, Request
 from pathlib import Path
 
 from agents7.agents.tool_agent import ToolStepEvent
@@ -8,10 +7,43 @@ from agents7.exceptions import (
     PipelineConfigurationError,
     ToolLoopError,
 )
+from agents7.models.base import LLMMetrics
+from fastapi import APIRouter, HTTPException, Request
+
 from routers.catalog import CATALOG_PATH, find_config_file
-from routers.utils import _load_config, _resolve_agent_path
+from routers.utils import (
+    _load_config,
+    _resolve_agent_path,
+    agent_unavailable,
+)
 
 router = APIRouter(prefix="/api/run", tags=["run"])
+
+# What a run with no measurements to report sends. Built from the
+# framework's own model, so it is the zero of whatever `LLMMetrics`
+# currently declares rather than a hand-kept copy of it. Zeroes for
+# the counters, `None` for the cost — an unpriced run is not a free
+# one.
+_NO_METRICS = LLMMetrics(
+    tokens=0, prompt_tokens=0, total_duration=0.0
+).model_dump()
+
+
+def _metrics_payload(metrics: LLMMetrics) -> dict:
+    """Serialise one call's metrics for the wire.
+
+    Every field `LLMMetrics` carries is sent, by dumping the model
+    rather than listing its fields. The six routes below each
+    built this dict by hand and three had drifted, dropping
+    `cached_prompt_tokens` and `cached` — so a cached run rendered
+    as a real call that took no time and cost nothing. Listing the
+    fields in one place fixed those three; not listing them at all
+    is what stops the next field being missed here.
+
+    :param metrics: An `LLMMetrics`.
+    :return: The metric fields the UI renders.
+    """
+    return metrics.model_dump()
 
 
 def _build_pipeline(config_file: Path, cfg: dict):
@@ -62,6 +94,13 @@ def _step_payload(event: ToolStepEvent) -> dict:
     so a ``tool_call`` step carries its arguments and a
     ``tool_result`` its result rather than a row of nulls.
 
+    A rejected call carries ``error`` as well as ``result``. Both
+    are needed: ``result`` is the ``"Error: ..."`` text the model
+    was handed, and ``error`` is what says the call failed — a tool
+    may legitimately return text beginning with ``Error:``, which
+    is why agents7 v5.0.0 stopped reading the string and made
+    failure its own field.
+
     :param event: The event yielded by the agent's stream.
     :return: A JSON-serializable step dict.
     """
@@ -72,6 +111,8 @@ def _step_payload(event: ToolStepEvent) -> dict:
         step["arguments"] = event.arguments
     if event.result is not None:
         step["result"] = event.result
+    if event.error is not None:
+        step["error"] = event.error
     return step
 
 
@@ -86,18 +127,8 @@ def _tool_metrics(response) -> dict:
     :return: The metrics dict for the run response.
     """
     if response is None:
-        return {
-            "tokens": 0,
-            "prompt_tokens": 0,
-            "total_duration": 0.0,
-            "cost_cents": None,
-        }
-    return {
-        "tokens": response.metrics.tokens,
-        "prompt_tokens": response.metrics.prompt_tokens,
-        "total_duration": response.metrics.total_duration,
-        "cost_cents": response.metrics.cost_cents,
-    }
+        return dict(_NO_METRICS)
+    return _metrics_payload(response.metrics)
 
 
 def _run_tool_agent(config_file: Path, cfg: dict, input_data) -> dict:
@@ -114,7 +145,8 @@ def _run_tool_agent(config_file: Path, cfg: dict, input_data) -> dict:
     :param input_data: The request's input — a tool agent answers a
         user message, so this must be a string.
     :return: The run response payload.
-    :raises HTTPException: 422 if *input_data* is not a string.
+    :raises HTTPException: 422 if *input_data* is not a string, or if
+        the agent's own package is not installed.
     """
     if not isinstance(input_data, str):
         raise HTTPException(
@@ -125,7 +157,10 @@ def _run_tool_agent(config_file: Path, cfg: dict, input_data) -> dict:
             ),
         )
 
-    agent = build_agent(config_file, "tool")
+    try:
+        agent = build_agent(config_file, "tool")
+    except ImportError as exc:
+        raise agent_unavailable(exc) from exc
     stream = agent.act_stream(input_data)
 
     steps: list[dict] = []
@@ -202,12 +237,7 @@ async def run_agent(agent_name: str, request: Request) -> dict:
                     "name": getattr(pipeline_step.agent, "name", ""),
                     "input": current_input,
                     "output": step_out,
-                    "metrics": {
-                        "tokens": step_resp.metrics.tokens,
-                        "prompt_tokens": step_resp.metrics.prompt_tokens,
-                        "total_duration": step_resp.metrics.total_duration,
-                        "cost_cents": step_resp.metrics.cost_cents,
-                    },
+                    "metrics": _metrics_payload(step_resp.metrics),
                 }
             )
             if step_out is not None:
@@ -219,15 +249,12 @@ async def run_agent(agent_name: str, request: Request) -> dict:
             "raw_response": None,
             "parse_error": not response.success,
             "steps": steps_data,
-            "metrics": {
-                "tokens": sum(m.tokens for m in step_metrics),
-                "prompt_tokens": sum(m.prompt_tokens for m in step_metrics),
-                "total_duration": sum(m.total_duration for m in step_metrics),
-                "cost_cents": (
-                    sum(m.cost_cents for m in step_metrics if m.cost_cents)
-                    or None
-                ),
-            },
+            # `LLMMetrics.sum` is the framework's one aggregator,
+            # so a pipeline's total follows the same rules as a
+            # guarded turn's or a tool loop's: an unpriced run
+            # stays `None` rather than reading as free, and the
+            # run counts as cached only when every step was a hit.
+            "metrics": _metrics_payload(LLMMetrics.sum(step_metrics)),
         }
 
     if agent_type not in AGENT_TYPE_MAP:
@@ -241,7 +268,10 @@ async def run_agent(agent_name: str, request: Request) -> dict:
     if agent_type == "tool":
         return _run_tool_agent(config_file, cfg, input_data)
 
-    agent = build_agent(config_file, agent_type)
+    try:
+        agent = build_agent(config_file, agent_type)
+    except ImportError as exc:
+        raise agent_unavailable(exc) from exc
 
     if isinstance(input_data, dict):
         response = agent.act(input_data)
@@ -257,12 +287,7 @@ async def run_agent(agent_name: str, request: Request) -> dict:
                 "output": None,
                 "raw_response": None,
                 "parse_error": True,
-                "metrics": {
-                    "tokens": 0,
-                    "prompt_tokens": 0,
-                    "total_duration": 0.0,
-                    "cost_cents": None,
-                },
+                "metrics": dict(_NO_METRICS),
             }
         response = batch[0]
 
@@ -275,10 +300,5 @@ async def run_agent(agent_name: str, request: Request) -> dict:
         "output": output,
         "raw_response": response.response,
         "parse_error": response.model is None,
-        "metrics": {
-            "tokens": response.metrics.tokens,
-            "prompt_tokens": response.metrics.prompt_tokens,
-            "total_duration": response.metrics.total_duration,
-            "cost_cents": response.metrics.cost_cents,
-        },
+        "metrics": _metrics_payload(response.metrics),
     }

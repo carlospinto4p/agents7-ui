@@ -112,6 +112,11 @@
       label: 'Eval',
       icon: '<path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/>',
     },
+    {
+      key: 'reads',
+      label: 'Reads',
+      icon: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+    },
   ]
 </script>
 
@@ -143,6 +148,8 @@
         class="nav-item"
         class:active
         aria-current={active ? 'page' : undefined}
+        aria-label={item.label}
+        title={item.label}
       >
         <svg
           class="nav-icon"
@@ -156,7 +163,7 @@
         >
           {@html item.icon}
         </svg>
-        <span>{item.label}</span>
+        <span class="nav-label">{item.label}</span>
         {#if active}
           <span class="nav-dot"></span>
         {/if}
@@ -169,9 +176,10 @@
       class="ollama-pill"
       class:up={ollamaStatus === 'up'}
       class:down={ollamaStatus === 'down'}
+      title="Ollama: {ollamaStatus}"
     >
       <span class="dot"></span>
-      <span>Ollama</span>
+      <span class="pill-label">Ollama</span>
     </div>
     {#if ollamaStatus === 'down' && canStart}
       <button class="start-btn" onclick={onstart} disabled={starting}>
@@ -368,5 +376,47 @@
   .start-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* ── Narrow viewport: an icon rail ──────────────────── */
+  /* The dragged width is an inline style, so the rail has to
+     override it. The stored width is untouched and comes back as
+     soon as the window is wide again. */
+  @media (max-width: 640px) {
+    .sidebar {
+      width: 3.5rem !important;
+    }
+    .brand-text,
+    .nav-label,
+    .nav-dot,
+    .pill-label,
+    .resize-handle {
+      display: none;
+    }
+    .brand {
+      justify-content: center;
+      padding: 0.9rem 0;
+    }
+    .nav {
+      padding: 0.4rem 0.35rem;
+    }
+    .nav-item {
+      justify-content: center;
+      padding: 0.6rem 0;
+    }
+    .engine-block {
+      flex-direction: column;
+      padding: 0.6rem 0.2rem;
+    }
+    .ollama-pill {
+      padding: 0.45rem;
+    }
+    .start-btn {
+      max-width: 100%;
+      padding: 0.2rem 0.3rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 </style>

@@ -1,16 +1,55 @@
 # agents7 UI
 
 Web UI for the agents7 framework and catalog: browse agents, run them,
-chat, evaluate, and inspect the Ollama engine. FastAPI backend + Svelte
-(Vite) frontend.
+chat, evaluate, read back recorded conversations, and inspect the
+Ollama engine. FastAPI backend + Svelte (Vite) frontend.
+
+The **Reads** page is the one that writes rather than only showing.
+It finds every read folder under the catalog — an agent's
+`docs/reads/<date>/` holding recordings written by
+`ConversationRecorder` — renders each conversation as a chat, and
+lets a correction be attached to any turn. Above the chat a block
+says what the conversation ran with, in four sections: the run, the
+context it was given, what the agent already knew, and the prompt
+variants it drew. The feedback form works
+from the keyboard: it opens with the caret in its first field,
+ctrl+enter saves from any field and moves to the next turn's button,
+escape cancels, and arrow up and down step between the turns'
+buttons. What has been judged shows without scrolling: each
+conversation's tab carries a count of its entries, and a strip of
+turn numbers above the thread fills in the turns that have feedback
+and jumps to one when clicked.
+
+Conversations get there from either side. A script can record one
+(`ConversationRecorder`), or you can hold one on the **Chatter**
+page and press **Save as read**, which writes the same recording
+under that agent's `docs/reads/`. The Download button beside it is
+a different thing: it writes `{role, text}` for reading elsewhere,
+with no metrics, guard verdicts or context, so no read can be built
+from it. Saving leaves the session open, so a conversation can be
+saved and then continued, and an existing recording is never
+overwritten. The confirmation links straight to the saved
+conversation on the Reads page.
+
+A read has an address. `#/reads/conv-1?read=<path>` opens the read
+at `<path>` (relative to the catalog root, URL-encoded) on its
+second conversation, and the address bar keeps up as you change
+tabs or pick another read, so it can be copied at any point.
+`&conv=<id>` names a conversation by its recording's name instead
+of its position. Corrections are saved to
+`feedback.yml` beside the recordings, in the format
+`agents7 chat-feedback` reads, so the rules to change, the eval rows
+and the report all come off the same file. The page is an editor for
+it, never a second store.
 
 ## Run locally (no Docker)
 
 The default workflow. Needs a local Ollama plus `uv` and `pnpm` (via
 corepack). No environment configuration is required to run against Ollama
 — the defaults point the backend at `localhost:11434` and the repo's
-`agents_catalog/`. Anything you do put in `.env` (provider keys, ports) is
-read on startup; see [Configuration](#configuration).
+`samples/`. To serve a catalog of your own, set `CATALOG_PATH` to its
+folder. Anything you do put in `.env` (provider keys, ports) is read on
+startup; see [Configuration](#configuration).
 
 1. **Ollama** — run it on the host on its default port:
 
@@ -18,22 +57,32 @@ read on startup; see [Configuration](#configuration).
    ollama serve            # or: systemctl start ollama
    ```
 
-2. **Catalog packages** — install every catalog agent that ships as a
-   package into the backend's venv:
+2. **Catalog packages** — only for a catalog of your own whose agents
+   ship as packages. The samples need nothing installed. Install every
+   such agent into the backend's venv:
 
    ```bash
-   uv run --project agents7_ui/backend python agents7_ui/scripts/install_catalog.py
+   CATALOG_PATH=/path/to/your/catalog \
+       uv run --project agents7_ui/backend python agents7_ui/scripts/install_catalog.py
    ```
 
    Those agents resolve their `output_model` / `tools` by dotted path
-   (e.g. `tagger_agent.models.NickTag`), so without this step
-   `POST /api/run/Tagger agent` fails with `ModuleNotFoundError`. The
-   script installs each package editable and `--no-deps`, then its
-   third-party dependencies. Re-run it after adding a new catalog
-   package, and after any `uv sync` on the backend — the catalog
-   packages are not backend dependencies, so a sync uninstalls them.
-   The Compose stack does the same thing in `Dockerfile.backend` and
-   needs no manual step.
+   (e.g. `my_agent.models.MyModel`), so the Run and Eval pages can
+   only build them once the package is importable here. The script
+   installs each package editable and `--no-deps`, then its
+   third-party dependencies.
+
+   **Re-run it after adding a new catalog agent, and after any
+   `uv sync` on the backend** — a sync uninstalls them. They are not
+   backend dependencies on purpose: each catalog agent is an
+   independent package with its own version and venv, so naming them
+   here would couple the UI to the catalog. The script discovers them
+   instead. The Compose stack serves only the samples.
+
+   Skipping the step is not silent. Running or evaluating an agent
+   whose package is missing answers `422` with the module it could
+   not import and the command above, rather than failing with a
+   `ModuleNotFoundError` traceback.
 
 3. **Backend** — port 8002 (the dev frontend proxies `/api` to it):
 

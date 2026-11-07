@@ -8,6 +8,7 @@
   import Chatter from './pages/Chatter.svelte'
   import Engine from './pages/Engine.svelte'
   import Eval from './pages/Eval.svelte'
+  import Reads from './pages/Reads.svelte'
 
   let page = $state(getPage())
   let ollamaStatus = $state('checking')
@@ -17,7 +18,10 @@
   let appVersion = $state('')
 
   function getPage() {
-    return window.location.hash.replace('#/', '').split('/')[0] || 'home'
+    // A page may carry a query after its path (`#/reads?read=…`),
+    // which is its own business and not part of the page name.
+    const path = window.location.hash.replace('#/', '').split('?')[0]
+    return path.split('/')[0] || 'home'
   }
 
   $effect(() => {
@@ -97,6 +101,8 @@
         <Engine />
       {:else if page === 'eval'}
         <Eval />
+      {:else if page === 'reads'}
+        <Reads />
       {:else}
         <p>Page not found.</p>
       {/if}
@@ -121,5 +127,10 @@
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
+  }
+  @media (max-width: 640px) {
+    .content {
+      padding: 0.75rem;
+    }
   }
 </style>

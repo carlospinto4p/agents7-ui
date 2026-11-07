@@ -2,555 +2,634 @@
 ## Changelog - agents7 UI
 
 
-### v0.30.1 - 23rd August 2026
+### v0.47.1 - 7th November 2026
 
-- Added `backend/env_setup.py`: loads `agents7_ui/.env` into the
-  environment on import, so a locally-run backend
-  (`uv run uvicorn main:app`) sees the same variables the Compose stack
-  gets through `env_file:`. Previously every non-Ollama provider reported
-  "not ready" on the Chatter page outside Docker even with its key in the
-  file. A real environment variable still wins over the file, so
-  `docker-compose.yml`'s `environment:` block keeps priority.
-  - Imported first in `backend/main.py`: `logging_setup`,
-    `routers.engine` and `routers.catalog` read variables at import time.
-  - Declared `python-dotenv` explicitly in `backend/pyproject.toml`;
-    it was only present transitively via `uvicorn[standard]`.
-  - Added `backend/tests/test_env_setup.py`: 4 tests covering the path
-    resolved, an unset name taken from the file, a real environment
-    variable winning, and a missing file being a no-op.
-- Updated docs for the same change:
-  - `README.md`: the local-run and Configuration sections now say both
-    start-up paths read `.env`.
-  - `.env.example`: header documents both readers, not just Compose.
+- Reworded examples ahead of publishing this repository: backend
+  tests, Playwright specs and docstrings use the sample persona David
+  and neutral mock names (`my_tagger`); the feedback form's
+  placeholder names `characters/david.yml`; `changelog.md` and
+  `changelog/2026.md` reword 9 passages. Behaviour is unchanged.
 
 
-### v0.30.0 - 23rd August 2026
+### v0.47.0 - 7th November 2026
 
-- Added a **Character** section to the Catalog detail page, below the
-  Runner, with one tab per block the agent actually defines:
-  - `Persona`: identity fields, physical appearance, personality and
-    interest chips, backstory, speaking style, and `extra` details.
-  - `Scene`: time period, setting, situation, goal, and numbered lists
-    of rules and other characters.
-  - `Guard`: the guard's model (flagged when inherited from the
-    agent's own engine), thinking mode, forbidden terms, the
-    `max_guard_retries` / `guard_context_turns` tuning, and the
-    character summary the guard judges against.
-- Added `routers/catalog.py`:
-  - `_guard_data()`: reads the `guard:` block plus the top-level
-    `guard_*` settings, resolving the engine the guard actually runs
-    on. `/api/catalog/<agent>` now returns a `guard` key; a
-    `guarded_*` agent reports its guard even with no `guard:` block.
+- The UI serves the repository's `samples/` by default, since the
+  agent catalog moved to its own repository:
+  - `routers/catalog.py`, `routers/reads.py`: `CATALOG_PATH` defaults to
+    `samples/`. Point it at a catalog of your own to serve its agents.
+  - `scripts/install_catalog.py`: reads the catalog from `CATALOG_PATH`
+    too, defaulting to `samples/`, which needs nothing installed.
+  - `Dockerfile.backend`: copies only `samples/` and no longer installs
+    catalog packages, so the Compose stack serves the samples alone.
+  - `README.md`, `.env.example`: say how to serve your own catalog.
+
+
+### v0.46.1 - 7th October 2026
+
+- Rotated changelog: archived 3 entries to `changelog/2026.md`.
+
+
+### v0.46.0 - 4th October 2026
+
+- Updated the block above a read's conversation that says what it
+  ran with, in `frontend/src/components/ReadConversation.svelte`:
+  - One titled section per group: Run, Context, Knew already,
+    Variants. Needs agents7 v9.25.0; rows with no group fall into one
+    untitled section.
+  - Each label sits above its value instead of beside it.
+  - A value over 48 characters, and every variant, takes the whole
+    width of its section.
+  - The facts the agent already knew are a list in columns.
+- Added `e2e/reads-context.spec.js`: 4 tests.
+
+
+### v0.45.2 - 4th October 2026
+
+- Fixed prose stopping at about half the page while the cards and
+  tables beside it ran the full column. Removed the `max-width` from
+  text blocks in `frontend/src/pages/`:
+  - `Reads.svelte`: `.standfirst`, `.caveat`, `.nospec`, `.closing`.
+  - `Runner.svelte`: `.page-intro`, `.agent-desc`.
+  - `Eval.svelte`: `.intro-desc`, `.agent-desc`.
+  - `Catalog.svelte`: `.intro-desc`, `.detail-desc`.
+  - `Home.svelte`, `Engine.svelte`, `Classes.svelte`: `.intro-desc`.
+  - `Chatter.svelte`: `.agent-description`.
+- Added `e2e/reads-text-width.spec.js`: the read's standfirst, caveat
+  and closing are as wide as a verdict card at 1920px.
+
+
+### v0.45.1 - 4th October 2026
+
+- Rotated changelog: archived 6 entries to `changelog/2026.md`.
+
+
+### v0.45.0 - 2nd October 2026
+
+- Added a narrow-viewport layout: at 640px wide or less the sidebar
+  becomes an icon rail, so the page keeps the rest of the width.
+  - `frontend/src/components/Sidebar.svelte`: the rail hides the
+    labels, the brand text and the resize handle. Each link keeps
+    its name through `aria-label` and `title`, and the stored
+    sidebar width is left alone.
+  - `frontend/src/App.svelte`: smaller content padding at that
+    width.
+  - `frontend/e2e/sidebar.spec.js`: 3 tests.
+
+
+### v0.44.0 - 2nd October 2026
+
+- Added support for a context value computed from another one, so
+  a Chatter conversation with a chat agent gets a value worked out
+  from another field instead of running with it blank.
+  - `backend/routers/catalog.py`: `_context_params` reports
+    `derived_from` for each declared value.
+  - `frontend/src/pages/Chatter.svelte`: a derived value gets a
+    line saying which field it is worked out from, and no field.
+  - `backend/pyproject.toml`: agents7 floor raised to 9.21.0, the
+    version that computes it.
 - Added tests:
-  - `backend/tests/test_catalog.py`: 7 tests for `_guard_data()`.
-  - `frontend/e2e/catalog-character.spec.js`: 7 tests covering tab
-    rendering per agent shape, tab switching, and the absence of the
-    section for an agent with no persona, scene, or guard.
-- Updated `README.md`: the catalog-install step now notes that
-  `uv sync` on the backend uninstalls the catalog packages, since they
-  are not backend dependencies, so `install_catalog.py` must be re-run
-  after one.
+  - `backend/tests/test_catalog.py`: 1 test.
+  - `backend/tests/test_chat.py`: 1 test.
+  - `frontend/e2e/chatter-context.spec.js`: 1 test.
 
 
-### v0.29.11 - 23rd August 2026
+### v0.43.0 - 2nd October 2026
 
-- Added `scripts/install_catalog.py`: installs every `agents_catalog/*`
-  package into the backend's virtualenv, editable and `--no-deps`,
-  then each package's third-party dependencies. Without it, running
-  the backend locally (no Docker) fails any agent whose
-  `output_model` / `tools` resolve to a dotted path outside the
-  framework — `POST /api/run/Tagger agent` raised
-  `ModuleNotFoundError: No module named 'tagger_agent'`. The Compose
-  stack already handled this in `Dockerfile.backend`.
-- Updated `README.md`: added the catalog-install step to
-  "Run locally (no Docker)".
-
-
-### v0.29.10 - 23rd August 2026
-
-- Restructured a sample's `demonstrates` field from a prose sentence
-  into `{class, feature}` — a framework class name (e.g. `Labeler`)
-  and an optional short feature tag (e.g. `tool calling`):
-  - `backend/routers/catalog.py`: `_demonstrates()` now returns
-    that shape (or `None` when `class` is missing), instead of a
-    stripped string.
-  - `frontend/src/pages/Catalog.svelte`: the card and detail page
-    render `class`/`feature` as badges next to the "Demonstrates"
-    label, instead of a sentence in a tinted box.
-  - Updated `frontend/e2e/catalog-demonstrates.spec.js` for the new
-    shape; added a class-only (no feature) case.
+- Added a link from a saved conversation to the Reads page, and an
+  address for a read, so reviewing what was just saved is one click
+  and not a hop to the other page and a pick from the dropdown.
+  - `frontend/src/components/ChatPanel.svelte`: the "Saved N turns"
+    confirmation ends in an "open it on the Reads page" link. A
+    failed save shows none.
+  - `frontend/src/pages/Reads.svelte`:
+    - `?read=<path>` in the hash selects a read; an unknown path
+      falls back to the first one.
+    - `&conv=<id>` opens a conversation by its recording's name. It
+      applies to the first load only.
+    - The hash is rewritten with the current read whenever the tab
+      or the read changes.
+  - `frontend/src/App.svelte`: the page name no longer includes a
+    query after it.
+  - Added `e2e/reads-link.spec.js`: 6 tests.
+  - `e2e/chatter-save-read.spec.js`: 2 tests for the link.
+- Updated `README.md`: the link and the address format.
+- Updated `backlog.md`: removed the item this closes.
 
 
-### v0.29.9 - 23rd August 2026
+### v0.42.0 - 2nd October 2026
 
-- Fixed `frontend/src/pages/Catalog.svelte`: a card's Demonstrates
-  line rendered as solid accent-colored text the same weight as its
-  label, reading as a wall of blue. Restyled it as a small tinted
-  chip — only the "DEMONSTRATES" label keeps the accent color, the
-  capability text is muted like the rest of the card.
-
-
-### v0.29.8 - 23rd August 2026
-
-- Added a `demonstrates` field to the Catalog page, separate from
-  `description`:
-  - `backend/routers/catalog.py`: `_demonstrates()` reads a
-    sample's `demonstrates` config key and returns it in both the
-    catalog list and agent detail responses.
-  - `frontend/src/pages/Catalog.svelte`: each card and the agent
-    detail page render it in its own labeled box, instead of the
-    previous approach of appending it as a sentence onto
-    `description`.
-  - Added `frontend/e2e/catalog-demonstrates.spec.js`: 3 tests.
+- Added markers on the Reads page for what already carries feedback,
+  so it shows without scrolling to each turn. Both are part of Review
+  mode and absent in Read mode.
+  - `frontend/src/components/ReadConversation.svelte`: a strip of
+    turn numbers above the thread, headed "Feedback on N of M turns".
+    A turn with feedback is filled; clicking a number scrolls to that
+    turn and focuses its `+ Feedback` button.
+  - `frontend/src/pages/Reads.svelte`: each conversation's tab shows
+    a count of its entries, whole-conversation notes included. No
+    count is shown at zero.
+  - Added `e2e/reads-feedback-markers.spec.js`: 5 tests.
 
 
-### v0.29.7 - 23rd August 2026
+### v0.41.0 - 2nd October 2026
 
-- Bumped the `agents7` dependency to v4.15.0
-  (`agents7.tools.demo`, added for the `StoreAssistant` catalog
-  reclassification below — no `agents7_ui` code changed).
-- `StoreAssistant` moved from `agents_catalog/store_assistant/` (a
-  catalog agent package) to `agents_catalog/examples/store_assistant/`
-  (a sample); the Catalog page now lists it under "Framework
-  Examples" instead of "Catalog Agents". Its tools now resolve from
-  `agents7.tools.demo` — which, as a bonus, fixes running it locally
-  without Docker (its tools now live in the framework, already a
-  backend dependency, instead of a separate package the backend's
-  venv never had installed).
-
-
-### v0.29.6 - 23rd August 2026
-
-- Fixed `frontend/src/pages/Catalog.svelte`: the embedded Runner
-  on an agent's detail page never got the v0.28.0 tool-agent
-  handling that the standalone Runner page has. A `tool` agent
-  (e.g. `StoreAssistant`) fell back to a generic
-  `{ "field": "value" }` JSON textarea, and its result — which has
-  no `output`, only `answer` and `tool_steps` — rendered nothing.
-  - Ported `isToolAgent()`-based free-text input detection from
-    `Runner.svelte`.
-  - Added the `Answer` label, the loop-error state, and the tool
-    call trajectory (arguments/result per call) to the result card.
-  - Added `frontend/e2e/tool-agent-catalog.spec.js`: 2 tests
-    covering the free-text fallback and the rendered trajectory.
+- Added a keyboard path to the Reads page's feedback form, so a read
+  can be judged turn after turn without the mouse.
+  - `frontend/src/components/FeedbackForm.svelte`:
+    - Opens with the caret in "Should say".
+    - ctrl+enter (or cmd+enter) saves from any field.
+    - Escape cancels.
+    - Now a `<form>` labelled "Feedback", with a line naming the two
+      keys beside its buttons.
+  - `frontend/src/components/ReadConversation.svelte`:
+    - Saving moves focus to the next turn's `+ Feedback` button.
+    - Cancelling and deleting return focus to the same turn's button.
+    - Arrow up and down step between the turns' buttons.
+  - Added e2e tests, the first for the Reads page:
+    - `e2e/reads-feedback-keyboard.spec.js`: 5 tests.
+    - `e2e/_reads.js`: a stubbed read shared by Reads specs.
 
 
-### v0.29.5 - 23rd August 2026
+### v0.40.1 - 22nd September 2026
 
-- Fixed `frontend/src/pages/Catalog.svelte`: the backend already
-  returned each agent's `description` (from its `config.yml`), but
-  the Catalog page never rendered it. Added a clamped description
-  line to each grid card and the full description to the agent
-  detail header.
+- Rotated changelog: archived 3 entries to `changelog/2026.md`.
 
 
-### v0.29.4 - 23rd August 2026
+### v0.40.0 - 20th September 2026
 
-- Fixed `backend/main.py`: the framework README path used
-  `Path(__file__).parents[1]`, resolving to a nonexistent
-  `agents7_ui/agents7_framework/README.md` and 404ing the Home
-  page's README fetch. Corrected to `parents[2]` to reach the
-  repo-root `agents7_framework/README.md`.
+- Added **Save as read** to the Chatter page, joining the two halves
+  of the UI. A conversation held here was answered and forgotten: the
+  Reads page could only show what a script had recorded, so feeding
+  back on a chat meant leaving the UI to record it again — and at
+  temperature, running it again is a different conversation, so it
+  could never be the same one.
+  - `backend/routers/chat.py`:
+    - `_Transcript`: accumulates a session into the framework's
+      `Recording` shape. Built by recording at the point each
+      endpoint has its reply rather than by driving the session
+      through `ConversationRecorder`, which replaces the
+      `guard_callback` this router needs for its metrics line and
+      has no async or streaming path — and three of the four ways a
+      turn arrives here are one or the other.
+    - `_GuardCollector` keeps whole guard events, not just their
+      cost, so a saved read carries why a reply was rejected and
+      what was suggested instead. `summary()` is unchanged.
+    - `POST /api/chat/{session_id}/save-read`: writes the recording
+      under the agent's own `docs/reads/<read_id>/`. A snapshot
+      rather than an ending — the session stays open, so a
+      conversation can be saved and then continued. An existing file
+      is refused with a 409: a recording is paid for and is never
+      overwritten.
+    - `_package_version`: reads the agent package's `pyproject.toml`
+      rather than `Chatter.version`, which is the config *schema*
+      version — a recording came out stamped `1` that way once.
+    - Read ids and conversation ids are restricted to characters
+      that cannot escape a directory.
+  - `frontend/src/components/ChatPanel.svelte`: the control, with the
+    read and conversation names editable and today's date offered.
+    The Download button beside it still writes `{role, text}`, which
+    no read can use — this writes what the Reads page reads.
+- Added tests:
+  - `backend/tests/test_chat_save_read.py`: 26 covering the package
+    lookup, the collector keeping verdicts, turn recording across
+    the four paths, and the save endpoint's refusals.
+  - `frontend/e2e/chatter-save-read.spec.js`: 9 covering the
+    control's absence before anything is said, the form, the request
+    it sends, a name collision and an empty name.
 
 
-### v0.29.3 - 28th July 2026
+### v0.39.0 - 20th September 2026
 
-- Rotated changelog: archived 2 entries to `changelog/2026.md`.
+- Added the **Reads** page: read a chat agent's recorded
+  conversations, and attach feedback to a turn. Judging a read has
+  until now meant a text editor — holding turn numbers in your head
+  and typing `turn: 7` by hand — and that is the slow half.
+  - `frontend/src/pages/Reads.svelte`: the read picker, the
+    Read / Review toggle, the tab bar (Verdicts, Numbers, one per
+    conversation, Feedback), verdict cards with their three stamps,
+    the numbers table with its comparison column, and the derived
+    feedback report with copy and download. The tab lives in the
+    hash — `#/reads/conv-1` — so one conversation can be linked to,
+    the way the generated page's `read.html#conv-1` can.
+  - `frontend/src/components/ReadConversation.svelte`: one
+    conversation as a chat client — agent left, counterpart right, a
+    multi-line reply split into one bubble per line — with the
+    context block, the per-turn metrics line (agent, guard, gap,
+    total, cost split into its two halves, running total, tokens and
+    cached share), the guard-attempts disclosure, and the notes from
+    the read spec in their four colours.
+  - `frontend/src/components/FeedbackForm.svelte`: the form that
+    attaches one correction, pre-filled with `he_said` from the
+    reply so a rewrite cannot drift from the line it corrects. Its
+    fields are one-shot seeds rather than bindings, so a re-render
+    never overwrites what is being typed; the caller remounts it
+    when a different entry is opened.
+  - `backend/routers/reads.py`: discovers read folders under the
+    catalog, serves the framework's own `read_payload` rather than
+    rebuilding it, and writes feedback to the same `feedback.yml`
+    the `chat-feedback` command reads. Never a second store: a read
+    half in a database and half in git would be worse than the
+    editor it replaces.
+- Added `backend/tests/test_reads.py`: 24 tests covering discovery,
+  catalog-escape refusal, serving a folder that has no `read.yml`,
+  and the merge semantics — including `clear`, which is what makes
+  deleting the last entry on a turn possible, since merging keys on
+  the turns the incoming entries name.
+- Updated `backend/pyproject.toml`: `agents7>=9.19.0`, the second
+  feature requirement this backend has ever had. `read_payload`,
+  `eval.chat_feedback` and `Recording.context` do not exist earlier,
+  so the router's imports fail outright rather than degrading.
 
 
-### v0.29.2 - 26th July 2026
+### v0.38.4 - 7th September 2026
 
-- Redeployed the hardened `scripts/changelog-add.sh`: guards against
-  the CWD-relative wrong-repo footgun (comparing the target
-  changelog's version against the wrong repo's manifest when invoked
-  from outside its own directory).
+- Rotated changelog: archived 3 entries to `changelog/2026.md`.
 
 
-### v0.29.1 - 19th July 2026
+### v0.38.3 - 6th September 2026
+
+- Updated `backend/routers/utils.py`:
+  - `_load_config` returns the *resolved* configuration, so an
+    agent whose persona lives in a `character` file and whose scene
+    lives in a `chat_goal` file still lists with a display name and
+    still renders its persona and scene panels. One catalog agent is
+    the first split that way; before this it would have listed under
+    its bare name with both panels empty.
+  - A config the framework refuses falls back to a plain parse, so
+    one broken agent cannot empty the catalog.
+  - The raw YAML shown on the detail page is still the authored
+    file, which is the one to edit.
+- Updated `backend/pyproject.toml`: the `agents7` floor is
+  `>=8.5.0`, the version that resolves the composition.
+
+
+### v0.38.2 - 5th September 2026
+
+- Updated `backend/pyproject.toml`:
+  - Raised the `agents7` floor from `>=5.0.0` to `>=8.0.1`, the
+    version the UI is developed and tested against. The lock
+    recorded 5.4.0 against a source tree three majors ahead, which
+    misinformed a reader about what the backend runs. Nothing was
+    broken: the dependency is an editable path install, so the venv
+    always ran what was on disk, and the v6, v7 and v8 majors are
+    confined to `eval.style` and `eval.style_history`, which this
+    backend does not import.
+- Updated `backend/uv.lock`: records `agents7` at 8.0.1.
+
+
+### v0.38.1 - 4th September 2026
+
+- Rotated changelog: archived 3 entries to `changelog/2026.md`.
+
+
+### v0.38.0 - 3rd September 2026
+
+- Updated `backend/routers/run.py`:
+  - `_step_payload()` sends a tool step's `error` alongside its
+    `result`. Both are needed: `result` is the `"Error: ..."` text
+    the model was handed, and `error` is what says the call failed
+    — a tool may legitimately return text beginning with `Error:`,
+    which is why agents7 v5.0.0 made failure its own field.
+- Updated `frontend/src/pages/`:
+  - `Runner.svelte`, `Catalog.svelte`: a call the tool rejected is
+    marked. The card takes the fail border, the header gains a
+    `rejected` badge, and the block is labelled `Error` rather than
+    `Result` with the failure colours. Previously it rendered in
+    the same `tool-result` block as a successful call, so a reader
+    had to infer the failure from the text.
+  - `Eval.svelte`: the trajectory line reports `failed_calls` as
+    `N rejected`, so a matched/expected gap says what closed it.
+- Updated tests:
+  - `backend/tests/test_run.py`: a rejected call's payload carries
+    `error`; a successful one omits it.
+  - `frontend/e2e/tool-agent-run.spec.js`,
+    `tool-agent-catalog.spec.js`: a rejected call is marked on both
+    pages, and a successful one is not.
+  - `frontend/e2e/tool-agent-eval.spec.js`: the rejected count is
+    rendered.
+- Updated `backend/pyproject.toml`: requires agents7 >= 5.0.0.
+
+
+### v0.37.0 - 3rd September 2026
+
+- Updated `backend/routers/eval.py`:
+  - Every agent type now goes through `agents7.eval.run_eval_suite`.
+    Only a tool agent did; every other type ran a hand-rolled loop
+    that duplicated `run_evaluation` and `compute_metrics`, and had
+    drifted from the framework's own field comparison — a missing
+    key was compared as `""` where the framework matches `None`
+    against `None`.
+  - The response carries what that duplication had been discarding:
+    `per_field` accuracy, `timing`, `per_category` from the
+    framework, `calls` (the run's call totals, tokens, duration and
+    cost), the resolved `model`, and `error` on a row the agent
+    never answered.
+  - Dropped the endpoint's own `agent_type` check; the framework
+    rejects an unknown type and the endpoint relays it as a 422.
+- Updated `frontend/src/pages/Eval.svelte`:
+  - Added a per-field accuracy table, worst field first.
+  - Added a line reporting what the run cost — calls, tokens, time
+    (with the average and spread when there was more than one call),
+    money, cache hits and retries. An Ollama run reads `unpriced`
+    rather than `$0.00`.
+  - A mismatch the agent never answered shows its error instead of
+    an empty `Actual`, and the summary counts those rows apart from
+    the wrong answers.
+- Added `frontend/e2e/tool-agent-eval.spec.js` specs for the
+  per-field table, the cost line, an unpriced run, a single-call
+  run, and the failed-call row.
+- Requires agents7 v4.38.1.
+
+
+### v0.36.1 - 31st August 2026
 
 - Rotated changelog: archived 7 entries to `changelog/2026.md`.
 
 
-### v0.29.0 - 18th July 2026
+### v0.36.0 - 29th August 2026
 
-- Added tool-agent support to the eval endpoint:
-  - `backend/routers/eval.py`: scores a `tool` agent by delegating to
-    `agents7.eval.run_eval_suite`, returning the framework's
-    `trajectory` metrics plus the calls each failed row made, missed
-    and added.
-  - `_find_golden_set()`: falls back to an `eval_data.jsonl` beside
-    the config, so a tool agent's trajectory set is discovered.
-    Agents shipping `data/golden_set.*` are unaffected.
-  - Removed `reject_tool_agent()` from `backend/routers/utils.py` —
-    both endpoints it guarded now serve tool agents.
-- Added the trajectory view to the Eval page:
-  - `frontend/src/pages/Eval.svelte`: renders match mode, call
-    totals, and per-tool recall in place of the per-category table,
-    and lists called/missing/extra calls per mismatch.
+- Added retries to what a turn and a run report, from agents7
+  v4.26.0. A response that fought the provider took several
+  attempts and several times as long, and nothing on screen said
+  so — the duration beside it is the successful attempt's own
+  figure, so the wait was invisible.
+  - `frontend/src/lib/format.js`: added `retryLabel()`, rendering
+    `2 retries (4.5s)`. The seconds are in brackets rather than
+    written as `+4.5s` because whether they are already inside the
+    duration next to them depends on the page: the Chatter shows
+    the framework's `total_duration`, which excludes them, while
+    the Runner and Catalog show a stopwatch that was ticking
+    throughout. For a guarded turn the guard's retries are added
+    in, since both halves held the same person up.
+  - `metricsLine()` and `stepMetaLine()` end in the retry part
+    when there is one, and are unchanged when there is not.
+  - `frontend/src/pages/Runner.svelte` and `Catalog.svelte`: the
+    run-level meta line, which each build by hand, says it too.
+- Updated the metrics payloads to mirror the framework structurally
+  rather than by hand:
+  - `backend/routers/chat.py` and `run.py`: both dump `LLMMetrics`
+    instead of listing its fields, and `_NO_METRICS` is the model's
+    own zero. Listing the fields is how these payloads fell behind
+    twice, on `cached` and on `cached_prompt_tokens`.
+  - `backend/routers/chat.py`: `_GuardCollector.summary()` and
+    `run.py`'s pipeline total now add with `LLMMetrics.sum`, the
+    framework's one aggregator, instead of summing field by field.
+    A pipeline whose every step was a cache hit on a priced engine
+    now reads as `0.0` rather than as unpriced, which is the
+    honest answer — it really did spend nothing.
+- Fixed the engine override dropping the agent's pricing:
+  - `backend/routers/chat.py`: `pricing` is kept when the override
+    names the agent's own provider *and* model. It was dropped on
+    every override, so choosing the very model the rates were
+    written for left the turn unpriced and its cost silently
+    absent from the page. A different model still drops them —
+    rates belong to one model, and carrying them would put a
+    confident price on a turn never billed at them.
 - Added tests:
-  - `backend/tests/test_eval.py`: 10 tests covering eval-set
-    discovery and the trajectory route.
-  - `frontend/e2e/tool-agent-eval.spec.js`: 3 e2e tests.
+  - `backend/tests/test_chat.py`: retries in the payload and in
+    the guard summary, the three pricing-override cases, and the
+    metric stubs rebuilt on the real `LLMMetrics` so a field added
+    upstream cannot leave them behind.
+  - `backend/tests/test_run.py`: retries in a run's payload; the
+    two hand-written expected dicts replaced by comparisons
+    against the framework's own model.
+  - `frontend/e2e/chatter-retries.spec.js`: 4 cases over the
+    rendered line.
 
 
-### v0.28.0 - 18th July 2026
+### v0.35.0 - 29th August 2026
 
-- Added tool-agent support to the run endpoint:
-  - `backend/routers/run.py`: runs a `tool` agent through
-    `act_stream`, returning its free-text `answer` plus the
-    `tool_steps` trajectory. An exhausted loop reports its `error`
-    and the calls it made instead of failing the request.
-  - Removed the `reject_tool_agent` guard from the run path.
-- Added the tool-agent view to the Runner page:
-  - `frontend/src/pages/Runner.svelte`: renders the answer and pairs
-    each tool call with the result that answered it. A tool agent now
-    falls back to a free-text input when it declares no
-    `system_examples`.
-  - `frontend/src/constants.js`: added `isToolAgent()`.
+- Added the response cache to what a turn reports:
+  - `backend/routers/chat.py`: the metrics payload carries `cached`,
+    and the guard summary carries `cached` and
+    `cached_prompt_tokens`.
+  - `backend/routers/run.py`: added `_metrics_payload()` and
+    `_NO_METRICS`, replacing six hand-built dicts — three had
+    drifted and were missing `cached_prompt_tokens`.
+  - `frontend/src/lib/format.js`: added `cacheLabel()` and
+    `stepMetaLine()`. The metrics line ends in `cached`, or `reply
+    cached` when the guard really ran.
+  - `frontend/src/pages/Runner.svelte` and `Catalog.svelte`: the
+    run and per-step meta lines say when a result came from cache.
 - Added tests:
-  - `backend/tests/test_run.py`: 4 tool-agent tests.
-  - `frontend/e2e/tool-agent-run.spec.js`: 3 e2e tests.
+  - `backend/tests/test_chat.py`: the payload carries a cache hit;
+    the guard summary reports its own cache state.
+  - `backend/tests/test_run.py`: run metrics carry the flag; a run
+    that produced nothing is unpriced, not free. The metric stubs
+    now use the real `LLMMetrics` so a new field cannot leave them
+    behind.
+  - `frontend/e2e/chatter-cached.spec.js`: 4 cases over the
+    rendered line.
+- Updated `.claude/rules/metrics-completeness.md`: moved the
+  UI cache gap into the closed list.
 
 
-### v0.27.1 - 18th July 2026
+### v0.34.0 - 29th August 2026
+
+- Updated `backend/routers/chat.py` to report the guard's own
+  cost beside the reply's:
+  - Added `_GuardCollector`, attached to a guarded chatter when
+    its session starts and reset at the top of every turn, since
+    the framework's callback fires once per guard attempt.
+  - `_metrics_dict` now carries a `guard` object (`calls`,
+    `tokens`, `prompt_tokens`, `total_duration`, `cost_cents`)
+    and a `total_cost_cents`, plus `cached_prompt_tokens` from
+    agents7 v4.21.0.
+  - Applies to `send_message`, `open_turn` and both streaming
+    routes.
+- Updated `frontend/src/lib/format.js`:
+  - `fmtCost` formats three significant digits with trailing
+    zeros stripped, instead of a fixed four decimal places of
+    dollars.
+  - `metricsLine` renders a guarded turn as
+    `29 tok · 1.9s · $0.000168 + guard $0.000146 = $0.000314`.
+    An agent with no guard, or one with no pricing, is unchanged.
+- Added tests:
+  - `backend/tests/test_chat.py`: 8 tests covering attachment,
+    per-attempt summing, the per-turn reset, and the unguarded
+    and unpriced cases.
+  - `frontend/e2e/chatter-cost.spec.js`: 4 tests on the rendered
+    line.
+
+**Two bugs, both of which made the number wrong rather than
+imprecise.** A guarded reply is at least two LLM calls and only
+the first is in the `ChatResponse`, so the page showed about half
+of what a turn cost — measured on a chat agent, the guard is 46% of
+the bill. And a real $0.000168 rounded to `$0.0002`, while
+anything under $0.00005 rendered as `$0.0000`, a price that reads
+as free.
+
+
+### v0.33.5 - 28th August 2026
+
+- Fixed `Dockerfile.backend`: the framework is now installed as
+  `agents7[anthropic,openai]`, matching what
+  `backend/pyproject.toml` already declared. The image installed
+  it with no extras, so building an Anthropic or `openai_compat`
+  engine raised `ImportError` in Compose while working locally.
+  Surfaced by a catalog chat agent, which runs on DeepSeek
+  through `openai_compat` and so is the first packaged agent that
+  needs the extra at run time.
+- Updated `backend/tests/test_chat.py`: the fixture docstring
+  naming the catalog agent that records character facts now uses
+  that agent's new name. It was a sample under
+  `agents_catalog/examples/`; it is now a released package at the
+  catalog root. The Catalog page needs no change — it tiers an
+  agent by whether `examples` is in its path, so the agent moved
+  from the sample list to the agent list on its own, and
+  `scripts/install_catalog.py` picks the package up by discovery.
+
+
+### v0.33.4 - 28th August 2026
+
+- Added `frontend/e2e/`:
+  - `chatter-error.spec.js`: six specs pushing the backend's
+    `event: error` frame over the stubbed chat stream, covering the
+    message rendering above the transcript, the empty bubble being
+    dropped when a turn fails before speaking, partial text being kept
+    when it fails mid-sentence, the fallback message for a frame
+    carrying none, the opening turn failing the same way, and the next
+    message clearing the previous failure.
+
+
+### v0.33.3 - 28th August 2026
+
+- Updated `backend/routers/chat.py`: catch provider errors, not just
+  framework ones. The four chat-turn handlers caught only
+  `Agents7Exception`, so an error raised by a provider SDK — a revoked
+  key, a rate limit, a model the account cannot reach, an endpoint that
+  is down — escaped them. The non-streaming routes then answered 500
+  with a traceback instead of the generic detail beside them, and
+  `_stream_turn` broke the Server-Sent Events stream instead of
+  emitting the `event: error` frame the frontend renders. All four now
+  catch `Exception`, keeping the logging and the generic response body.
+- Added tests in `backend/tests/test_chat.py`:
+  - `_ProviderErrChatter`: a chatter that fails the way a provider SDK
+    does, through a type that is not an `Agents7Exception`.
+  - Provider-error regression tests for `send_message`, `open_turn`,
+    `remember_turn`, `stream_message` and `stream_opening`.
+  - First tests for `send_message`, which had none: unknown session,
+    missing message, the reply and its metrics, and a framework error.
+
+
+### v0.33.2 - 28th August 2026
+
+- Rotated changelog: archived 5 entries to `changelog/2026.md`.
+
+
+### v0.33.1 - 27th August 2026
 
 - Updated `backend/routers/`:
-  - `utils.py`: added `reject_tool_agent()`. `tool` joined the
-    framework's `AGENT_TYPE_MAP` in agents7 v4.14.0, so it now passes
-    the membership check the run and eval endpoints share; neither can
-    serve it (both read `response.model`, which a `ToolAgent` never
-    populates), so they refuse it with a 422 pointing at the CLI
-    instead of returning an empty output.
-  - `run.py`, `eval.py`: call the guard.
-- Added `backend/tests/test_utils.py` coverage for the guard: 2 tests.
-
-
-### v0.27.0 - 18th July 2026
-
-- Added a Playwright end-to-end test harness in `frontend/`:
-  - `playwright.config.js`: pins the dev server to the claimed port
-    5186 and starts it via `webServer`, reusing a running one locally.
-  - `e2e/_helpers.js`: stubs every `/api` boundary, so specs need no
-    backend. Catch-all registered first, specific endpoints last.
-  - `e2e/sidebar.spec.js`: 7 tests covering drag-to-resize, the
-    min/max clamps, double-click reset, keyboard nudging, and width
-    persistence across a reload (v0.22.0).
-  - `e2e/chatter-override.spec.js`: 7 tests covering the engine
-    override, including the regression test owed for the v0.26.3 fix
-    — both branches, Ollama with no installed models (blocked) and
-    `openai_compat` whose model comes from the environment (allowed).
-  - `test:e2e` script and the `@playwright/test` dev dependency.
-- Updated `.gitignore`: ignore `frontend/test-results/` and
-  `frontend/playwright-report/`.
-
-
-### v0.26.3 - 18th July 2026
-
-- Fixed the **Chatter** page starting a session with an engine override
-  that has no model, which failed server-side as a 400 and logged a
-  warning:
-  - `frontend/src/pages/Chatter.svelte`: new `needsModel` derived flag —
-    true when a provider is selected, no model is set, and the provider
-    does not supply one itself. `onProviderChange()` leaves `ovModel`
-    empty whenever Ollama reports no installed models (or has not
-    answered yet), and nothing downstream re-checked it.
-  - While `needsModel` holds, `ChatPanel` is not mounted and the page
-    explains what is missing, instead of handing the backend an
-    override it will reject.
-  - `openai_compat` is unaffected: its model may legitimately come from
-    the environment, which `/api/chat/providers` reports as `model`.
-
-
-### v0.26.2 - 18th July 2026
-
-- Filled in `roadmap.md`, which was still an `init-project` stub:
-  - Current phase: frontend e2e test harness (gating new interactive
-    features), then making the Eval page a first-class consumer of
-    `agents7.eval` (gating duplicated eval logic).
-  - Standing invariants: the UI stays a thin, introspecting view over
-    the framework; provider-agnostic by default; the backend is never
-    host-exposed in Compose; registry-claimed host ports; first-party
-    backend records only in `logs/`; 17px raw-text floor.
-  - Refuted directions: version badge in or above the top bar
-    (v0.10.1), a second source of the app version, and `$effect`
-    blocks calling `$state`-reading helpers.
-
-
-### v0.26.1 - 13th July 2026
-
-- Rotated changelog: archived 18 entries to `changelog/2026.md`.
-
-
-### v0.26.0 - 12th July 2026
-
-- Added an engine override to the **Chatter** page — chat with any
-  provider/model instead of the one baked into the agent config:
-  - `backend/routers/chat.py`: `POST /api/chat/start/{agent}` now
-    accepts an optional `{provider, model}` body and swaps the reply
-    engine via `_apply_engine_override()` (retry/cache carry over;
-    connection settings only within the same provider; the guard keeps
-    its own engine). Returns the effective `provider`/`model`.
-  - `backend/routers/chat.py`: new `GET /api/chat/providers` reporting
-    each provider's readiness (SDK installed + credentials in the env).
-  - `backend/pyproject.toml`: depend on `agents7[anthropic,openai]` so
-    the API providers are usable.
-  - `frontend/src/components/ChatPanel.svelte`: `provider`/`model`
-    props sent on session start; changing either restarts the session.
-  - `frontend/src/pages/Chatter.svelte`: Provider + Model selectors
-    (Ollama picks from installed models, API providers take a free
-    model name), with a readiness warning for unconfigured providers.
-- Updated the **Chatter** agent dropdown to show each agent's class
-  type alongside its name.
-- Added `backend/tests/test_chat.py` tests for the override helper,
-  provider-status reporting, and the optional-body parser.
-
-
-### v0.25.0 - 12th July 2026
-
-- Enhanced the **Agent Classes** page to show field inheritance:
-  - `backend/routers/agent_fields.py`: new `build_fields()` attributes
-    each agent's dataclass fields to the ancestor class that introduced
-    them, pairing each with the most specific description across the
-    inheritance chain's docstrings.
-  - `GET /api/classes` now returns `fields` (name, type, description,
-    `owner`, `inherited`) per class; docstring attribute/parameter
-    blocks are superseded by it, with only note prose kept in
-    `sections`.
-  - `Classes.svelte`: renders fields grouped by origin — "inherited
-    from `BaseAgent`", "inherited from `Labeler`", "defined here" — as
-    collapsible groups with per-group field counts.
-  - Renders reST inline code (`` `name` `` / ` ``name`` `) in
-    descriptions and field text as `<code>` instead of literal
-    backticks.
-  - The selected class is now deep-linkable as `#/classes/<ClassName>`.
+  - `utils.agent_unavailable()`: builds a 422 naming the module that
+    could not be imported and the command that reinstalls it.
+  - `run.py`: `POST /api/run/<agent>` answers 422 instead of 500 when
+    the agent's own package is missing, on both the structured and
+    the tool route.
+  - `eval.py`: same for `POST /api/eval/<agent>`, on both routes.
 - Added tests:
-  - `tests/test_agent_fields.py`: 6 tests for field attribution.
-  - `tests/test_classes.py`: updated for the `fields` shape.
+  - `tests/test_utils.py`: 2 tests for the message.
+  - `tests/test_run.py`: 2 tests for the run routes.
+  - `tests/test_eval.py`: 2 tests for the eval routes.
+- Updated `backend/pyproject.toml`: recorded why catalog agents are
+  not backend dependencies — each is an independent package, so the
+  UI never enumerates them.
+- Updated `README.md`: the catalog-install step now says a missing
+  package is reported, not a traceback.
 
 
-### v0.24.1 - 12th July 2026
+### v0.33.0 - 27th August 2026
 
-- Improved the **Agent Classes** page:
-  - Switched the hierarchy diagram to a horizontal (left→right) tree —
-    the abstract root anchors the left, depth grows rightward.
-  - `backend/routers/docstrings.py`: new `parse_docstring()` that
-    normalises Google-style (`Attributes:` / `Note:`) and Sphinx
-    (`:param:`) docstrings into structured sections.
-  - `GET /api/classes` now returns each class's `description` and
-    parsed `sections` alongside the raw `doc`.
-  - `Classes.svelte`: renders attributes/parameters as a field list
-    with type badges and notes as prose, instead of raw docstring text.
+- Added `backend/routers/chat.py`:
+  - `POST /api/chat/{session_id}/remember`: runs the agent's fact
+    extractor over the conversation so far and returns the fact
+    sentences it wrote. Answers 422 for an agent with no
+    `character_facts` store, and 500 without leaking the framework
+    error.
+  - `_can_remember()`: reports whether a chatter has both a fact
+    store and an extractor, mirroring the framework's own
+    precondition.
+  - `can_remember` on the `POST /api/chat/start/{agent}` response,
+    alongside `can_open`, so the UI only offers the control where it
+    works.
+- Updated `frontend/src/components/ChatPanel.svelte`: a Remember
+  button on the transcript toolbar, shown only for an agent that
+  keeps character facts. Reports what was recorded, or that nothing
+  was new. Deliberately a click and never automatic — the session is
+  torn down and restarted on every agent, provider, model and context
+  change, so anything wired to teardown would spend an LLM call on a
+  dropdown change; sessions also expire on a timer that no teardown
+  hook sees.
 - Added tests:
-  - `tests/test_docstrings.py`: 9 tests for the docstring parser.
-  - `tests/test_classes.py`: assert `description`/`sections` are parsed.
+  - `backend/tests/test_chat.py`: 7 tests for the route, the
+    precondition and the start-response flag.
+  - `frontend/e2e/chatter-remember.spec.js`: 7 specs covering the
+    control appearing only where supported, nothing being recorded
+    until asked, and the empty and rejected results.
 
 
-### v0.24.0 - 12th July 2026
+### v0.32.0 - 27th August 2026
 
-- Added an **Agent Classes** page — a diagram of the framework's agent
-  class hierarchy:
-  - `backend/routers/classes.py`: `GET /api/classes` introspects
-    `BaseAgent.__subclasses__()` at runtime (name, parent, module,
-    abstract flag, summary, docstring) so the tree needs no hardcoded
-    list and always matches the installed framework.
-  - `frontend/src/pages/Classes.svelte`: tidy top-down SVG tree with
-    family colouring, dashed abstract nodes, and a click-to-inspect
-    detail panel showing the inheritance chain and docstring.
-  - Registered the route in `App.svelte` and a nav entry in
-    `Sidebar.svelte`.
-- Added `tests/test_classes.py`: 6 tests covering the hierarchy
-  endpoint.
-
-
-### v0.23.1 - 12th July 2026
-
-- Fixed the Runner listing conversational (chatter-family) agents,
-  which have no input schema and left the Run button permanently
-  disabled when one was auto-selected:
-  - Updated `frontend/src/pages/Runner.svelte`: exclude
-    chatter-family agents (via `isChatter`) from both dropdowns and
-    the default selection, so the Runner only offers one-shot
-    `/api/run` agents. Chatters belong in the Chatter tab.
-  - The agent picker now shows the `display_name` and an
-    `agent_type` badge, matching the Catalog and Chatter pages.
-
-
-### v0.23.0 - 12th July 2026
-
-- Added agent descriptions to the selection UIs:
-  - `backend/routers/catalog.py`: catalog summary and detail now
-    include a `description` field, from the config's `description`
-    or derived from the persona backstory / system prompt.
-  - Runner, Eval, and Chatter show the selected agent's description
-    beneath the picker so users see what each agent does.
-  - `backend/tests/test_catalog.py`: tests for `_description` and
-    `_first_sentences`.
+- Added the agent's opening turn to the Chatter page. An agent whose
+  config sets `can_open` (a chat agent) can write the first message,
+  so the transcript starts with it instead of waiting for the user:
+  - `backend/routers/chat.py`: `start_chat` reports `can_open`
+    alongside the provider and model.
+  - `backend/routers/chat.py`: added `POST /api/chat/{id}/open` and
+    `POST /api/chat/{id}/open/stream`, wrapping the framework's
+    `open_chat_async` and `open_chat_stream_async`. An agent whose
+    `can_open` is False is rejected with a 422 before the reply
+    starts, rather than being made to invent an opening.
+  - `frontend/src/components/ChatPanel.svelte`: a control offering the
+    opening turn, shown only when the session reports `can_open` and
+    the transcript is still empty. It is a click, not something that
+    fires on start — the session restarts on every agent, engine and
+    context change, and each restart would otherwise spend a model
+    call nobody asked for. Taking it clears the seeded example
+    message.
+  - `frontend/e2e/chatter-opening.spec.js`: 6 specs covering the
+    control's visibility, that no opening is requested until asked
+    for, and that the agent's line lands first in the transcript.
+- Updated `backend/routers/chat.py`:
+  - Added `_metrics_dict()`, `_require_session()`,
+    `_require_can_open()` and `_stream_turn()`, so the reply and
+    opening routes share one Server-Sent Events path and one session
+    lookup.
+- Added `backend/tests/test_chat.py` coverage: 12 tests for the
+  opening routes, the shared metrics helper, and `can_open` on the
+  start response.
 
 
-### v0.22.4 - 12th July 2026
+### v0.31.0 - 25th August 2026
 
-- Fixed the Runner's Single tab for agents whose input is a single
-  free-text string (e.g. `CompanyPersonExtractor`, classifiers):
-  - Updated `frontend/src/pages/Runner.svelte`: detect string vs
-    dict example input and render one text area for string agents,
-    instead of spreading the example string into one box per
-    character via `Object.entries`.
-  - Updated `backend/routers/run.py`: route scalar `input_data`
-    through `act_in_batch` (as eval does) since the framework's
-    single `act()` only accepts a dict; a bare string previously
-    raised `AgentConfigurationError`.
-  - Added `backend/tests/test_run.py`: cover dict→`act`,
-    scalar→`act_in_batch`, and empty-batch parse-error routing.
-
-
-### v0.22.3 - 12th July 2026
-
-- Updated `frontend/src/components/Sidebar.svelte`: shortened the
-  default sidebar width from 336px to 300px.
-
-
-### v0.22.2 - 12th July 2026
-
-- Updated `frontend/src/components/Sidebar.svelte`: dropped the
-  `· console` tagline from the brand subtitle — it now shows only the
-  version (`v{version}`).
-
-
-### v0.22.1 - 12th July 2026
-
-- Updated `frontend/src/components/Sidebar.svelte`: raised the default
-  sidebar width 1.4× (240px → 336px) so it opens wider by default;
-  still user-adjustable and within the 180–420px clamp.
-
-
-### v0.22.0 - 12th July 2026
-
-- Updated `frontend/src/components/Sidebar.svelte`:
-  - Made the sidebar width adjustable by dragging its right edge; the
-    chosen width is clamped (180–420px) and persisted in
-    `localStorage` across sessions.
-  - Added keyboard resizing on the focusable handle (arrow keys to
-    nudge, Shift for larger steps, Home/End for min/max) and
-    double-click to reset to the default width.
-  - Raised `.brand-sub` from `0.8125rem` to `1.0625rem` to meet the
-    17px raw-text floor, and nudged `.brand-name` to `1.3rem` to keep
-    the name/subtitle hierarchy.
-
-
-### v0.21.1 - 11th July 2026
-
-- De-conflicted the dev backend host port from the shared `8001` to a
-  registry-claimed `8002`, so `pnpm dev` no longer proxies `/api` into a
-  leftover backend from another project (market_wrapper also binds
-  8001):
-  - Updated `frontend/vite.config.js`: proxy target `/api` → `:8002`.
-  - Updated `README.md`: backend run command and proxy notes use `8002`.
-
-
-### v0.21.0 - 11th July 2026
-
-- Reworked the frontend navigation from a top header bar to a lateral
-  sidebar menu, mirroring the market_wrapper console style:
-  - Added `frontend/src/components/Sidebar.svelte`: lateral menu with a
-    brand mark, app name + version subtitle, icon-per-item nav (Home,
-    Catalog, Runner, Chatter, Engine, Eval) with an accent active state,
-    and the Ollama engine status pill + Start button pinned at the base.
-  - Updated `frontend/src/App.svelte`: full-height sidebar + scrollable
-    content shell; fetches `/api/info` and passes name/version to the
-    sidebar. Kept hash routing, page switching, and Ollama start logic.
-  - Updated `frontend/src/app.css`: `#app` is now a full-height row
-    layout; added slim custom scrollbars.
-  - Updated `frontend/src/pages/Home.svelte`: removed the intro version
-    badge now that the sidebar shows name + version in persistent chrome.
-
-
-### v0.20.8 - 11th July 2026
-
-- Updated `docker-compose.yml`:
-  - Exposed the FastAPI backend on a registry-claimed host port
-    (`${API_PORT:-5191}` → container 8000), so the backend API and its
-    Swagger UI (`/docs`) are reachable directly, not only same-origin
-    via nginx.
-  - Expanded the `banner` service to advertise the Backend and Swagger
-    URLs alongside the App URL.
-- Updated `agents7_ui/.env.example`: documented `API_PORT`.
-
-
-### v0.20.7 - 11th July 2026
-
-- Updated `docker-compose.yml`:
-  - Replaced the frontend `post_start` echo with a dedicated `banner`
-    busybox service, matching the fleet-canonical startup-banner format
-    (blank-line padded, `➜`-prefixed, reads the same `${FRONTEND_PORT}`
-    the ports mapping binds).
-
-
-### v0.20.6 - 11th July 2026
-
-- Updated `.env.example`: added the external OpenAI-compatible provider vars (`OPENAI_COMPAT_MODEL_NAME`, `OPENAI_COMPAT_BASE_URL`, `OPENAI_COMPAT_API_KEY`) to the LLM provider keys section, for pointing an `openai_compat` agent at a provider like DeepSeek.
-
-
-### v0.20.5 - 11th July 2026
-
-- Fixed test-suite log pollution in `backend/`:
-  - `tests/conftest.py`: redirect `LOGS_DIR` to a throwaway dir at
-    conftest import time, so importing `main` (which calls
-    `configure_logging()`) no longer installs file handlers rooted at
-    the committed `backend/logs/` tree. Router tests that trigger
-    warnings previously persisted them there and tripped the
-    session-start container-log check.
-  - `tests/test_logging.py`: added
-    `test_session_logs_redirected_out_of_source_tree()` regression
-    guard.
-- Added `.claude/skills/fix-errors/`: per-project skill to triage the
-  backend's `logs/errors/` and `logs/warnings/` (read → diagnose →
-  fix → delete), adapting the canonical container-log fix loop to the
-  agents7 UI backend domain.
-
-
-### v0.20.4 - 21st June 2026
-
-- Refactored `backend/routers/` to drop the last local copies of
-  framework agent-resolution glue:
-  - `run.py`: structured-agent resolution now uses
-    `agents7.eval.AGENT_TYPE_MAP` + `build_agent` instead of the
-    local `AGENT_TYPE_MAP` / `import_class`; the `pipeline` branch
-    is preserved.
-  - `run.py` / `chat.py`: dotted-path class loading now uses the
-    framework's `import_from_path` (adds an injection guard on
-    user-supplied YAML `agent_type` paths) in place of the local
-    `import_class`.
-  - `utils.py`: removed the duplicated `AGENT_TYPE_MAP` and
-    `import_class`; only `CHATTER_TYPE_MAP` (no framework
-    equivalent) remains.
-  - `tests/test_utils.py`: dropped the `import_class` tests (the
-    behaviour is now covered by the framework suite).
-
-
-### v0.20.3 - 21st June 2026
-
-- Refactored `backend/routers/eval.py` to reuse the framework's
-  `agents7.eval` public API instead of local copies:
-  - Replaced `_load_golden_set` with `load_eval_rows`, the inline row
-    normalisation with `normalise_rows`, the output-field resolution with
-    `model_output_fields`, and the agent construction with `build_agent`.
-  - `AGENT_TYPE_MAP` now comes from `agents7.eval` rather than
-    `routers.utils`.
-  - Fixed a latent crash in the failure-logging path: a scalar input is
-    logged as `["<input>"]` instead of calling `.keys()` on a string.
-
-
-### v0.20.2 - 21st June 2026
-
-- Repinned ports to comply with `default-ports.md` (never bind a
-  service's shared default):
-  - `docker-compose.yml`: frontend host port `8080` → registry-claimed
-    `${FRONTEND_PORT:-5185}`; the `ports` mapping, `CORS_ORIGINS` default,
-    and the `post_start` startup banner now read the one variable so they
-    cannot drift (`docker-compose-startup-ports.md` source-of-truth).
-  - `frontend/vite.config.js`: pinned dev server `port` to `5186` (never
-    the shared Vite `5173` default).
-  - `backend/main.py`: updated `_default_origins` to `5186,5185`.
-- Updated `README.md` and `.env.example`: document `FRONTEND_PORT` and the
-  new dev/compose ports.
-- Updated `tests/test_security.py`: sample CORS origins use the new ports.
+- Updated `backend/routers/chat.py`:
+  - `start_chat` accepts a `context` mapping in the request body and
+    passes it to the agent's `set_context`, so a conversation can be
+    started with values the config declares but does not fix — the
+    nickname of the person on the other side, for instance. A name the
+    agent does not declare is rejected with a 400.
+  - Added `_clean_context()`: drops blank entries so a field left
+    empty falls back to the agent's declared default instead of
+    substituting an empty string.
+- Updated `backend/routers/catalog.py`:
+  - The agent detail now reports `context_params`, read through the
+    framework's own `parse_context_params` rather than a second
+    reading of the YAML. A value the framework computes itself (one
+    with a `callable`) is flagged `supplied_by_caller: false`.
+- Updated `frontend/src/pages/Chatter.svelte`:
+  - One text field per declared context value, with its default as the
+    placeholder and its description in a hint line below the controls.
+    Values are committed when the field is left, not on each
+    keystroke, so typing a nickname does not restart the chat letter
+    by letter. Switching agent clears them.
+- Updated `frontend/src/components/ChatPanel.svelte`:
+  - Added the `context` prop, sent with the session-start request.
+    Changing it restarts the session, since the values are baked into
+    the system prompt when the conversation begins.
+- Added tests:
+  - `frontend/e2e/chatter-context.spec.js`: 9 Playwright specs.
+  - `backend/tests/test_chat.py`: 8 tests, four of them starting a
+    real session against a temporary catalog and asserting the value
+    reaches the agent's resolved system prompt.
+  - `backend/tests/test_catalog.py`: 5 tests.
+- Updated `backend/pyproject.toml`: requires `agents7>=4.16.1` for
+  `parse_context_params`.

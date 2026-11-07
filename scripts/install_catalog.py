@@ -3,12 +3,16 @@
 
 Catalog agents that ship as installable packages resolve their
 `output_model` / `tools` by dotted path at run time (e.g.
-`tagger_agent.models.NickTag`). The backend's own venv does not have
+`my_tagger.models.Tag`). The backend's own venv does not have
 them, so `POST /api/run/<agent>` fails with `ModuleNotFoundError`
 unless they are installed alongside it.
 
-`Dockerfile.backend` already does this for the Compose stack. This
-script is the equivalent for the "Run locally (no Docker)" workflow.
+This is for the "Run locally (no Docker)" workflow with a catalog of
+your own. The samples in `samples/` need nothing installed: they
+resolve their models and tools from `agents7` itself.
+
+The catalog is read from `CATALOG_PATH`, the same variable the backend
+uses, and defaults to `samples/`.
 
 Each package is installed **editable** and with `--no-deps` — its
 `agents7` dependency is a local path override that is not on PyPI, so
@@ -17,17 +21,18 @@ are installed in a second pass.
 
 Usage (from the repo root or anywhere)::
 
-    uv run python agents7_ui/scripts/install_catalog.py
+    CATALOG_PATH=/path/to/your/catalog \\
+        uv run python agents7_ui/scripts/install_catalog.py
 """
 
+import os
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
-import tomllib
-
 ROOT = Path(__file__).resolve().parents[2]
-CATALOG = ROOT / "agents_catalog"
+CATALOG = Path(os.getenv("CATALOG_PATH", str(ROOT / "samples")))
 BACKEND_VENV = ROOT / "agents7_ui" / "backend" / ".venv"
 
 

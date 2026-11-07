@@ -22,13 +22,16 @@ export const AGENT = {
  * Stub every /api boundary the app calls.
  *
  * @param page      Playwright page.
- * @param overrides `agents`, `providers`, `models` to vary per spec.
+ * @param overrides `agents`, `providers`, `models`, `detail` to vary
+ *                  per spec. `detail` is the agent-detail payload the
+ *                  Chatter and Catalog pages fetch per agent.
  */
 export async function stubApi(page, overrides = {}) {
   const {
     agents = [AGENT],
     providers = [],
     models = [],
+    detail = { persona: null, scene: null },
   } = overrides
 
   // Catch-all first — anything not explicitly stubbed below (chat
@@ -51,7 +54,7 @@ export async function stubApi(page, overrides = {}) {
   // Agent detail and the bare list are distinct patterns (the detail
   // route requires a trailing segment), so neither shadows the other.
   await page.route('**/api/catalog/*', route =>
-    route.fulfill({ json: { persona: null, scene: null } }),
+    route.fulfill({ json: detail }),
   )
   await page.route('**/api/catalog', route =>
     route.fulfill({ json: agents }),

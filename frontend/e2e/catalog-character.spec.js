@@ -67,8 +67,8 @@ const PERSONA_ONLY = {
 }
 
 const PLAIN = {
-  name: 'tagger_agent',
-  display_name: 'Tagger agent',
+  name: 'my_tagger',
+  display_name: 'MyTagger',
   agent_type: 'classifier',
   provider: 'ollama',
   model: 'gemma3:12b',
@@ -191,7 +191,7 @@ test('a persona-only agent gets a single tab', async ({ page }) => {
 test('an agent with no persona, scene, or guard has no Character section', async ({
   page,
 }) => {
-  await open(page, 'Tagger agent')
+  await open(page, 'MyTagger')
 
   await expect(page.locator('.character-section')).toHaveCount(0)
   // The runner is still there — the section is additive.

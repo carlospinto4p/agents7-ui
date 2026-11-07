@@ -2,6 +2,8 @@ import logging
 import os
 from pathlib import Path
 
+from agents7.agents.config_loader import parse_context_params
+from agents7.exceptions import Agents7Exception
 from fastapi import APIRouter, HTTPException
 
 from routers.utils import (
@@ -13,11 +15,10 @@ from routers.utils import (
 router = APIRouter(prefix="/api/catalog", tags=["catalog"])
 logger = logging.getLogger(__name__)
 
-_default = str(Path(__file__).parents[3] / "agents_catalog")
+# The samples that ship with this repository. Point `CATALOG_PATH` at a
+# catalog of your own to serve its agents instead.
+_default = str(Path(__file__).parents[3] / "samples")
 CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
-
-_catalog_cache: list[Path] | None = None
-_name_index: dict[str, Path] | None = None
 
 # Directories that hold build/install artifacts, not real agent configs.
 # Catalog agents that ship as packages get a copy of their config.yml
@@ -34,28 +35,34 @@ _SKIP_DIRS = {
 }
 
 
-def _is_catalog_config(p: Path) -> bool:
-    """Return ``True`` if ``p`` is a real agent config, not an artifact."""
-    return not any(
-        part in _SKIP_DIRS or part.endswith(".egg-info") for part in p.parts
-    )
+def _is_skipped_dir(name: str) -> bool:
+    """Return ``True`` for a directory the catalog walk must not enter.
+
+    :param name: A single directory name, not a path.
+    :return: ``True`` when the directory holds build or install
+        artifacts rather than authored agent configs.
+    """
+    return name in _SKIP_DIRS or name.endswith(".egg-info")
 
 
-def _ensure_catalog_loaded() -> None:
-    global _catalog_cache, _name_index
-    if _catalog_cache is not None:
-        return
-    _catalog_cache = []
-    _name_index = {}
-    if CATALOG_PATH.exists():
-        for p in sorted(CATALOG_PATH.rglob("config.yml")):
-            if not _is_catalog_config(p):
-                continue
-            _catalog_cache.append(p)
-            cfg, _ = _load_config(p)
-            name = (cfg.get("name") or "").lower()
-            if name:
-                _name_index[name] = p
+def _discover_configs() -> list[Path]:
+    """Return every agent `config.yml` under the catalog root.
+
+    The tree is walked on each call rather than cached. A cached path
+    list left a newly added agent folder invisible until the backend
+    restarted, while config *edits* were picked up live — an
+    inconsistency with no upside. Artifact directories are pruned from
+    the walk itself rather than filtered afterwards, which keeps a full
+    scan around a millisecond even with virtualenvs in the tree.
+
+    :return: Sorted config paths, artifact copies excluded.
+    """
+    found: list[Path] = []
+    for dirpath, dirnames, filenames in os.walk(CATALOG_PATH):
+        dirnames[:] = [d for d in dirnames if not _is_skipped_dir(d)]
+        if "config.yml" in filenames:
+            found.append(Path(dirpath) / "config.yml")
+    return sorted(found)
 
 
 def _agent_source(config_file: Path) -> str:
@@ -184,6 +191,39 @@ def _guard_data(cfg: dict) -> dict | None:
     }
 
 
+def _context_params(cfg: dict, config_file: Path) -> list[dict]:
+    """Return the per-conversation values the agent declares.
+
+    Parsed with the framework's own loader so the UI never carries a
+    second reading of the `context_params` schema. A value with a
+    `callable` is computed by the framework on every message, so it is
+    reported with `supplied_by_caller` false and the chat form leaves
+    it alone. One computed from another declared value also names
+    that value in `derived_from`, so the form can say where it comes
+    from.
+
+    :param cfg: Parsed agent config dictionary.
+    :param config_file: Path to the config (for error messages).
+    :return: One dict per declaration; empty when none are declared or
+        the section is malformed.
+    """
+    try:
+        declared = parse_context_params(cfg, str(config_file))
+    except Agents7Exception as exc:
+        logger.warning("Ignoring context_params in %s: %s", config_file, exc)
+        return []
+    return [
+        {
+            "name": param.name,
+            "default": param.default,
+            "description": param.description,
+            "supplied_by_caller": param.resolver is None,
+            "derived_from": param.derived_from,
+        }
+        for param in declared or ()
+    ]
+
+
 def _resolve_pipeline_step_details(
     config_file: Path, steps: list[dict]
 ) -> list[dict]:
@@ -282,6 +322,7 @@ def _parse_detail(config_file: Path) -> dict:
         "system_prompt": cfg.get("system_prompt"),
         "persona": cfg.get("persona"),
         "scene": cfg.get("scene"),
+        "context_params": _context_params(cfg, config_file),
         "guard": _guard_data(cfg),
         "output_model": cfg.get("output_model"),
         "output_schema": output_schema,
@@ -292,15 +333,27 @@ def _parse_detail(config_file: Path) -> dict:
 
 
 def find_config_file(agent_name: str) -> Path | None:
-    """Return config.yml path for agent_name (case-insensitive)."""
-    _ensure_catalog_loaded()
-    return _name_index.get(agent_name.lower())  # type: ignore[union-attr]
+    """Return the `config.yml` path for *agent_name*.
+
+    Matching is case-insensitive against the config's `name` field.
+    Configs are parsed until one matches rather than indexed up front,
+    so an agent added while the backend is running is found without a
+    restart.
+
+    :param agent_name: The agent's `name` as written in its config.
+    :return: The config path, or `None` when no agent matches.
+    """
+    target = agent_name.lower()
+    for config_file in _discover_configs():
+        cfg, _ = _load_config(config_file)
+        if (cfg.get("name") or "").lower() == target:
+            return config_file
+    return None
 
 
 @router.get("")
 def list_agents() -> list[dict]:
-    _ensure_catalog_loaded()
-    return [_parse_summary(c) for c in _catalog_cache]  # type: ignore[arg-type]
+    return [_parse_summary(c) for c in _discover_configs()]
 
 
 @router.get("/{agent_name}")

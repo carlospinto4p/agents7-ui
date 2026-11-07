@@ -5,7 +5,7 @@ Dotted-path import resolution moved to the framework's
 suite); the local `import_class` duplicate was removed.
 """
 
-from routers.utils import _load_output_schema
+from routers.utils import _load_output_schema, agent_unavailable
 
 # ── _load_output_schema ────────────────────────────────────────────────────
 
@@ -37,3 +37,22 @@ def test_load_output_schema_valid_model_returns_schema():
     assert isinstance(schema, dict)
     assert "properties" in schema
     assert fields == set(schema["properties"].keys())
+
+
+# ── agent_unavailable ──────────────────────────────────────────────────────
+
+
+def test_agent_unavailable_names_the_missing_module():
+    exc = agent_unavailable(
+        ModuleNotFoundError("No module named 'my_tagger'", name="my_tagger")
+    )
+    assert exc.status_code == 422
+    assert "`my_tagger`" in exc.detail
+    assert "not installed" in exc.detail
+
+
+def test_agent_unavailable_without_a_module_name_still_reads():
+    """A bare ImportError carries no `name`; the message must hold."""
+    exc = agent_unavailable(ImportError("circular import"))
+    assert exc.status_code == 422
+    assert "a module it declares" in exc.detail

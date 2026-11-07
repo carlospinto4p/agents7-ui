@@ -1,7 +1,14 @@
 <script>
   import { history } from '../stores/history.js'
   import { isChatter, isToolAgent } from '../constants.js'
-  import { fmtCost, copyText, downloadJson } from '../lib/format.js'
+  import {
+    fmtCost,
+    cacheLabel,
+    retryLabel,
+    stepMetaLine,
+    copyText,
+    downloadJson,
+  } from '../lib/format.js'
 
   // ── Shared state ─────────────────────────────────────────
   let agents     = $state([])
@@ -194,6 +201,13 @@
     if (singleResult?.metrics?.tokens) parts.push(`${singleResult.metrics.tokens} tok`)
     const cost = fmtCost(singleResult?.metrics?.cost_cents)
     if (cost) parts.push(cost)
+    const cached = cacheLabel(singleResult?.metrics)
+    if (cached) parts.push(cached)
+    // The duration above is this page's own stopwatch, which was
+    // running through the retries too — so this says how much of
+    // it went on attempts that failed.
+    const retries = retryLabel(singleResult?.metrics)
+    if (retries) parts.push(retries)
     if (agentDetail?.model) parts.push(agentDetail.model)
     return parts.join(' · ')
   })
@@ -219,6 +233,7 @@
           iteration: s.iteration,
           arguments: s.arguments ?? {},
           result: null,
+          error: null,
         }
         calls.push(call)
         if (!byIteration.has(s.iteration)) byIteration.set(s.iteration, [])
@@ -227,7 +242,13 @@
         const match = (byIteration.get(s.iteration) ?? []).find(
           c => c.result === null,
         )
-        if (match) match.result = s.result ?? ''
+        if (match) {
+          match.result = s.result ?? ''
+          // `error` is the flag, not the text: `result` already holds
+          // the "Error: ..." message the model was handed, and a tool
+          // may return text starting with "Error:" and have succeeded.
+          match.error = s.error ?? null
+        }
       }
     }
     return calls
@@ -562,10 +583,13 @@
             <div class="steps-section" data-testid="tool-trajectory">
               <span class="steps-label">Trajectory <span class="steps-count">({toolCallSteps.length} {toolCallSteps.length === 1 ? 'call' : 'calls'})</span></span>
               {#each toolCallSteps as step, i}
-                <div class="step-card tool-step">
+                <div class="step-card tool-step" class:rejected={step.error != null}>
                   <div class="tool-step-header">
                     <span class="step-num">{i + 1}</span>
                     <span class="tool-name">{step.name}</span>
+                    {#if step.error != null}
+                      <span class="tool-rejected" data-testid="tool-rejected">rejected</span>
+                    {/if}
                     <span class="tool-iteration">iteration {step.iteration + 1}</span>
                   </div>
                   <div class="tool-step-body">
@@ -587,9 +611,9 @@
                       {/if}
                     </div>
                     <div class="tool-io">
-                      <span class="io-label">Result</span>
+                      <span class="io-label">{step.error != null ? 'Error' : 'Result'}</span>
                       {#if step.result != null}
-                        <pre class="tool-result">{step.result}</pre>
+                        <pre class="tool-result" class:rejected={step.error != null}>{step.result}</pre>
                       {:else}
                         <p class="state-msg">No result — the loop ended before this call returned.</p>
                       {/if}
@@ -615,7 +639,7 @@
                       <span class="badge model">{agentDetail.step_engines[i].model}</span>
                     {/if}
                     {#if step.metrics?.tokens}
-                      <span class="step-meta">{step.metrics.tokens} tok · {step.metrics.total_duration?.toFixed(1)}s{fmtCost(step.metrics.cost_cents) ? ` · ${fmtCost(step.metrics.cost_cents)}` : ''}</span>
+                      <span class="step-meta">{stepMetaLine(step.metrics)}</span>
                     {/if}
                     <span class="chevron" class:closed={!singleStepsOpen[i]}>▾</span>
                   </button>
@@ -818,7 +842,7 @@
     height: 100%;
   }
 
-  .page-intro { margin-bottom: 1.5rem; max-width: 700px; }
+  .page-intro { margin-bottom: 1.5rem; }
   .page-title {
     font-size: 1.5rem;
     font-weight: 700;
@@ -907,7 +931,6 @@
 
   .agent-desc {
     margin: -0.4rem 0 0;
-    max-width: 640px;
     font-size: 1.0625rem;
     line-height: 1.5;
     color: var(--text-muted);
@@ -1300,6 +1323,22 @@
     word-break: break-word;
     color: var(--text);
     overflow-x: auto;
+  }
+
+  /* A call the tool threw out. It reached the tool and got no
+     answer back, so it must not read like an ordinary result. */
+  .tool-step.rejected { border-color: var(--fail); }
+  .tool-rejected {
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--fail-bg);
+    color: var(--fail);
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+  .tool-result.rejected {
+    background: var(--fail-bg);
+    color: var(--fail);
   }
 
   /* Pipeline steps breakdown */

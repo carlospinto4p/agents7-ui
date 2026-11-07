@@ -346,7 +346,6 @@
     font-size: 1.0625rem;
     line-height: 1.6;
     margin: 0;
-    max-width: 720px;
   }
   .intro-desc code {
     font-family: ui-monospace, 'Cascadia Code', monospace;

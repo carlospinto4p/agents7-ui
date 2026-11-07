@@ -33,12 +33,39 @@
     !!ovProvider && !ovModel && !providerInfo?.model
   )
 
+  // Per-conversation context — the values an agent declares under
+  // `context_params` and expects the caller to supply (the other person's nickname,
+  // for instance). `draft` follows the inputs; `context` holds the
+  // committed values and is what restarts the session, so typing a
+  // nickname does not restart the chat on every keystroke.
+  let contextDraft = $state({})
+  let context      = $state({})
+
+  let contextFields = $derived(
+    (detail?.context_params ?? []).filter(p => p.supplied_by_caller),
+  )
+  // Values the framework works out from one of the fields above.
+  // They get no field of their own, only a line saying so.
+  let derivedFields = $derived(
+    (detail?.context_params ?? []).filter(p =>
+      contextFields.some(f => f.name === p.derived_from),
+    ),
+  )
+
+  function commitContext() {
+    context = { ...contextDraft }
+  }
+
   // Reset to the agent's default engine whenever the agent changes,
   // so an override never silently carries across a different persona.
+  // The conversation context goes with it — a nickname belongs to the
+  // agent it was typed for.
   $effect(() => {
     agentName
     ovProvider = ''
     ovModel = ''
+    contextDraft = {}
+    context = {}
   })
 
   // Seed a sensible model when a provider is chosen: the agent's own
@@ -182,6 +209,23 @@
       </label>
     {/if}
 
+    {#each contextFields as p (p.name)}
+      <label class="field">
+        <span class="label">{p.name}</span>
+        <input
+          type="text"
+          class="context-input"
+          data-context-param={p.name}
+          bind:value={contextDraft[p.name]}
+          onchange={commitContext}
+          placeholder={p.default || p.name}
+          title={p.description}
+          spellcheck="false"
+          disabled={!agentName}
+        />
+      </label>
+    {/each}
+
     <button
       class="reset-btn"
       onclick={() => chatPanel?.restart()}
@@ -190,6 +234,24 @@
       Reset
     </button>
   </div>
+
+  {#if contextFields.length}
+    <p class="context-hint">
+      {#each contextFields as p, i (p.name)}
+        {i > 0 ? ' · ' : ''}<strong>{p.name}</strong>{p.description
+          ? ` — ${p.description}`
+          : ''}
+      {/each}
+      — set before the first message; changing one starts a fresh
+      conversation.
+      {#each derivedFields as p (p.name)}
+        <span class="context-derived" data-derived-param={p.name}>
+          <strong>{p.name}</strong> is worked out from
+          {p.derived_from}.
+        </span>
+      {/each}
+    </p>
+  {/if}
 
   {#if ovProvider && providerInfo && !providerInfo.ready}
     <p class="override-warn">
@@ -267,6 +329,7 @@
         {agentName}
         provider={ovProvider}
         model={ovModel}
+        {context}
       />
     </div>
   {:else}
@@ -348,6 +411,26 @@
   .model-input:disabled { opacity: 0.4; }
   .model-input:focus { outline: none; border-color: var(--accent); }
 
+  .context-input {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1.0625rem;
+    background: var(--bg-surface);
+    color: var(--text);
+    min-width: 160px;
+  }
+  .context-input:disabled { opacity: 0.4; }
+  .context-input:focus { outline: none; border-color: var(--accent); }
+
+  .context-hint {
+    flex-shrink: 0;
+    margin: 0;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
   .override-warn {
     flex-shrink: 0;
     margin: 0;
@@ -389,7 +472,6 @@
   .meta-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; min-width: 0; }
   .agent-description {
     margin: 0;
-    max-width: 640px;
     font-size: 1.0625rem;
     line-height: 1.5;
     color: var(--text-muted);

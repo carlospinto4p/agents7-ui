@@ -133,3 +133,57 @@ test('an out-of-range stored width falls back to the default', async ({
 
   expect(await widthOf(page)).toBe(DEFAULT_WIDTH)
 })
+
+// ── Narrow viewport (v0.45.0) ─────────────────────────────────────
+//
+// Below 640px the sidebar becomes an icon rail, so the page keeps
+// most of the width instead of being squeezed into a column of
+// one-word lines.
+
+const NARROW = { width: 430, height: 900 }
+const RAIL_MAX = 60
+
+test('a narrow viewport collapses the sidebar to an icon rail', async ({
+  page,
+}) => {
+  await page.setViewportSize(NARROW)
+  await page.goto('/')
+  await expect(sidebar(page)).toBeVisible()
+
+  expect(await widthOf(page)).toBeLessThanOrEqual(RAIL_MAX)
+  await expect(sidebar(page).locator('.nav-label').first()).toBeHidden()
+  await expect(sidebar(page).locator('.brand-text')).toBeHidden()
+  await expect(handle(page)).toBeHidden()
+
+  // The point of the rail: the content gets the rest of the width.
+  const main = await page.locator('main').boundingBox()
+  expect(main.width).toBeGreaterThanOrEqual(NARROW.width - RAIL_MAX)
+})
+
+test('the icon rail still navigates, by accessible name', async ({
+  page,
+}) => {
+  await page.setViewportSize(NARROW)
+  await page.goto('/')
+
+  // The label text is hidden, so the link's name has to come from
+  // somewhere else or the rail is unusable to a screen reader.
+  const link = sidebar(page).getByRole('link', { name: 'Eval' })
+  await link.click()
+  await expect(page).toHaveURL(/#\/eval$/)
+  await expect(link).toHaveAttribute('aria-current', 'page')
+})
+
+test('the rail does not touch the stored width', async ({ page }) => {
+  await page.goto('/')
+  await dragHandle(page, 80)
+  expect(await storedWidth(page)).toBe(String(DEFAULT_WIDTH + 80))
+
+  await page.setViewportSize(NARROW)
+  expect(await widthOf(page)).toBeLessThanOrEqual(RAIL_MAX)
+  expect(await storedWidth(page)).toBe(String(DEFAULT_WIDTH + 80))
+
+  // Wide again: the width the user chose comes back.
+  await page.setViewportSize({ width: 1280, height: 900 })
+  expect(await widthOf(page)).toBe(DEFAULT_WIDTH + 80)
+})

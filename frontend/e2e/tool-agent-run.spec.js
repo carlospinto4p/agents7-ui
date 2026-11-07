@@ -119,6 +119,64 @@ test('the answer and the tool trajectory are rendered', async ({ page }) => {
   await expect(trajectory).toContainText('blue mug')
 })
 
+test('a call the tool rejected is marked, not shown as a result', async ({
+  page,
+}) => {
+  await stubRun(page, {
+    ...RUN_RESULT,
+    answer: 'Sorry, I could not find that product.',
+    raw_response: 'Sorry, I could not find that product.',
+    tool_steps: [
+      {
+        kind: 'tool_call',
+        iteration: 0,
+        name: 'find_product',
+        arguments: { query: { type: 'string', value: 'blue mug' } },
+      },
+      {
+        kind: 'tool_result',
+        iteration: 0,
+        name: 'find_product',
+        result: 'Error: Invalid arguments for `find_product`',
+        error: 'Invalid arguments for `find_product`',
+      },
+      { kind: 'answer', iteration: 1 },
+    ],
+  })
+  await openRunner(page)
+
+  await page.locator('textarea').fill('Any blue mugs?')
+  await page.getByRole('button', { name: 'Run', exact: true }).click()
+
+  const trajectory = page.getByTestId('tool-trajectory')
+  const step = trajectory.locator('.tool-step')
+  await expect(step).toHaveCount(1)
+
+  // The badge, and the card carrying the failure class — without
+  // them the page reads an "Error: ..." string as an ordinary
+  // result, which is the string-sniffing the framework dropped.
+  await expect(page.getByTestId('tool-rejected')).toBeVisible()
+  await expect(step).toHaveClass(/rejected/)
+  await expect(trajectory.locator('.tool-result.rejected')).toHaveCount(1)
+
+  // The block is labelled Error rather than Result.
+  await expect(trajectory).toContainText('Error')
+  await expect(trajectory.getByText('Result', { exact: true })).toHaveCount(0)
+})
+
+test('a successful call carries no rejected marking', async ({ page }) => {
+  await stubRun(page, RUN_RESULT)
+  await openRunner(page)
+
+  await page.locator('textarea').fill('Any blue mugs?')
+  await page.getByRole('button', { name: 'Run', exact: true }).click()
+
+  const trajectory = page.getByTestId('tool-trajectory')
+  await expect(trajectory.locator('.tool-step')).toHaveCount(2)
+  await expect(page.getByTestId('tool-rejected')).toHaveCount(0)
+  await expect(trajectory.locator('.tool-result.rejected')).toHaveCount(0)
+})
+
 test('an exhausted loop shows the error and the calls it did make', async ({
   page,
 }) => {

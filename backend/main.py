@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from logging_setup import configure_logging
-from routers import catalog, chat, classes, engine, eval, run
+from routers import catalog, chat, classes, engine, eval, reads, run
 
 configure_logging()
 
@@ -83,6 +83,7 @@ app.include_router(run.router)
 app.include_router(engine.router)
 app.include_router(eval.router)
 app.include_router(chat.router)
+app.include_router(reads.router)
 
 _README = Path(__file__).parents[2] / "agents7_framework" / "README.md"
 

@@ -1,11 +1,39 @@
 [project]
 name = "agents7-ui-backend"
-version = "0.30.1"
+version = "0.47.1"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
-    "agents7[anthropic,openai]>=4.0.0",
+    # 8.0.1: the version the UI is developed and tested against.
+    # Not a feature requirement — the last API this backend needed
+    # was 5.0.0 (a tool step carrying `error` as well as `result`,
+    # so a rejected call can be rendered as one, and a trajectory
+    # run's metrics carrying `failed_calls`). It is raised because
+    # `routers/run.py` forwards `LLMMetrics` with `model_dump()`
+    # rather than a hand-listed dict, so the payload carries
+    # whatever the framework measures and a reader needs to know
+    # which version that field set came from. The v6, v7 and v8
+    # majors are confined to `eval.style` and `eval.style_history`,
+    # which this backend does not import.
+    #
+    # 8.5.0 WAS a feature requirement, and the first one since
+    # 5.0.0: `routers/utils.py` calls `agents7.agents.resolve_config`
+    # so an agent whose persona and scene live in a `character` and
+    # a `chat_goal` file still lists with a display name and both
+    # panels. On an earlier agents7 the import fails and every
+    # config falls back to a plain parse.
+    #
+    # 9.19.0 is the second, for `routers/reads.py`:
+    # `eval.chat_review.read_payload` (9.19.0) is the data contract
+    # the Reads page renders, so the page and the generated read
+    # cannot drift apart, and `eval.chat_feedback` (9.18.0) is the
+    # feedback format it writes back. `Recording.context` and
+    # `Recording.facts` (9.17.0) are what put a conversation's
+    # nickname, time of day and prior facts on the page. None of
+    # the three exists earlier, so the router's imports fail
+    # outright rather than degrading.
+    "agents7[anthropic,openai]>=9.21.0",
     "pyyaml>=6.0",
     "httpx>=0.28.0",
     "python-dotenv>=1.0.0",
@@ -13,6 +41,15 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=8.0"]
+
+# Catalog agents are deliberately absent here. Each one is an
+# independent package with its own version and venv, so naming them
+# as backend dependencies would couple the UI to the catalog and
+# break that independence. They are installed into this venv by
+# discovery instead — `scripts/install_catalog.py` locally, the
+# equivalent loop in `Dockerfile.backend` for the image — and an
+# agent whose package is missing is reported as unavailable rather
+# than failing with a traceback (`routers.utils.agent_unavailable`).
 
 [tool.uv.sources]
 agents7 = { path = "../../agents7_framework", editable = true }

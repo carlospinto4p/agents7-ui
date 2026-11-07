@@ -1,45 +1,84 @@
 from pathlib import Path
 
+import pytest
+import routers.catalog as catalog_mod
 from routers.catalog import (
+    _context_params,
     _demonstrates,
     _description,
+    _discover_configs,
     _first_sentences,
     _guard_data,
-    _is_catalog_config,
+    find_config_file,
 )
 
-# ── _is_catalog_config Tests ───────────────────────────────────────
+
+def _write_config(path: Path, name: str) -> Path:
+    """Create a minimal agent config at *path* and return it."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f"name: {name}\nagent_type: chatter\n", encoding="utf-8")
+    return path
 
 
-def test_real_agent_config_is_kept():
-    p = Path("/app/agents_catalog/tagger_agent/src/tagger_agent/config.yml")
-    assert _is_catalog_config(p) is True
+@pytest.fixture
+def catalog(tmp_path, monkeypatch):
+    """A throwaway catalog root the discovery walk points at."""
+    monkeypatch.setattr(catalog_mod, "CATALOG_PATH", tmp_path)
+    return tmp_path
 
 
-def test_example_config_is_kept():
-    p = Path("/app/agents_catalog/examples/bio_generator/config.yml")
-    assert _is_catalog_config(p) is True
+# ── _discover_configs Tests ────────────────────────────────────────
 
 
-def test_build_artifact_config_is_skipped():
+def test_real_and_example_configs_are_found(catalog):
+    _write_config(catalog / "my_tagger/src/my_tagger/config.yml", "mt")
+    _write_config(catalog / "examples/bio_generator/config.yml", "bio")
+    assert _discover_configs() == [
+        catalog / "examples/bio_generator/config.yml",
+        catalog / "my_tagger/src/my_tagger/config.yml",
+    ]
+
+
+def test_build_artifact_config_is_skipped(catalog):
     # The duplicate copy left by building a packaged catalog agent.
-    p = Path(
-        "/app/agents_catalog/tagger_agent/build/lib/tagger_agent/config.yml"
+    _write_config(catalog / "my_tagger/src/my_tagger/config.yml", "mt")
+    _write_config(catalog / "my_tagger/build/lib/my_tagger/config.yml", "mt")
+    assert _discover_configs() == [
+        catalog / "my_tagger/src/my_tagger/config.yml"
+    ]
+
+
+def test_venv_site_packages_config_is_skipped(catalog):
+    _write_config(
+        catalog / ".venv/lib/python3.12/site-packages/mt/config.yml", "mt"
     )
-    assert _is_catalog_config(p) is False
+    assert _discover_configs() == []
 
 
-def test_venv_site_packages_config_is_skipped():
-    p = Path(
-        "/app/agents_catalog/tagger_agent/.venv/lib/python3.12/"
-        "site-packages/tagger_agent/config.yml"
+def test_egg_info_config_is_skipped(catalog):
+    _write_config(catalog / "src/foo.egg-info/config.yml", "foo")
+    assert _discover_configs() == []
+
+
+def test_missing_catalog_root_yields_no_configs(catalog):
+    assert _discover_configs() == []
+
+
+def test_agent_added_after_first_scan_is_found(catalog):
+    _write_config(catalog / "examples/first/config.yml", "first")
+    assert find_config_file("second") is None
+
+    # The failure this replaces: a cached path list meant a folder
+    # added while the backend ran stayed invisible until a restart.
+    _write_config(catalog / "examples/second/config.yml", "second")
+    assert (
+        find_config_file("second") == catalog / "examples/second/config.yml"
     )
-    assert _is_catalog_config(p) is False
 
 
-def test_egg_info_config_is_skipped():
-    p = Path("/app/agents_catalog/tagger_agent/src/foo.egg-info/config.yml")
-    assert _is_catalog_config(p) is False
+def test_find_config_file_matches_case_insensitively(catalog):
+    _write_config(catalog / "examples/mt/config.yml", "My_Tagger")
+    assert find_config_file("my_tagger") == catalog / "examples/mt/config.yml"
 
 
 # ── _description Tests ─────────────────────────────────────────────
@@ -185,3 +224,67 @@ def test_guard_data_tolerates_non_mapping_guard_block():
     guard = _guard_data(cfg)
     assert guard["engine_inherited"] is True
     assert guard["think"] is None
+
+
+# ── _context_params Tests ──────────────────────────────────────────
+
+
+def test_context_params_absent_gives_empty_list(tmp_path):
+    assert _context_params({"name": "a"}, tmp_path / "config.yml") == []
+
+
+def test_context_params_reports_declaration(tmp_path):
+    cfg = {
+        "context_params": {
+            "nick": {"default": "ella", "description": "Her nick"},
+        }
+    }
+    assert _context_params(cfg, tmp_path / "config.yml") == [
+        {
+            "name": "nick",
+            "default": "ella",
+            "description": "Her nick",
+            "supplied_by_caller": True,
+            "derived_from": "",
+        }
+    ]
+
+
+def test_context_params_names_what_a_value_is_derived_from(tmp_path):
+    """A derived value gets no field, and says what it reads."""
+    cfg = {
+        "context_params": {
+            "nick": {"default": "ella"},
+            "hint": {"callable": "html.escape", "from": "nick"},
+        }
+    }
+    by_name = {
+        p["name"]: p for p in _context_params(cfg, tmp_path / "config.yml")
+    }
+    assert by_name["hint"]["supplied_by_caller"] is False
+    assert by_name["hint"]["derived_from"] == "nick"
+    assert by_name["nick"]["derived_from"] == ""
+
+
+def test_context_params_marks_resolver_backed_as_not_supplied(tmp_path):
+    cfg = {
+        "context_params": {
+            "moment": {
+                "callable": "agents7.agents.context.spanish_time_of_day"
+            },
+        }
+    }
+    param = _context_params(cfg, tmp_path / "config.yml")[0]
+    assert param["supplied_by_caller"] is False
+
+
+def test_context_params_scalar_entry_is_the_default(tmp_path):
+    cfg = {"context_params": {"nick": "ella"}}
+    param = _context_params(cfg, tmp_path / "config.yml")[0]
+    assert param["default"] == "ella"
+
+
+def test_context_params_malformed_section_is_ignored(tmp_path):
+    """A bad declaration must not break the whole detail page."""
+    cfg = {"context_params": {"nick": {"callable": "nope.missing"}}}
+    assert _context_params(cfg, tmp_path / "config.yml") == []

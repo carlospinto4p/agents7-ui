@@ -15,13 +15,12 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import routers.run as run_mod
 from agents7.agents.tool_agent import ToolStepEvent, ToolStepKind
 from agents7.exceptions import ToolLoopError
+from agents7.models import LLMMetrics
 from fastapi import HTTPException
-
-import routers.run as run_mod
 from routers.run import run_agent
-
 
 # ── Fakes ──────────────────────────────────────────────────────────
 
@@ -42,7 +41,7 @@ def _agent_response(output):
     return SimpleNamespace(
         model=model,
         response="raw text",
-        metrics=SimpleNamespace(
+        metrics=LLMMetrics(
             tokens=7,
             prompt_tokens=3,
             total_duration=0.5,
@@ -198,7 +197,7 @@ def test_tool_agent_returns_answer_and_trajectory(monkeypatch):
     response = SimpleNamespace(
         response="We have blue mugs.",
         thinking="checked the catalog",
-        metrics=SimpleNamespace(
+        metrics=LLMMetrics(
             tokens=42, prompt_tokens=20, total_duration=1.5, cost_cents=None
         ),
     )
@@ -236,7 +235,47 @@ def test_tool_step_payload_omits_unset_fields(monkeypatch):
     assert "result" not in call
     assert tool_result["result"] == '{"sku": "MUG-01"}'
     assert "arguments" not in tool_result
+    assert "error" not in tool_result
     assert answer == {"kind": "answer", "iteration": 1}
+
+
+def test_tool_step_payload_carries_a_rejected_call(monkeypatch):
+    """A call the tool threw out is flagged, not just described.
+
+    `result` is the "Error: ..." text the model was handed, and a
+    tool may return text starting with "Error:" and have succeeded
+    — so `error` is what the page needs to render the failure.
+    """
+    events = [
+        ToolStepEvent(
+            kind=ToolStepKind.TOOL_CALL,
+            iteration=0,
+            name="find_product",
+            arguments={"query": {"type": "string", "value": "mug"}},
+        ),
+        ToolStepEvent(
+            kind=ToolStepKind.TOOL_RESULT,
+            iteration=0,
+            name="find_product",
+            result="Error: Invalid arguments for `find_product`",
+            error="Invalid arguments for `find_product`",
+        ),
+        ToolStepEvent(
+            kind=ToolStepKind.ANSWER,
+            iteration=1,
+            text="Sorry, I could not find that.",
+        ),
+    ]
+    agent = _FakeToolAgent(_FakeStream(events))
+    _patch_tool(monkeypatch, agent)
+
+    result = asyncio.run(
+        run_agent("X", _FakeRequest({"input_data": "Any blue mugs?"}))
+    )
+
+    tool_result = result["tool_steps"][1]
+    assert tool_result["error"] == "Invalid arguments for `find_product`"
+    assert tool_result["result"].startswith("Error: Invalid arguments")
 
 
 def test_tool_loop_error_reports_steps_made(monkeypatch):
@@ -269,3 +308,140 @@ def test_tool_agent_rejects_dict_input(monkeypatch):
     assert exc.value.status_code == 422
     assert "must be a string" in exc.value.detail
     assert agent.stream_calls == []
+
+
+# ── Missing agent package Tests ────────────────────────────────────
+
+
+def _patch_build_importing(monkeypatch, agent_type, dotted):
+    """Patch `build_agent` to fail the way a real config would.
+
+    The failure is produced by actually resolving *dotted* through
+    the framework's `import_from_path`, so the `ModuleNotFoundError`
+    carries the `name` attribute the interpreter sets — a hand-built
+    exception does not, and would let the test pass against a
+    message that never names the module.
+    """
+    monkeypatch.setattr(
+        run_mod, "find_config_file", lambda name: Path("/x/config.yml")
+    )
+    monkeypatch.setattr(
+        run_mod,
+        "_load_config",
+        lambda cf: ({"agent_type": agent_type, "name": "X"}, None),
+    )
+
+    def _build(config_file, at):
+        from agents7.agents.utils import import_from_path
+
+        return import_from_path(dotted)
+
+    monkeypatch.setattr(run_mod, "build_agent", _build)
+
+
+def test_missing_package_is_422_not_500(monkeypatch):
+    """A catalog agent whose own package is absent must not 500.
+
+    A config naming `my_tagger.models.Tag` makes building it raise
+    `ModuleNotFoundError` from inside `from_yaml` when that package
+    is not installed here.
+    """
+    _patch_build_importing(
+        monkeypatch, "labeler", "my_tagger_absent.models.Tag"
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(run_agent("X", _FakeRequest({"input_data": "david"})))
+
+    assert exc.value.status_code == 422
+    assert "my_tagger_absent" in exc.value.detail
+    assert "not installed" in exc.value.detail
+
+
+def test_tool_agent_missing_package_is_422(monkeypatch):
+    _patch_build_importing(
+        monkeypatch, "tool", "store_tools_absent.tools.find_product"
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(run_agent("X", _FakeRequest({"input_data": "hi"})))
+
+    assert exc.value.status_code == 422
+    assert "store_tools_absent" in exc.value.detail
+
+
+def test_run_metrics_carry_the_cache_flag(monkeypatch):
+    """A cached run must be tellable from a fast free one.
+
+    Three of the six metrics payloads in this router were built by
+    hand and had drifted, dropping `cached_prompt_tokens` and
+    `cached` — so a run served from the response cache rendered as
+    a real call that took no time and cost nothing.
+    """
+    cached = _agent_response({"name": "John"})
+    cached.metrics = LLMMetrics(
+        tokens=7,
+        prompt_tokens=3,
+        cached_prompt_tokens=3,
+        total_duration=0.0004,
+        cost_cents=0.0,
+        cached=True,
+    )
+    agent = _FakeAgent()
+    agent.act = lambda input_data: cached
+    _patch(monkeypatch, agent)
+
+    result = asyncio.run(
+        run_agent("X", _FakeRequest({"text": "John is an engineer."}))
+    )
+
+    assert result["metrics"]["cached"] is True
+    assert result["metrics"]["cached_prompt_tokens"] == 3
+
+
+def test_run_metrics_carry_the_retries(monkeypatch):
+    """A run that fought the provider must not look clean.
+
+    The retry seconds sit outside `total_duration`, which is the
+    successful attempt's own figure, so a run that spent a minute
+    on backoff would otherwise render as a quick one.
+    """
+    retried = _agent_response({"name": "John"})
+    retried.metrics = LLMMetrics(
+        tokens=7,
+        prompt_tokens=3,
+        total_duration=1.2,
+        retries=2,
+        retry_duration=6.0,
+    )
+    agent = _FakeAgent()
+    agent.act = lambda input_data: retried
+    _patch(monkeypatch, agent)
+
+    result = asyncio.run(
+        run_agent("X", _FakeRequest({"text": "John is an engineer."}))
+    )
+
+    assert result["metrics"]["retries"] == 2
+    assert result["metrics"]["retry_duration"] == 6.0
+
+
+def test_a_run_that_produced_nothing_is_unpriced_not_free(monkeypatch):
+    """No measurement is not a measurement of zero.
+
+    A tool loop that exceeded `max_iterations` never produced an
+    `AgentResponse`, so its cost is unknown — `None`, never `0.0`,
+    which would read as a run that really happened and was free.
+    """
+    empty = run_mod._tool_metrics(None)
+
+    # Compared against the framework's own zero rather than a
+    # hand-written dict, so a metric added upstream does not have
+    # to be remembered here as well.
+    assert (
+        empty
+        == LLMMetrics(
+            tokens=0, prompt_tokens=0, total_duration=0.0
+        ).model_dump()
+    )
+    assert empty["cost_cents"] is None
