@@ -133,7 +133,7 @@ def agent_unavailable(exc: ImportError) -> HTTPException:
             f"which is not installed in this environment. Catalog "
             f"agents are installed separately from the backend, and "
             f"a `uv sync` removes them. Reinstall them with: "
-            f"uv run --project agents7_ui/backend python "
-            f"agents7_ui/scripts/install_catalog.py"
+            f"uv run --project backend python "
+            f"scripts/install_catalog.py"
         ),
     )

@@ -11,6 +11,12 @@ __pycache__/
 .env.*
 !.env.example
 
+# The agents this UI serves by default: your own, never committed
+catalog/
+
+# Ruff cache
+.ruff_cache/
+
 # File-based WARNING/ERROR logs (local-dev observability)
 logs/
 *.log

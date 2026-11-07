@@ -2,11 +2,11 @@ services:
   backend:
     build:
       context: .
-      dockerfile: agents7_ui/Dockerfile.backend
+      dockerfile: Dockerfile.backend
     # Secrets (API_KEY, provider keys) go here; gitignored, optional.
-    # See agents7_ui/.env.example for the documented variables.
+    # See .env.example for the documented variables.
     env_file:
-      - path: agents7_ui/.env
+      - path: .env
         required: false
     environment:
       # Reach the host's Ollama. NOTE: the host service binds localhost by
@@ -19,24 +19,27 @@ services:
       # the frontend's published host port (FRONTEND_PORT, default 5185).
       - CORS_ORIGINS=http://localhost:${FRONTEND_PORT:-5185}
       # Root for file-based WARNING/ERROR logs (-> /app/logs, bind-mounted
-      # below). See agents7_ui/backend/logging_setup.py.
+      # below). See backend/logging_setup.py.
       - LOGS_DIR=/app
     ports:
-      # Registry-claimed host port (never uvicorn's shared 8000 default)
+      # A fixed host port (not uvicorn's common 8000 default)
       # → container 8000. Exposes the FastAPI backend and its Swagger UI
       # directly; the frontend still reaches it same-origin via nginx.
       - "${API_PORT:-5191}:8000"
     volumes:
       # First-party WARNING/ERROR records, surfaced on the host.
-      - ./agents7_ui/logs:/app/logs
+      - ./logs:/app/logs
+      # The agents to serve: the repository's `catalog/` folder (empty
+      # until you add agent configs), read-only.
+      - ./catalog:/app/catalog:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
   frontend:
     build:
-      context: agents7_ui
+      context: .
       dockerfile: Dockerfile.frontend
-    # Registry-claimed host port (never the shared 8080 default). Override
+    # A fixed host port (not the common 8080 default). Override
     # with FRONTEND_PORT; the banner below reads the same value so they
     # cannot drift.
     ports:

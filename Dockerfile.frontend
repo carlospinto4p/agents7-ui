@@ -1,4 +1,4 @@
-# Build context: agents7_ui/
+# Build context: the repository root
 FROM node:22-alpine AS build
 WORKDIR /app
 RUN corepack enable

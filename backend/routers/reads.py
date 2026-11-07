@@ -34,7 +34,8 @@ from pydantic import BaseModel, Field
 router = APIRouter(prefix="/api/reads", tags=["reads"])
 logger = logging.getLogger(__name__)
 
-_default = str(Path(__file__).parents[3] / "samples")
+# Same default as `routers.catalog`: the repository's `catalog/` folder.
+_default = str(Path(__file__).parents[2] / "catalog")
 CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
 
 #: Where a read folder lives relative to an agent package. Reads are

@@ -1,4 +1,4 @@
-"""Load `agents7_ui/.env` into the environment, on import.
+"""Load the repository's `.env` into the environment, on import.
 
 The Compose stack hands that file to the backend container through
 `env_file:`, so a container start already sees its variables. Running

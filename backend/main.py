@@ -2,14 +2,15 @@ import asyncio
 import functools
 import os
 import re
+import tomllib
 from contextlib import asynccontextmanager
+from importlib import metadata
 from pathlib import Path
 
-# Must precede every import below: reads `agents7_ui/.env` into the
+# Must precede every import below: reads the repository's `.env` into the
 # environment, and `logging_setup` / `routers.engine` /
 # `routers.catalog` all read variables at import time.
 import env_setup  # noqa: F401
-import tomllib
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
@@ -85,20 +86,33 @@ app.include_router(eval.router)
 app.include_router(chat.router)
 app.include_router(reads.router)
 
-_README = Path(__file__).parents[2] / "agents7_framework" / "README.md"
-
 
 @functools.lru_cache(maxsize=1)
 def _read_readme() -> str:
-    """Read the framework README (cached; it never changes at runtime)."""
-    return _README.read_text(encoding="utf-8")
+    """Read the framework README from the installed `agents7` package.
+
+    The framework is a dependency, not a sibling folder, so its README
+    comes from the package metadata (its long description). Cached; it
+    never changes at runtime.
+
+    :return: The README text.
+    :raises LookupError: If `agents7` is not installed or carries no
+        README.
+    """
+    try:
+        text = metadata.metadata("agents7").get_payload()
+    except metadata.PackageNotFoundError as exc:
+        raise LookupError("agents7 is not installed") from exc
+    if not text:
+        raise LookupError("agents7 carries no README")
+    return text
 
 
 @app.get("/api/readme", response_class=PlainTextResponse)
 def get_readme() -> str:
     try:
         return _read_readme()
-    except OSError:
+    except LookupError:
         raise HTTPException(status_code=404, detail="README not found")
 
 

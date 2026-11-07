@@ -15,9 +15,11 @@ from routers.utils import (
 router = APIRouter(prefix="/api/catalog", tags=["catalog"])
 logger = logging.getLogger(__name__)
 
-# The samples that ship with this repository. Point `CATALOG_PATH` at a
-# catalog of your own to serve its agents instead.
-_default = str(Path(__file__).parents[3] / "samples")
+# The UI ships no agents. By default it serves the git-ignored `catalog/`
+# folder at the repository root, empty until you put agent configs in
+# it; point `CATALOG_PATH` at a catalog of your own to serve that
+# instead.
+_default = str(Path(__file__).parents[2] / "catalog")
 CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
 
 # Directories that hold build/install artifacts, not real agent configs.

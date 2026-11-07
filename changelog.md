@@ -2,6 +2,34 @@
 ## Changelog - agents7 UI
 
 
+### v0.48.0 - 7th November 2026
+
+- The UI is now its own repository, cut from the old combined one with
+  its history (the stretch from 24th August to 7th November 2026 is
+  one squashed commit). The repository root is the old `agents7_ui/`
+  folder, plus `docker-compose.yml`.
+- The framework is a tagged release instead of a sibling folder:
+  - `backend/pyproject.toml`: `agents7` comes from
+    `github.com/carlospinto4p/agents7` at tag `v9.25.9`.
+  - `Dockerfile.backend`: installs the same tag (`AGENTS7_TAG`)
+    instead of copying the framework's source; build context is the
+    repository root.
+  - `backend/main.py`: `/api/readme` serves the installed package's
+    README instead of reading a sibling file, and answers `404` when
+    the package is missing.
+- The UI ships no agents. The default catalog is the repository's
+  git-ignored `catalog/` folder instead of the old `samples/`;
+  `CATALOG_PATH` still overrides it, and Compose mounts `catalog/`
+  read-only at `/app/catalog`.
+- Updated every path that assumed the `agents7_ui/` folder:
+  `docker-compose.yml`, `scripts/install_catalog.py`, the install hint
+  in `routers/utils.py`, `.env.example`, `README.md`, `env_setup.py`.
+- Added `LICENSE` (MIT) and `ruff.toml`; `.dockerignore` and
+  `.gitignore` cover the new layout.
+- `tests/test_security.py`: the README tests read package metadata,
+  and a new test checks the `404`.
+
+
 ### v0.47.3 - 7th November 2026
 
 - Root `CLAUDE.md`: the framework moved to its own repository, checked

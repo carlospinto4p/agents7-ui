@@ -1,6 +1,7 @@
 # agents7 UI
 
-Web UI for the agents7 framework and catalog: browse agents, run them,
+Web UI for the [agents7](https://github.com/carlospinto4p/agents7)
+framework: browse agents, run them,
 chat, evaluate, read back recorded conversations, and inspect the
 Ollama engine. FastAPI backend + Svelte (Vite) frontend.
 
@@ -46,9 +47,16 @@ it, never a second store.
 
 The default workflow. Needs a local Ollama plus `uv` and `pnpm` (via
 corepack). No environment configuration is required to run against Ollama
-— the defaults point the backend at `localhost:11434` and the repo's
-`samples/`. To serve a catalog of your own, set `CATALOG_PATH` to its
-folder. Anything you do put in `.env` (provider keys, ports) is read on
+— the defaults point the backend at `localhost:11434` and at the
+repository's `catalog/` folder. The UI ships no agents: that folder is
+git-ignored and empty until you put agent configs in it (the
+framework's `samples/` folder is a good start). To serve a catalog
+kept elsewhere, set `CATALOG_PATH` to its folder.
+
+The framework is a tagged release, pinned in
+`backend/pyproject.toml`. To try an unreleased framework change, run
+`uv pip install -e <framework checkout>` in `backend/`; the next
+`uv sync` puts the tag back. Anything you do put in `.env` (provider keys, ports) is read on
 startup; see [Configuration](#configuration).
 
 1. **Ollama** — run it on the host on its default port:
@@ -57,13 +65,13 @@ startup; see [Configuration](#configuration).
    ollama serve            # or: systemctl start ollama
    ```
 
-2. **Catalog packages** — only for a catalog of your own whose agents
-   ship as packages. The samples need nothing installed. Install every
-   such agent into the backend's venv:
+2. **Catalog packages** — only for agents that ship as packages.
+   Configs that use only the framework's own models and tools need
+   nothing installed. Install every such agent into the backend's venv:
 
    ```bash
    CATALOG_PATH=/path/to/your/catalog \
-       uv run --project agents7_ui/backend python agents7_ui/scripts/install_catalog.py
+       uv run --project backend python scripts/install_catalog.py
    ```
 
    Those agents resolve their `output_model` / `tools` by dotted path
@@ -77,7 +85,8 @@ startup; see [Configuration](#configuration).
    backend dependencies on purpose: each catalog agent is an
    independent package with its own version and venv, so naming them
    here would couple the UI to the catalog. The script discovers them
-   instead. The Compose stack serves only the samples.
+   instead. The Compose stack serves the `catalog/` folder, and only
+   agents that need no package.
 
    Skipping the step is not silent. Running or evaluating an agent
    whose package is missing answers `422` with the module it could
@@ -87,15 +96,15 @@ startup; see [Configuration](#configuration).
 3. **Backend** — port 8002 (the dev frontend proxies `/api` to it):
 
    ```bash
-   cd agents7_ui/backend
+   cd backend
    uv run uvicorn main:app --port 8002 --reload
    ```
 
 4. **Frontend** — Vite dev server on :5186, proxies `/api` → :8002:
 
    ```bash
-   corepack pnpm --dir agents7_ui/frontend install
-   corepack pnpm --dir agents7_ui/frontend dev
+   corepack pnpm --dir frontend install
+   corepack pnpm --dir frontend dev
    ```
 
 5. Open <http://localhost:5186>.
@@ -106,8 +115,8 @@ startup; see [Configuration](#configuration).
 docker compose up -d --build      # frontend on http://localhost:5185
 ```
 
-The frontend's published host port defaults to `5185` (a registry-claimed
-port, never the shared `8080` default). Override it with `FRONTEND_PORT`
+The frontend's published host port defaults to `5185` (a fixed port, not
+the common `8080` default). Override it with `FRONTEND_PORT`
 in `.env` — the `CORS_ORIGINS` default and the startup banner both follow
 that value.
 
@@ -179,7 +188,7 @@ logs/
 ```
 
 In the Compose stack the backend's `LOGS_DIR=/app` is bind-mounted to
-`agents7_ui/logs/` on the host. Running locally, files land under
+`logs/` on the host. Running locally, files land under
 `backend/logs/`. The folder is gitignored.
 
 Scope: these folders hold **first-party backend code's** warnings and

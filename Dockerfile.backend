@@ -1,35 +1,32 @@
-# Build context: repo root
-# docker build -f agents7_ui/Dockerfile.backend .
+# Build context: the repository root
+# docker build -f Dockerfile.backend .
 FROM python:3.12-slim
 
 RUN pip install --no-cache-dir uv
 
 WORKDIR /app
 
-COPY agents7_framework/pyproject.toml agents7_framework/README.md agents7_framework/
-COPY agents7_framework/src agents7_framework/src/
-
-# The extras match `backend/pyproject.toml`'s own
+# The framework is a tagged release from its own repository, the same
+# tag `backend/pyproject.toml` pins in `[tool.uv.sources]`; keep the two
+# in step. The extras match `backend/pyproject.toml`'s own
 # `agents7[anthropic,openai]`. Without them the Anthropic and
 # openai_compat providers raise ImportError the moment an engine is
-# built, so any agent or Chatter-page override using one fails in
-# the image while working locally. The absolute path keeps this a
-# directory install rather than a name-with-extras lookup.
-RUN uv pip install --system "/app/agents7_framework[anthropic,openai]"
+# built, so any agent or Chatter-page override using one fails in the
+# image while working locally.
+ARG AGENTS7_TAG=v9.25.9
+RUN uv pip install --system \
+    "agents7[anthropic,openai] @ https://github.com/carlospinto4p/agents7/archive/refs/tags/${AGENTS7_TAG}.tar.gz"
 
 # Install backend API deps (no private index needed)
 RUN uv pip install --system "fastapi>=0.115.0" "uvicorn[standard]>=0.34.0" "pyyaml>=6.0" "httpx>=0.28.0"
 
-# The image serves the samples that ship with this repository. They
-# resolve their output models and tools from `agents7` itself, so there
-# is nothing else to install. A catalog of your own, with packaged
-# agents, runs with the backend outside Docker: see
-# `scripts/install_catalog.py`.
-COPY samples/ samples/
+# The UI ships no agents. `docker-compose.yml` mounts the repository's
+# `catalog/` folder here; agent configs that only use the framework's
+# own models and tools run as they are. Packaged agents run with the
+# backend outside Docker: see `scripts/install_catalog.py`.
+ENV CATALOG_PATH=/app/catalog
 
-COPY agents7_ui/backend/ backend/
-
-ENV CATALOG_PATH=/app/samples
+COPY backend/ backend/
 
 WORKDIR /app/backend
 

@@ -1,6 +1,6 @@
 [project]
 name = "agents7-ui-backend"
-version = "0.47.3"
+version = "0.48.0"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
@@ -52,4 +52,8 @@ dev = ["pytest>=8.0"]
 # than failing with a traceback (`routers.utils.agent_unavailable`).
 
 [tool.uv.sources]
-agents7 = { path = "../../agents7_framework", editable = true }
+# A tagged release of the framework (github.com/carlospinto4p/agents7).
+# To try an unreleased framework change, install a checkout over it:
+# `uv pip install -e <framework checkout>`; the next `uv sync` puts the
+# tag back. `Dockerfile.backend` installs the same tag.
+agents7 = { git = "https://github.com/carlospinto4p/agents7", tag = "v9.25.9" }

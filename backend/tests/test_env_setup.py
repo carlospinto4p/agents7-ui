@@ -1,4 +1,4 @@
-"""Tests for loading `agents7_ui/.env` into the environment."""
+"""Tests for loading the repository's `.env` into the environment."""
 
 import os
 from pathlib import Path
@@ -8,7 +8,7 @@ import pytest
 
 
 def test_env_path_points_at_ui_project_root():
-    """The file read is `agents7_ui/.env`, beside `backend/`."""
+    """The file read is the repository's `.env`, beside `backend/`."""
     backend = Path(env_setup.__file__).parent
     assert env_setup.ENV_PATH == backend.parent / ".env"
     assert env_setup.ENV_PATH.name == ".env"

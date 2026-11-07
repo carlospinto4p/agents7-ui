@@ -7,12 +7,12 @@ Catalog agents that ship as installable packages resolve their
 them, so `POST /api/run/<agent>` fails with `ModuleNotFoundError`
 unless they are installed alongside it.
 
-This is for the "Run locally (no Docker)" workflow with a catalog of
-your own. The samples in `samples/` need nothing installed: they
-resolve their models and tools from `agents7` itself.
+This is for the "Run locally (no Docker)" workflow. Configs that only
+use the framework's own models and tools (such as the framework's
+`samples/`) need nothing installed.
 
 The catalog is read from `CATALOG_PATH`, the same variable the backend
-uses, and defaults to `samples/`.
+uses, and defaults to the repository's `catalog/` folder.
 
 Each package is installed **editable** and with `--no-deps` — its
 `agents7` dependency is a local path override that is not on PyPI, so
@@ -22,7 +22,7 @@ are installed in a second pass.
 Usage (from the repo root or anywhere)::
 
     CATALOG_PATH=/path/to/your/catalog \\
-        uv run python agents7_ui/scripts/install_catalog.py
+        uv run python scripts/install_catalog.py
 """
 
 import os
@@ -31,9 +31,9 @@ import sys
 import tomllib
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-CATALOG = Path(os.getenv("CATALOG_PATH", str(ROOT / "samples")))
-BACKEND_VENV = ROOT / "agents7_ui" / "backend" / ".venv"
+ROOT = Path(__file__).resolve().parents[1]
+CATALOG = Path(os.getenv("CATALOG_PATH", str(ROOT / "catalog")))
+BACKEND_VENV = ROOT / "backend" / ".venv"
 
 
 def backend_python() -> Path:
@@ -48,7 +48,7 @@ def backend_python() -> Path:
             return candidate
     sys.exit(
         f"No virtualenv at {BACKEND_VENV}. Create it first with:\n"
-        f"    uv sync --project agents7_ui/backend"
+        f"    uv sync --project backend"
     )
 
 

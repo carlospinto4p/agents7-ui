@@ -576,14 +576,42 @@ def test_read_version_is_cached(monkeypatch):
     main._read_version.cache_clear()
 
 
-def test_read_readme_is_cached(monkeypatch, tmp_path):
+def test_read_readme_is_cached(monkeypatch):
+    import main
+
+    calls = []
+
+    class _Meta:
+        def get_payload(self):
+            calls.append(1)
+            return "hello readme"
+
+    main._read_readme.cache_clear()
+    monkeypatch.setattr(main.metadata, "metadata", lambda name: _Meta())
+    assert main._read_readme() == "hello readme"
+    assert main._read_readme() == "hello readme"  # served from cache
+    assert len(calls) == 1
+    main._read_readme.cache_clear()
+
+
+def test_readme_comes_from_the_installed_framework():
+    """The README is the installed `agents7` package's own."""
     import main
 
     main._read_readme.cache_clear()
-    readme = tmp_path / "README.md"
-    readme.write_text("hello readme")
-    monkeypatch.setattr(main, "_README", readme)
-    assert main._read_readme() == "hello readme"
-    readme.write_text("changed on disk")
-    assert main._read_readme() == "hello readme"  # served from cache
+    assert "agents7" in main._read_readme()
+    main._read_readme.cache_clear()
+
+
+def test_readme_missing_is_a_404(monkeypatch):
+    import main
+    from fastapi.testclient import TestClient
+
+    def _missing(name):
+        raise main.metadata.PackageNotFoundError(name)
+
+    main._read_readme.cache_clear()
+    monkeypatch.setattr(main.metadata, "metadata", _missing)
+    response = TestClient(main.app).get("/api/readme")
+    assert response.status_code == 404
     main._read_readme.cache_clear()
