@@ -2,6 +2,13 @@
 ## Changelog - agents7 UI
 
 
+### v0.47.3 - 7th November 2026
+
+- Root `CLAUDE.md`: the framework moved to its own repository, checked
+  out at `../framework`; `agents7_framework/` here is frozen, and the UI
+  keeps using it until it is split off too.
+
+
 ### v0.47.2 - 7th November 2026
 
 - Rotated changelog: archived 3 entries to `changelog/2026.md`.
