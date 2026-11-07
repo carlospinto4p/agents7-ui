@@ -48,10 +48,25 @@ it, never a second store.
 The default workflow. Needs a local Ollama plus `uv` and `pnpm` (via
 corepack). No environment configuration is required to run against Ollama
 — the defaults point the backend at `localhost:11434` and at the
-repository's `catalog/` folder. The UI ships no agents: that folder is
-git-ignored and empty until you put agent configs in it (the
-framework's `samples/` folder is a good start). To serve a catalog
-kept elsewhere, set `CATALOG_PATH` to its folder.
+repository's `catalog/` folder. The UI ships no agents. It lists two
+kinds:
+
+- **Installed agent packages.** A package that declares its config in
+  the `agents7.agents` entry point group is listed once it is installed
+  into the backend's environment, wherever it was installed from. For
+  example, the public sentiment classifier:
+
+  ```bash
+  uv pip install --python backend/.venv/bin/python \
+      "sentiment-classifier @ git+https://github.com/carlospinto4p/sentiment_classifier@v0.1.0"
+  ```
+
+  Its framework tag must match the one `backend/pyproject.toml` pins.
+  A `uv sync` on the backend removes it; install it again afterwards.
+- **Loose configs in a folder.** The `catalog/` folder is git-ignored
+  and empty until you put agent configs in it (the framework's
+  `samples/` folder is a good start). To serve a catalog kept
+  elsewhere, set `CATALOG_PATH` to its folder.
 
 The framework is a tagged release, pinned in
 `backend/pyproject.toml`. To try an unreleased framework change, run

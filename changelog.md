@@ -2,6 +2,19 @@
 ## Changelog - agents7 UI
 
 
+### v0.49.0 - 7th November 2026
+
+- `backend/routers/catalog.py`: the catalog also lists agent packages
+  installed in the backend's environment, found through the
+  `agents7.agents` entry point group (`ENTRY_POINT_GROUP`), after the
+  `CATALOG_PATH` folder's configs. A config found both ways is listed
+  once; an entry point that fails to load or names a missing file is
+  logged and skipped. Run, Eval and Chat find these agents by name like
+  any other. Step 3 of the framework's `docs/repository-split.md`.
+- `backend/tests/test_catalog.py`: 5 tests for installed agents.
+- `README.md`: how to install an agent package beside the UI.
+
+
 ### v0.48.1 - 7th November 2026
 
 - Added the project's Claude Code setup, carried over from the old

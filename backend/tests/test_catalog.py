@@ -1,3 +1,5 @@
+import sys
+from importlib.metadata import EntryPoint
 from pathlib import Path
 
 import pytest
@@ -21,10 +23,52 @@ def _write_config(path: Path, name: str) -> Path:
 
 
 @pytest.fixture
-def catalog(tmp_path, monkeypatch):
+def installed(monkeypatch):
+    """The entry points the backend's environment reports.
+
+    Starts empty, so packages really installed in the test venv do not
+    leak into the expected lists; a test appends to it.
+    """
+    eps: list[EntryPoint] = []
+    monkeypatch.setattr(
+        catalog_mod,
+        "entry_points",
+        lambda group: [e for e in eps if e.group == group],
+    )
+    return eps
+
+
+@pytest.fixture
+def catalog(tmp_path, monkeypatch, installed):
     """A throwaway catalog root the discovery walk points at."""
-    monkeypatch.setattr(catalog_mod, "CATALOG_PATH", tmp_path)
-    return tmp_path
+    root = tmp_path / "catalog"
+    root.mkdir()
+    monkeypatch.setattr(catalog_mod, "CATALOG_PATH", root)
+    return root
+
+
+def _install_agent(
+    tmp_path: Path, monkeypatch, installed: list, name: str
+) -> Path:
+    """Make an importable agent package and register its entry point.
+
+    The package is a real module on `sys.path` exposing `CONFIG_PATH`,
+    so the entry point is loaded the way an installed one is.
+    """
+    site = tmp_path / "site-packages"
+    config = _write_config(site / name / "config.yml", name)
+    (site / name / "__init__.py").write_text(
+        "from pathlib import Path\n"
+        "CONFIG_PATH = Path(__file__).parent / 'config.yml'\n",
+        encoding="utf-8",
+    )
+    monkeypatch.syspath_prepend(str(site))
+    # Another test's copy of the module would otherwise be reused.
+    monkeypatch.delitem(sys.modules, name, raising=False)
+    installed.append(
+        EntryPoint(name, f"{name}:CONFIG_PATH", catalog_mod.ENTRY_POINT_GROUP)
+    )
+    return config
 
 
 # ── _discover_configs Tests ────────────────────────────────────────
@@ -79,6 +123,63 @@ def test_agent_added_after_first_scan_is_found(catalog):
 def test_find_config_file_matches_case_insensitively(catalog):
     _write_config(catalog / "examples/mt/config.yml", "My_Tagger")
     assert find_config_file("my_tagger") == catalog / "examples/mt/config.yml"
+
+
+# ── Installed agent packages ───────────────────────────────────────
+
+
+def test_installed_agent_is_listed_after_the_catalog_folder(
+    catalog, tmp_path, monkeypatch, installed
+):
+    local = _write_config(catalog / "examples/local/config.yml", "local")
+    pkg = _install_agent(tmp_path, monkeypatch, installed, "pkg_agent")
+    assert _discover_configs() == [local, pkg]
+    assert find_config_file("pkg_agent") == pkg
+
+
+def test_installed_agent_is_listed_with_an_empty_catalog_folder(
+    catalog, tmp_path, monkeypatch, installed
+):
+    pkg = _install_agent(tmp_path, monkeypatch, installed, "pkg_agent")
+    assert catalog_mod.list_agents()[0]["name"] == "pkg_agent"
+    assert _discover_configs() == [pkg]
+
+
+def test_agent_in_both_places_is_listed_once(catalog, installed):
+    # An agent installed editable from inside the catalog folder.
+    config = _write_config(catalog / "mt/src/mt/config.yml", "mt")
+    installed.append(_StubEntryPoint("mt", config))
+    assert _discover_configs() == [config]
+
+
+def test_broken_entry_point_is_skipped(
+    catalog, tmp_path, monkeypatch, installed
+):
+    installed.append(
+        EntryPoint(
+            "gone", "no_such_agent:CONFIG_PATH", catalog_mod.ENTRY_POINT_GROUP
+        )
+    )
+    pkg = _install_agent(tmp_path, monkeypatch, installed, "pkg_agent")
+    assert _discover_configs() == [pkg]
+
+
+def test_entry_point_naming_a_missing_file_is_skipped(catalog, installed):
+    installed.append(_StubEntryPoint("ghost", Path("/nowhere/config.yml")))
+    assert _discover_configs() == []
+
+
+class _StubEntryPoint:
+    """An entry point whose `load()` returns a fixed path."""
+
+    group = catalog_mod.ENTRY_POINT_GROUP
+
+    def __init__(self, name: str, path: Path) -> None:
+        self.name = name
+        self._path = path
+
+    def load(self) -> Path:
+        return self._path
 
 
 # ── _description Tests ─────────────────────────────────────────────

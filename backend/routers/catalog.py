@@ -1,5 +1,6 @@
 import logging
 import os
+from importlib.metadata import entry_points
 from pathlib import Path
 
 from agents7.agents.config_loader import parse_context_params
@@ -21,6 +22,12 @@ logger = logging.getLogger(__name__)
 # instead.
 _default = str(Path(__file__).parents[2] / "catalog")
 CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
+
+# Agent packages declare their `config.yml` in this entry point group
+# (`[project.entry-points."agents7.agents"]`), so an agent installed
+# into the backend's environment is listed wherever it was installed.
+# The group is named in the framework's docs/repository-split.md.
+ENTRY_POINT_GROUP = "agents7.agents"
 
 # Directories that hold build/install artifacts, not real agent configs.
 # Catalog agents that ship as packages get a copy of their config.yml
@@ -47,8 +54,43 @@ def _is_skipped_dir(name: str) -> bool:
     return name in _SKIP_DIRS or name.endswith(".egg-info")
 
 
+def _installed_configs() -> list[Path]:
+    """Return the configs of agent packages installed beside the UI.
+
+    Each entry point in `ENTRY_POINT_GROUP` names a path to a
+    `config.yml`. An entry point that fails to load, or names a file
+    that does not exist, is logged and skipped, so one broken package
+    cannot hide the rest of the catalog.
+
+    :return: Config paths, in entry point name order.
+    """
+    found: list[Path] = []
+    for ep in sorted(
+        entry_points(group=ENTRY_POINT_GROUP), key=lambda e: e.name
+    ):
+        try:
+            path = Path(ep.load())
+        except Exception as exc:
+            logger.warning("Skipping agent entry point %s: %s", ep.name, exc)
+            continue
+        if not path.is_file():
+            logger.warning(
+                "Skipping agent entry point %s: no config at %s",
+                ep.name,
+                path,
+            )
+            continue
+        found.append(path)
+    return found
+
+
 def _discover_configs() -> list[Path]:
-    """Return every agent `config.yml` under the catalog root.
+    """Return every agent config: the catalog folder's, then installed.
+
+    The catalog folder's configs come first, sorted; then those of
+    installed agent packages (`_installed_configs`), minus any that
+    are the same file as one already found (an agent installed
+    editable from inside the catalog folder).
 
     The tree is walked on each call rather than cached. A cached path
     list left a newly added agent folder invisible until the backend
@@ -57,14 +99,20 @@ def _discover_configs() -> list[Path]:
     the walk itself rather than filtered afterwards, which keeps a full
     scan around a millisecond even with virtualenvs in the tree.
 
-    :return: Sorted config paths, artifact copies excluded.
+    :return: Config paths, artifact copies excluded.
     """
     found: list[Path] = []
     for dirpath, dirnames, filenames in os.walk(CATALOG_PATH):
         dirnames[:] = [d for d in dirnames if not _is_skipped_dir(d)]
         if "config.yml" in filenames:
             found.append(Path(dirpath) / "config.yml")
-    return sorted(found)
+    found.sort()
+    seen = {p.resolve() for p in found}
+    for path in _installed_configs():
+        if path.resolve() not in seen:
+            seen.add(path.resolve())
+            found.append(path)
+    return found
 
 
 def _agent_source(config_file: Path) -> str:
