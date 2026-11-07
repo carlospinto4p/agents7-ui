@@ -2,6 +2,18 @@
 ## Changelog - agents7 UI
 
 
+### v0.49.2 - 7th November 2026
+
+- `README.md` is a short overview (104 lines, was 211): what the UI does,
+  which agents it shows, running it locally and with Compose,
+  configuration, tests and logs.
+- Added `docs/reads.md`: the Reads page in detail, moved from the README.
+- `.claude/rules/committing.md`: user-facing changes go in `docs/`; the
+  README stays an overview (owner, 7th November 2026).
+- `backend/routers/catalog.py`: a comment pointed at a framework page
+  that no longer exists; it now names `docs/agent-packages.md`.
+
+
 ### v0.49.1 - 7th November 2026
 
 - `README.md`: the example agent installs from its renamed repository,

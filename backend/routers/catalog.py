@@ -26,7 +26,7 @@ CATALOG_PATH = Path(os.getenv("CATALOG_PATH", _default))
 # Agent packages declare their `config.yml` in this entry point group
 # (`[project.entry-points."agents7.agents"]`), so an agent installed
 # into the backend's environment is listed wherever it was installed.
-# The group is named in the framework's docs/repository-split.md.
+# The group is documented in the framework's docs/agent-packages.md.
 ENTRY_POINT_GROUP = "agents7.agents"
 
 # Directories that hold build/install artifacts, not real agent configs.

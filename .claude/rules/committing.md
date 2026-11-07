@@ -42,9 +42,10 @@ uncommitted edits into its unrelated commit.
 2. **Update tests** the change requires, before committing.
 3. **Update version and changelog** per `versioning.md` —
    config/tooling changes count too (see below).
-4. **Update README.md** when user-facing behaviour changed: usage
-   examples for new methods or classes, updated examples for changed
-   signatures, docs for new configuration options.
+4. **Update the docs** when user-facing behaviour changed: setup steps
+   and configuration in `README.md`, page-level detail in `docs/`.
+   `README.md` stays a short overview (owner, 7th November 2026: the
+   public READMEs were too long).
 5. **Update CLAUDE.md** when rules change or new important patterns
    emerge.
 6. **Sync the lock file**: every version bump updates `uv.lock`'s own
