@@ -2,6 +2,14 @@
 ## Changelog - agents7 UI
 
 
+### v0.49.5 - 7th November 2026
+
+- `backend/uv.lock`: framework tag `v9.25.9` re-resolved to commit
+  `bb03025`. The framework's history was rewritten and its repository
+  recreated, so the tag names a new commit; the code under it only
+  changed in docstrings, tests and the guard prompt's examples.
+
+
 ### v0.49.4 - 7th November 2026
 
 - Fixed `backend/routers/chat.py` `save_as_read`: for an agent found
