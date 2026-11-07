@@ -58,7 +58,7 @@ kinds:
 
   ```bash
   uv pip install --python backend/.venv/bin/python \
-      "sentiment-classifier @ git+https://github.com/carlospinto4p/sentiment_classifier@v0.1.0"
+      "sentiment-classifier @ git+https://github.com/carlospinto4p/agent-sentiment_classifier@v0.1.1"
   ```
 
   Its framework tag must match the one `backend/pyproject.toml` pins.

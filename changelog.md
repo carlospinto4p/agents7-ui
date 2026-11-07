@@ -2,6 +2,12 @@
 ## Changelog - agents7 UI
 
 
+### v0.49.1 - 7th November 2026
+
+- `README.md`: the example agent installs from its renamed repository,
+  `agent-sentiment_classifier`, tag `v0.1.1`.
+
+
 ### v0.49.0 - 7th November 2026
 
 - `backend/routers/catalog.py`: the catalog also lists agent packages
