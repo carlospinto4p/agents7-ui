@@ -2,6 +2,12 @@
 ## Changelog - agents7 UI
 
 
+### v0.49.6 - 8th November 2026
+
+- Updated `.claude/rules/00-rule-index.md`: regenerated, it now lists
+  `metrics-completeness`.
+
+
 ### v0.49.5 - 7th November 2026
 
 - `backend/uv.lock`: framework tag `v9.25.9` re-resolved to commit
