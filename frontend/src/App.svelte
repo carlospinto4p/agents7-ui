@@ -114,6 +114,7 @@
   .shell {
     display: flex;
     height: 100vh;
+    height: 100dvh;
     width: 100%;
     overflow: hidden;
   }
@@ -128,9 +129,19 @@
     max-width: 1400px;
     margin: 0 auto;
   }
+  /* Phone: the sidebar's top bar sits above the page, and the
+     sidebar itself becomes a drawer outside the layout. */
   @media (max-width: 640px) {
+    .shell {
+      flex-direction: column;
+    }
+    main {
+      flex: 1;
+      min-height: 0;
+    }
     .content {
       padding: 0.75rem;
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
   }
 </style>

@@ -1,5 +1,25 @@
 # Backlog - agents7 UI
 
+### 2026.11.23 (phone layout, v0.50.0)
+
+- [ ] **[manual]** Try the UI on a real phone and say what still feels
+  wrong. v0.50.0 was checked in a 390px headless browser only. Open
+  `http://<computer's address>:5185` from the phone (README, "Use it
+  on a phone"), add it to the home screen, and go through Catalog,
+  Runner, Chatter and Eval. (MEDIUM, S)
+- [ ] **A native Android app (Kotlin) for agents7, for a later stage.**
+  The owner chose the web UI on phones first (23rd November 2026) and
+  wants this kept for later. It would call the same FastAPI backend,
+  built like vademo (Compose, Material 3, Hilt, `HttpURLConnection`).
+  Worth it for what a browser does badly: a notification when a long
+  eval or batch run finishes, reading recorded conversations offline,
+  and sharing text from other apps into the Runner. Needs the backend
+  reachable from the phone with a login first, since the UI has none
+  today (`API_KEY` exists but the frontend does not send it). (LOW, L)
+- [ ] On the Runner page at phone width, the answer header squeezes the
+  "pass" badge and the timing onto three lines next to "ANSWER". Let
+  the header wrap below the label under 640px. (LOW, S)
+
 ### 2026.11.07 (found taking the README screenshots)
 
 - [ ] **Reads page shows "vunknown" for a sample's version.** A read

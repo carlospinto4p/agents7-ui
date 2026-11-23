@@ -2,6 +2,32 @@
 ## Changelog - agents7 UI
 
 
+### v0.50.0 - 23rd November 2026
+
+- The UI now works on a phone:
+  - `frontend/src/components/Sidebar.svelte`: below 640px a top bar
+    shows the page name, the Ollama status and a menu button, and the
+    sidebar opens as a drawer over the page (closed by picking a page,
+    the backdrop or Escape). It replaces the icon rail from v0.45.0.
+  - `frontend/src/App.svelte`, `frontend/src/app.css`: the layout
+    stacks under the top bar, uses the visible screen height (`dvh`),
+    and keeps clear of the notch and home bar.
+  - `frontend/src/app.css`: a table wider than the screen scrolls
+    sideways on its own instead of widening the page.
+  - `frontend/src/pages/Chatter.svelte`: the selects fit the screen
+    (they pushed the page to 626px), and the chat gets a screen of its
+    own below the agent's details instead of being squashed.
+- Added home-screen install: `frontend/public/manifest.webmanifest`,
+  app icons (`icon.svg`, `icon-192.png`, `icon-512.png`,
+  `apple-touch-icon.png`) and the matching tags in `index.html`.
+- Browser tests:
+  - Added `frontend/e2e/phone.spec.js`: 13 tests at 390px, covering the
+    drawer, every page's width, a wide table and the manifest.
+  - Updated `frontend/e2e/sidebar.spec.js`: the icon rail tests now
+    test the drawer, plus a test that a wide window has no top bar.
+- Updated `README.md`: "Use it on a phone".
+
+
 ### v0.49.7 - 10th November 2026
 
 - Rotated changelog: archived 11 entries to `changelog/2026.md`.
