@@ -2,6 +2,15 @@
 ## Changelog - agents7 UI
 
 
+### v0.50.1 - 23rd November 2026
+
+- Updated `.claude/rules/committing.md`: "Merge Into `main` After Every
+  Prompt": every prompt that changes the repository ends with its branch
+  merged into `main` through a merge-commit pull request, in every session
+  (local, web or the phone) and in all of the owner's repositories.
+  Added as a step of the post-change workflow too.
+
+
 ### v0.50.0 - 23rd November 2026
 
 - The UI now works on a phone:
