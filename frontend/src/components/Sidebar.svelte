@@ -74,6 +74,16 @@
     localStorage.setItem(STORAGE_KEY, String(width))
   }
 
+  // ── Phone menu ──────────────────────────────────────────
+  // Below 640px the sidebar leaves the layout: a top bar shows the
+  // page name and a menu button, and the sidebar slides in over the
+  // page as a drawer. Picking a page, the backdrop or Escape closes it.
+  let menuOpen = $state(false)
+
+  function onWindowKey(e) {
+    if (e.key === 'Escape' && menuOpen) menuOpen = false
+  }
+
   // Each nav item carries the SVG inner markup for its icon (24x24,
   // stroke-based to match a clean line-icon look).
   const nav = [
@@ -118,9 +128,61 @@
       icon: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
     },
   ]
+
+  const pageLabel = $derived(
+    nav.find(item => item.key === page)?.label ?? 'agents7',
+  )
 </script>
 
-<aside class="sidebar" class:dragging style="width: {width}px">
+<svelte:window onkeydown={onWindowKey} />
+
+<header class="topbar">
+  <button
+    type="button"
+    class="menu-btn"
+    aria-label="Open menu"
+    aria-expanded={menuOpen}
+    aria-controls="app-sidebar"
+    onclick={() => (menuOpen = true)}
+  >
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+  <span class="topbar-title">{pageLabel}</span>
+  <span
+    class="topbar-status"
+    class:up={ollamaStatus === 'up'}
+    class:down={ollamaStatus === 'down'}
+    title="Ollama: {ollamaStatus}"
+    role="img"
+    aria-label="Ollama: {ollamaStatus}"
+  ></span>
+</header>
+
+{#if menuOpen}
+  <button
+    type="button"
+    class="backdrop"
+    aria-label="Close menu"
+    onclick={() => (menuOpen = false)}
+  ></button>
+{/if}
+
+<aside
+  id="app-sidebar"
+  class="sidebar"
+  class:dragging
+  class:open={menuOpen}
+  style="width: {width}px"
+>
   <div class="brand">
     <div class="brand-mark" aria-hidden="true">
       <svg viewBox="0 0 32 32" fill="none">
@@ -150,6 +212,7 @@
         aria-current={active ? 'page' : undefined}
         aria-label={item.label}
         title={item.label}
+        onclick={() => (menuOpen = false)}
       >
         <svg
           class="nav-icon"
@@ -378,45 +441,115 @@
     cursor: not-allowed;
   }
 
-  /* ── Narrow viewport: an icon rail ──────────────────── */
-  /* The dragged width is an inline style, so the rail has to
-     override it. The stored width is untouched and comes back as
-     soon as the window is wide again. */
+  /* ── Phone: top bar and drawer ─────────────────────── */
+  .topbar,
+  .backdrop {
+    display: none;
+  }
+
   @media (max-width: 640px) {
-    .sidebar {
-      width: 3.5rem !important;
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      height: 3.25rem;
+      padding: 0 0.5rem;
+      padding-top: env(safe-area-inset-top);
+      box-sizing: content-box;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
     }
-    .brand-text,
-    .nav-label,
-    .nav-dot,
-    .pill-label,
+    .menu-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 3rem;
+      height: 3rem;
+      padding: 0;
+      border: none;
+      border-radius: 0.55rem;
+      background: transparent;
+      color: var(--text-strong);
+      cursor: pointer;
+    }
+    .menu-btn:hover,
+    .menu-btn:focus-visible {
+      background: var(--bg-raised);
+    }
+    .menu-btn svg {
+      width: 1.4rem;
+      height: 1.4rem;
+    }
+    .topbar-title {
+      flex: 1;
+      min-width: 0;
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--text-strong);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .topbar-status {
+      width: 0.6rem;
+      height: 0.6rem;
+      margin: 0 0.9rem;
+      border-radius: 50%;
+      background: var(--neutral);
+      flex-shrink: 0;
+    }
+    .topbar-status.up {
+      background: var(--pass);
+    }
+    .topbar-status.down {
+      background: var(--fail);
+    }
+
+    .backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      padding: 0;
+      border: none;
+      background: rgba(0, 0, 0, 0.55);
+      cursor: default;
+    }
+
+    /* The dragged width is an inline style, so the drawer has to
+       override it. The stored width is untouched and comes back as
+       soon as the window is wide again. */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      width: min(18rem, 85vw) !important;
+      height: auto;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      transform: translateX(-100%);
+      visibility: hidden;
+      transition: transform 0.2s ease, visibility 0.2s;
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
+    }
+    .sidebar.open {
+      transform: none;
+      visibility: visible;
+    }
     .resize-handle {
       display: none;
     }
-    .brand {
-      justify-content: center;
-      padding: 0.9rem 0;
-    }
-    .nav {
-      padding: 0.4rem 0.35rem;
-    }
     .nav-item {
-      justify-content: center;
-      padding: 0.6rem 0;
+      padding: 0.75rem 0.8rem;
     }
-    .engine-block {
-      flex-direction: column;
-      padding: 0.6rem 0.2rem;
-    }
-    .ollama-pill {
-      padding: 0.45rem;
-    }
-    .start-btn {
-      max-width: 100%;
-      padding: 0.2rem 0.3rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+  }
+
+  @media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+    .sidebar {
+      transition: none;
     }
   }
 </style>

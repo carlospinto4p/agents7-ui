@@ -75,6 +75,24 @@ Environment="OLLAMA_HOST=0.0.0.0:11434"
 Then `sudo systemctl restart ollama`. On a machine reachable from
 outside, block port 11434 in the firewall.
 
+## Use it on a phone
+
+The agents still run on the computer; the phone only opens the UI.
+Below 640px wide the sidebar becomes a menu behind a button in the top
+bar.
+
+1. Start the Docker Compose stack, which listens on every network
+   address, or the dev server with `corepack pnpm dev --host`.
+2. On the phone, open `http://<computer's address>:5185` (5186 for the
+   dev server).
+3. To keep it as an app, use the browser's *Add to Home screen*. It
+   opens in a window of its own only from an HTTPS address, such as one
+   from `tailscale serve`; from plain `http://` it may open as a
+   browser tab.
+
+The UI has no login, so anyone who can reach the port can run agents.
+Keep it on a network you trust, or reach it over a VPN like Tailscale.
+
 ## Configuration
 
 [`.env.example`](.env.example) lists every variable: `OLLAMA_HOST`,

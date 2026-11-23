@@ -540,6 +540,7 @@
 
   .panel-wrap { flex: 1; min-height: 0; display: flex; }
 
+
   .transcript-placeholder {
     flex: 1;
     display: flex;
@@ -552,5 +553,34 @@
     font-size: 1.0625rem;
     text-align: center;
     margin: auto;
+  }
+
+  /* Phone: the agent's details above the chat already fill the
+     screen, so a fixed-height page would squash the chat to nothing.
+     The page scrolls instead, and the chat takes a screen of its own
+     below the details. The selects shrink to the screen's width. */
+  @media (max-width: 640px) {
+    .chatter {
+      height: auto;
+    }
+    .controls {
+      gap: 0.75rem;
+    }
+    .field {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+    select,
+    .model-input,
+    .context-input {
+      min-width: 0;
+      width: 100%;
+    }
+    .panel-wrap,
+    .transcript-placeholder {
+      flex: none;
+      height: calc(100dvh - 3.25rem - 1.5rem - env(safe-area-inset-top));
+      min-height: 22rem;
+    }
   }
 </style>

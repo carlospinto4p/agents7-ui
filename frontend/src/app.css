@@ -42,6 +42,7 @@ body {
 
 #app {
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -70,4 +71,15 @@ a:hover { text-decoration: underline; }
 button, input, select, textarea {
   font-family: inherit;
   font-size: inherit;
+}
+
+/* Phone: a table wider than the screen scrolls sideways on its own
+   instead of pushing the whole page wider. As a block the table keeps
+   its column layout inside; only its box becomes the scroll area. */
+@media (max-width: 640px) {
+  main table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
 }
